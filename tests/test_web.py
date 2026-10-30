@@ -112,6 +112,11 @@ def test_bundled_branding_and_license_resources(gui):
     assert status == 200
     assert b"Gladius \xc2\xb7 Roman image cutouts" in page
     assert b'rel="icon"' in page
+    assert b'id="themeToggle"' in page
+    status, theme_script = request(gui, "/assets/theme.js", token=False)
+    assert status == 200 and b"gladius-theme" in theme_script
+    status, theme_css = request(gui, "/assets/theme.css", token=False)
+    assert status == 200 and b'color-scheme: dark' in theme_css
     for url in ("https://rges-pit.org/", "https://github.com/AmberLee2427/gladius",
                 "https://archive.stsci.edu/missions-and-data/roman", "https://mldb.rges-pit.com"):
         assert url.encode() in page
@@ -125,6 +130,8 @@ def test_bundled_branding_and_license_resources(gui):
     assert status == 200 and b"RGES-PIT" in notices
     status, dependencies = request(gui, "/dependencies", token=False)
     assert status == 200 and b"Astropy" in dependencies and b"Pydantic" in dependencies
+    assert b"__NONCE__" not in dependencies
+    assert b'id="themeToggle"' in dependencies
     status, licenses = request(gui, "/dependency-licenses", token=False)
     assert status == 200 and b"Copyright" in licenses and b"NumPy" in licenses
     assert request(gui, "/assets/unknown.png", token=False)[0] == 404

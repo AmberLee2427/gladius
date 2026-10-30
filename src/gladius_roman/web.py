@@ -23,6 +23,8 @@ MAX_REQUEST_BYTES = 16 * 1024 * 1024
 
 # Fixed resource map: never turn a URL into an arbitrary filesystem path.
 GUI_RESOURCES = {
+    "/assets/theme.js": ("theme.js", "text/javascript; charset=utf-8"),
+    "/assets/theme.css": ("theme.css", "text/css; charset=utf-8"),
     "/assets/gladius-logo.png": ("gladius-logo.png", "image/png"),
     "/dependencies": ("dependencies.html", "text/html; charset=utf-8"),
     "/dependency-licenses": ("dependency-licenses.txt", "text/plain; charset=utf-8"),
@@ -152,7 +154,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header(
             "Content-Security-Policy",
-            "default-src 'self'; style-src 'unsafe-inline'; "
+            "default-src 'self'; style-src 'self' 'unsafe-inline'; "
             f"script-src 'nonce-{self.server.token}'; connect-src 'self'; "
             "frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
         )
@@ -187,6 +189,8 @@ class Handler(BaseHTTPRequestHandler):
         elif path in GUI_RESOURCES:
             resource, content_type = GUI_RESOURCES[path]
             raw = files("gladius_roman").joinpath("web_assets", resource).read_bytes()
+            if content_type.startswith("text/html"):
+                raw = raw.replace(b"__NONCE__", self.server.token.encode())
             self._reply(200, raw, content_type)
         elif path == "/api/defaults":
             configuration = RunConfig(targets=[Target(id="example", ra=270, dec=-29)]).model_dump(

@@ -33,7 +33,7 @@ gladius = "gladius_roman.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-gladius_roman = ["data/*.yaml", "web_assets/*.html", "web_assets/*.png", "web_assets/*.txt", "py.typed"]
+gladius_roman = ["data/*.yaml", "web_assets/*.html", "web_assets/*.css", "web_assets/*.js", "web_assets/*.png", "web_assets/*.txt", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

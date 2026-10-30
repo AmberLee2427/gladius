@@ -1,7 +1,7 @@
 include README.md LICENSE.txt NOTICE.md THIRD_PARTY.md TEMPLATE.json CITATION.cff CHANGES.rst
 include CONTRIBUTING.md CODE_OF_CONDUCT.md AI_POLICY.md TESTING.md tox.ini .ruff.toml .pre-commit-config.yaml
 recursive-include licenses *.txt
-recursive-include src *.py *.typed *.yaml *.html *.png *.txt
+recursive-include src *.py *.typed *.yaml *.html *.css *.js *.png *.txt
 recursive-include tests *.py
 recursive-include docs *.md *.rst *.py *.json
 recursive-include examples *.yaml *.csv

@@ -7,8 +7,8 @@
   ><link rel="icon" href="/assets/gladius-emblem.png" /><style>
     body {
       margin: 0;
-      background: #faf7fd;
-      color: #241b29;
+      background: var(--paper);
+      color: var(--ink);
       font:
         15px/1.6 system-ui,
         sans-serif;
@@ -22,22 +22,22 @@
       font-size: 24px;
     }
     a {
-      color: #361d49;
+      color: var(--accent);
       text-underline-offset: 3px;
     }
     table {
       border-collapse: collapse;
       width: 100%;
-      background: white;
+      background: var(--surface);
     }
     td,
     th {
       padding: 12px;
       text-align: left;
-      border-bottom: 1px solid #e1d8e9;
+      border-bottom: 1px solid var(--line);
     }
     thead {
-      background: #eee6f5;
+      background: var(--badge);
     }
     p {
       max-width: 80ch;
@@ -46,11 +46,22 @@
       overflow: auto;
     }
     small {
-      color: #6d6173;
+      color: var(--muted);
     }
   </style>
+  <link rel="stylesheet" href="/assets/theme.css" />
+  <script nonce="__NONCE__" src="/assets/theme.js"></script>
   <main>
     <a href="/">← Gladius</a>
+    <button
+      id="themeToggle"
+      type="button"
+      aria-label="Toggle dark mode"
+      aria-pressed="false"
+      style="float: right"
+    >
+      Dark mode
+    </button>
     <h1>Dependencies and acknowledgements</h1>
     <p>
       Gladius builds on the work of these projects and their contributors.
