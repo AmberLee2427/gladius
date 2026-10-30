@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible behavior or scientific metadata problem
+title: '[Bug] '
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include versions, resolved configuration and a small redistributable input where possible. Remove credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: science
+    attributes:
+      label: Scientific impact
+      description: Which pixels, flags, coordinates or metadata are affected?

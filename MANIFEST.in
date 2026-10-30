@@ -1,0 +1,15 @@
+include README.md LICENSE.txt NOTICE.md TEMPLATE.json CITATION.cff CHANGES.rst
+include CONTRIBUTING.md CODE_OF_CONDUCT.md AI_POLICY.md TESTING.md tox.ini .ruff.toml .pre-commit-config.yaml
+recursive-include licenses *.txt
+recursive-include src *.py *.typed *.yaml *.html
+recursive-include tests *.py
+recursive-include docs *.md *.rst *.py *.json
+recursive-include examples *.yaml *.csv
+prune local-snapshot
+prune nexus-snapshot
+prune .agents
+prune .roman-cutouts-gui
+prune .github
+prune docs/_build
+exclude nexus-source-snapshot.zip
+global-exclude __pycache__ *.py[cod] .DS_Store

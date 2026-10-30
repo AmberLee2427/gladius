@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roman cutouts</title>
+    <style>
+      :root {
+        --ink: #241b29;
+        --muted: #6d6173;
+        --line: #e1d8e9;
+        --paper: #faf7fd;
+        --accent: #361d49;
+        --gold: #a859e4;
+        --white: #fff;
+        --danger: #a32e3a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          13px/1.5 Manrope,
+          Inter,
+          system-ui,
+          sans-serif;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        color: var(--ink);
+        padding: 8px 12px;
+        min-height: 36px;
+        font-weight: 600;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .primary {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+      header {
+        background: #21102c;
+        color: #fff;
+        min-height: 67px;
+        padding: 14px max(30px, calc((100vw - 1420px) / 2));
+        background: linear-gradient(115deg, #21102c, #361d49);
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: center;
+      }
+      .brand {
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: -0.4px;
+      }
+      .pill {
+        border: 1px solid #482757;
+        border-radius: 99px;
+        padding: 5px 12px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .layout {
+        max-width: 1470px;
+        margin: auto;
+        padding: 28px 32px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(350px, 0.85fr);
+        gap: 24px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 18px;
+        box-shadow: 0 2px 4px #361d4907;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+      h2 {
+        font-size: 16px;
+        margin-bottom: 5px;
+        letter-spacing: -0.2px;
+      }
+      h3 {
+        font-size: 15px;
+      }
+      a {
+        color: var(--accent);
+        text-underline-offset: 3px;
+      }
+      a:hover {
+        color: var(--gold);
+      }
+      .muted,
+      small {
+        color: var(--muted);
+      }
+      .muted {
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin: 14px 0;
+      }
+      .field > span,
+      .label {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .field input,
+      .field select,
+      .field textarea,
+      input[type="text"],
+      input[type="number"],
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid #e1d8e9;
+        border-radius: 7px;
+        background: #fff;
+        padding: 9px 10px;
+        color: var(--ink);
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: 2px solid #a859e4;
+        outline-offset: 2px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 16px;
+      }
+      .check {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        margin: 13px 0;
+        font-size: 13px;
+      }
+      .check input {
+        width: 17px;
+        height: 17px;
+        accent-color: var(--accent);
+      }
+      .checks {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .checks .check {
+        margin: 4px 0;
+      }
+      .detectors {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 5px;
+      }
+      .detectors label {
+        font-size: 12px;
+      }
+      .count {
+        font-size: 12px;
+        color: var(--accent);
+        background: #eee6f5;
+        border-radius: 99px;
+        padding: 4px 9px;
+      }
+      .target-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 18px 0 8px;
+      }
+      .table-wrap {
+        overflow: auto;
+        max-height: 270px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12px;
+      }
+      td,
+      th {
+        background: #f1ecf6;
+        font-size: 11px;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+      }
+      th {
+        background: #f1ecf6;
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      td button {
+        padding: 2px 7px;
+        font-size: 12px;
+      }
+      .empty {
+        border: 1px dashed #e1d8e9;
+        border-radius: 8px;
+        padding: 22px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      details {
+        margin-top: 14px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      details > div {
+        margin-top: 10px;
+      }
+      .sticky {
+        position: sticky;
+        top: 18px;
+        align-self: start;
+      }
+      .code {
+        font:
+          12px/1.6 ui-monospace,
+          SFMono-Regular,
+          monospace;
+        white-space: pre;
+        overflow: auto;
+        background: #f1ecf6;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 15px;
+        height: 355px;
+        margin: 13px 0;
+      }
+      .sticky .code {
+        height: 230px;
+      }
+      .editor {
+        height: 340px;
+        resize: vertical;
+        font:
+          12px/1.6 ui-monospace,
+          monospace;
+      }
+      .error {
+        white-space: pre-wrap;
+        color: var(--danger);
+        background: #fff0f1;
+        border: 1px solid #edc7cc;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-top: 12px;
+      }
+      .success {
+        color: var(--accent);
+        font-size: 13px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .logs:empty,
+      .caption:empty {
+        display: none;
+      }
+      .logs {
+        background: #21102c;
+        color: #f7f0fc;
+        font:
+          12px/1.7 ui-monospace,
+          monospace;
+        white-space: pre-wrap;
+        overflow: auto;
+        max-height: 230px;
+        min-height: 90px;
+        padding: 14px;
+        border-radius: 8px;
+      }
+      .runline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+      }
+      .state {
+        font-size: 12px;
+        font-weight: 650;
+        color: var(--accent);
+      }
+      .caption {
+        margin: 12px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      .section {
+        border-top: 1px solid var(--line);
+        padding-top: 15px;
+        margin-top: 17px;
+      }
+      .file-button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .file-button:focus-within {
+        outline: 2px solid var(--gold);
+        outline-offset: 2px;
+      }
+      .file-button .file-hidden {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        width: 100%;
+        cursor: pointer;
+      }
+      .spaced {
+        margin-top: 14px;
+      }
+      input[type="file"] {
+        max-width: 100%;
+        font-size: 12px;
+      }
+      input[type="file"]::file-selector-button {
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        margin-right: 8px;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .sticky {
+          position: static;
+        }
+        header {
+          padding: 20px;
+        }
+        .layout {
+          padding: 16px;
+        }
+        .code {
+          height: 280px;
+        }
+      }
+      @media (max-width: 480px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        header .pill {
+          display: none;
+        }
+        .card {
+          padding: 17px;
+        }
+        .detectors {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="brand">Roman cutouts</div>
+      </div>
+      <div class="pill">Local</div>
+    </header>
+    <main class="layout">
+      <div>
+        <section class="card">
+          <h2>Targets</h2>
+          <p class="muted">
+            Upload a CSV with <code>ra,dec</code> in ICRS degrees, or
+            <code>x,y</code> in zero-based parent pixels. An
+            <code>id</code> column is optional; extra columns are preserved as
+            target metadata. Import replaces the current target list.
+          </p>
+          <label class="field"
+            ><span>Target CSV</span
+            ><input
+              id="csvUpload"
+              type="file"
+              accept=".csv,text/csv"
+              aria-label="Upload targets CSV"
+              title="Columns: id (optional), ra/dec in ICRS degrees or x/y in parent pixels. Extra columns are preserved as metadata. Import replaces the list."
+          /></label>
+          <details>
+            <summary>Paste CSV</summary>
+            <div>
+              <textarea
+                id="csvText"
+                rows="4"
+                placeholder="id,ra,dec&#10;event-01,270.0,-29.0"
+                aria-label="Target CSV text"
+              ></textarea
+              ><button id="importCsv" class="spaced">Import</button>
+            </div>
+          </details>
+          <details>
+            <summary>Add target</summary>
+            <div>
+              <div class="grid">
+                <label class="field"
+                  ><span>Target ID</span
+                  ><input
+                    id="targetId"
+                    type="text"
+                    placeholder="event-01" /></label
+                ><label class="field"
+                  ><span>Coordinates</span
+                  ><select id="coordinateMode">
+                    <option value="sky">RA / Dec · ICRS degrees</option>
+                    <option value="pixel">x / y · Parent pixels</option>
+                  </select></label
+                ><label class="field"
+                  ><span id="coordALabel">RA (degrees)</span
+                  ><input id="coordA" type="number" step="any" /></label
+                ><label class="field"
+                  ><span id="coordBLabel">Dec (degrees)</span
+                  ><input id="coordB" type="number" step="any"
+                /></label>
+              </div>
+              <button id="addTarget">Add</button>
+            </div>
+          </details>
+          <div class="target-head">
+            <span id="targetCount" class="count">0 targets</span
+            ><button id="clearTargets">Clear</button>
+          </div>
+          <div id="targetTable" class="empty">No targets</div>
+          <div id="targetError" class="error hidden" role="alert"></div>
+        </section>
+        <section class="card">
+          <h2>Images &amp; processing</h2>
+          <p class="muted">
+            Each image is opened once for all targets. Existing local inputs are
+            never deleted.
+          </p>
+          <label class="field"
+            ><span>Working directory</span
+            ><input
+              id="baseDirectory"
+              type="text"
+              title="Resolve relative paths from this directory"
+          /></label>
+          <p class="muted">
+            Relative paths resolve from the working directory above.
+          </p>
+          <div id="settings"></div>
+        </section>
+      </div>
+      <aside class="sticky">
+        <section class="card">
+          <div class="runline">
+            <h2>YAML</h2>
+            <span id="validationState" class="state"></span>
+          </div>
+          <p class="muted">
+            The preview includes defaults and absolute paths. Download it to
+            reuse the run settings, or load an existing YAML file to edit them.
+          </p>
+          <div class="toolbar">
+            <button id="downloadYaml" disabled>Download YAML</button
+            ><label class="file-button"
+              >Load YAML
+              <input
+                id="yamlUpload"
+                class="file-hidden"
+                type="file"
+                accept=".yaml,.yml,text/yaml"
+                aria-label="Load YAML file"
+            /></label>
+          </div>
+          <pre id="yamlPreview" class="code">No targets.</pre>
+          <details>
+            <summary>Edit YAML</summary>
+            <div>
+              <textarea
+                id="yamlEditor"
+                class="editor"
+                aria-label="YAML editor"
+              ></textarea
+              ><button id="applyYaml" class="spaced">Apply</button>
+            </div>
+          </details>
+          <div id="configError" class="error hidden" role="alert"></div>
+        </section>
+        <section class="card">
+          <div class="runline">
+            <div>
+              <h2>Run</h2>
+              <span id="runState" class="state" role="status">Idle</span>
+            </div>
+            <button id="run" class="primary" disabled>Run cutouts</button>
+          </div>
+          <p class="caption">
+            Runs on this machine. Closing the tab does not stop a run; keep the
+            server terminal open.
+          </p>
+          <pre id="logs" class="logs" aria-live="polite"></pre>
+          <p id="runSummary" class="caption"></p>
+          <p id="manifestPath" class="caption"></p>
+          <button id="downloadManifest" class="hidden">
+            Download manifest
+          </button>
+          <div id="runError" class="error hidden" role="alert"></div>
+        </section>
+      </aside>
+    </main>
+
+    <script nonce="__NONCE__">
+      "use strict";
+      const BOOT = __BOOTSTRAP__,
+        $ = (id) => document.getElementById(id);
+      let config,
+        schema,
+        validYaml = "",
+        jobId = null,
+        running = false,
+        revision = 0,
+        timer;
+      const titles = {
+        inputs: "Input images",
+        selection: "Dates, detectors & filters",
+        extraction: "Cutout geometry",
+        astrometry: "Astrometry",
+        quality: "Quality screen",
+        stacks: "Display stacks",
+        storage: "Output & full images",
+        execution: "Execution",
+      };
+      const labels = {
+        mode: "Source",
+        directory: "Image directory",
+        pattern: "Filename pattern",
+        recursive: "Search subdirectories",
+        mast_criteria: "Additional MAST criteria (JSON)",
+        mast_radius_arcmin: "MAST search radius (arcmin)",
+        product_suffix: "Product suffix",
+        query_limit: "Query limit",
+        start: "Start (UTC, inclusive)",
+        end: "End (UTC, exclusive)",
+        detectors: "Detectors",
+        filters: "Filters",
+        size: "Size (pixels)",
+        edge: "Detector edge policy",
+        no_overlap: "No overlap",
+        corrected_directory: "Corrected WCS directory",
+        corrected_pattern: "Corrected filename pattern",
+        roundtrip_tolerance_pixels: "Numerical WCS tolerance (pixels)",
+        fits_tolerance_pixels: "FITS approximation tolerance (pixels)",
+        autocorrelation_limit: "Autocorrelation limit",
+        tile_size: "Tile size (pixels)",
+        radius: "Lag radius (pixels)",
+        exclude_from_stacks: "Exclude flagged cutouts from stacks",
+        enabled: "Build display stacks",
+        max_exposures: "Max. exposures",
+        max_memory_mb: "Memory limit (MiB)",
+        output_directory: "Output directory",
+        retain_full_images: "Retain full images",
+        formats: "Formats",
+        resume: "Resume",
+        continue_on_error: "Continue on error",
+        lock_timeout_seconds: "Lock timeout (seconds)",
+      };
+      async function api(path, body) {
+        const response = await fetch(path, {
+          method: body === undefined ? "GET" : "POST",
+          headers: {
+            "X-Roman-Token": BOOT.token,
+            ...(body === undefined
+              ? {}
+              : { "Content-Type": "application/json" }),
+          },
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || `Request failed (${response.status})`);
+        return data;
+      }
+      function errorAt(id, message) {
+        $(id).textContent = message || "";
+        $(id).classList.toggle("hidden", !message);
+      }
+      function canonicalYaml() {
+        return JSON.stringify(config, null, 2);
+      } // JSON is also valid YAML.
+      function changed() {
+        revision++;
+        validYaml = "";
+        $("run").disabled = true;
+        $("downloadYaml").disabled = true;
+        $("validationState").textContent = "Checking…";
+        clearTimeout(timer);
+        timer = setTimeout(validate, 250);
+      }
+      async function validate() {
+        const current = revision;
+        const invalid = [
+          ...document.querySelectorAll(
+            "#settings input,#settings textarea,#settings select",
+          ),
+        ].find((input) => !input.validity.valid);
+        if (invalid) {
+          $("validationState").textContent = "Invalid";
+          errorAt("configError", invalid.validationMessage);
+          return;
+        }
+        try {
+          const data = await api("/api/validate", {
+            yaml: canonicalYaml(),
+            base_directory: $("baseDirectory").value,
+          });
+          if (current !== revision) return;
+          validYaml = data.yaml;
+          $("yamlPreview").textContent = data.yaml;
+          $("yamlEditor").value = data.yaml;
+          errorAt("configError", "");
+          $("validationState").textContent = "Valid";
+          $("downloadYaml").disabled = false;
+          $("run").disabled = running;
+        } catch (e) {
+          if (current !== revision) return;
+          validYaml = "";
+          $("validationState").textContent = "Invalid";
+          errorAt("configError", e.message);
+          $("yamlPreview").textContent = "Fix configuration errors.";
+        }
+      }
+      function field(section, key, definition) {
+        const alternatives = definition.anyOf || [definition],
+          nonNull = alternatives.find((d) => d.type !== "null") || definition,
+          nullable = alternatives.some((d) => d.type === "null");
+        const def = { ...definition, ...nonNull };
+        const value = config[section][key];
+        const wrap = document.createElement(
+          key === "detectors" || key === "formats" ? "div" : "label",
+        );
+        wrap.className = "field";
+        const caption = document.createElement("span");
+        caption.textContent =
+          section === "astrometry" && key === "mode"
+            ? "WCS policy"
+            : labels[key] || key;
+        wrap.append(caption);
+        let input;
+        if (def.type === "boolean") {
+          wrap.className = "check";
+          input = document.createElement("input");
+          input.type = "checkbox";
+          input.checked = value;
+          wrap.prepend(input);
+          caption.replaceWith(document.createTextNode(labels[key] || key));
+          input.onchange = () => {
+            config[section][key] = input.checked;
+            changed();
+          };
+        } else if (key === "detectors" || key === "formats") {
+          const group = document.createElement("div");
+          group.className = key === "detectors" ? "detectors" : "checks";
+          group.setAttribute("role", "group");
+          group.setAttribute("aria-label", labels[key]);
+          const choices =
+            key === "detectors"
+              ? Array.from({ length: 18 }, (_, i) => i + 1)
+              : ["asdf", "fits"];
+          for (const item of choices) {
+            const label = document.createElement("label");
+            label.className = "check";
+            const box = document.createElement("input");
+            box.type = "checkbox";
+            box.setAttribute(
+              "aria-label",
+              key === "detectors"
+                ? "Detector " + item
+                : item.toUpperCase() + " output",
+            );
+            box.checked = value.includes(item);
+            box.onchange = () => {
+              config[section][key] = choices.filter(
+                (_, i) => group.children[i].querySelector("input").checked,
+              );
+              changed();
+            };
+            label.append(box, document.createTextNode(String(item)));
+            group.append(label);
+          }
+          wrap.append(group);
+          if (key === "detectors") {
+            const help = document.createElement("small");
+            help.textContent = "None selected means all detectors.";
+            wrap.append(help);
+          }
+          return wrap;
+        } else if (def.enum) {
+          input = document.createElement("select");
+          for (const option of def.enum) {
+            const o = document.createElement("option");
+            o.value = option;
+            o.textContent =
+              section === "astrometry" && key === "mode"
+                ? {
+                    use: "Use supplied WCS",
+                    validate: "Check numerical consistency",
+                    corrected: "Use corrected WCS",
+                  }[option] || option
+                : option;
+            input.append(o);
+          }
+          input.value = value;
+          input.onchange = () => {
+            config[section][key] = input.value;
+            changed();
+          };
+          wrap.append(input);
+        } else {
+          input = document.createElement(
+            def.type === "object" ? "textarea" : "input",
+          );
+          if (def.type === "object") {
+            input.rows = 3;
+            input.value = JSON.stringify(value, null, 2);
+          } else if (def.type === "array") {
+            input.type = "text";
+            input.value = value.join(", ");
+          } else {
+            input.type = ["integer", "number"].includes(def.type)
+              ? "number"
+              : "text";
+            if (input.type === "number") {
+              input.step = def.type === "integer" ? "1" : "any";
+              if (def.minimum !== undefined) input.min = def.minimum;
+            }
+            input.value = value ?? "";
+          }
+          input.oninput = () => {
+            try {
+              if (def.type === "object")
+                config[section][key] = JSON.parse(input.value);
+              else if (def.type === "array")
+                config[section][key] = input.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+              else if (input.type === "number")
+                config[section][key] =
+                  input.value === "" ? null : Number(input.value);
+              else
+                config[section][key] =
+                  nullable && input.value === "" ? null : input.value;
+              input.setCustomValidity("");
+              changed();
+            } catch (e) {
+              revision++;
+              clearTimeout(timer);
+              input.setCustomValidity(e.message);
+              validYaml = "";
+              $("run").disabled = true;
+              $("downloadYaml").disabled = true;
+              errorAt("configError", e.message);
+            }
+          };
+          wrap.append(input);
+        }
+        const tips = {
+          detectors: "None selected means all detectors",
+          filters: "Comma-separated; blank means all filters",
+          autocorrelation_limit: "Blank disables the quality screen",
+          retain_full_images: "Save a full copy of each selected parent image",
+        };
+        if (tips[key]) wrap.title = tips[key];
+        if (section === "astrometry" && key === "mode")
+          input.title =
+            "Numerical consistency does not establish absolute sky accuracy. Corrected mode requires a corrected WCS file.";
+        if (key === "filters") input.placeholder = "All filters";
+        if (key === "autocorrelation_limit") input.placeholder = "Disabled";
+        if (key === "mast_criteria") {
+          const help = document.createElement("small");
+          const links = [
+            [
+              "Query syntax",
+              "https://astroquery.readthedocs.io/en/stable/mast/mast_missions.html#mission-criteria-queries",
+            ],
+            [
+              "Roman field descriptions",
+              "https://outerspace.stsci.edu/spaces/MASTDOCS/pages/421464543/Roman+WFI+Search+Components",
+            ],
+            [
+              "Available API columns",
+              "https://astroquery.readthedocs.io/en/stable/api/astroquery.mast.MastMissionsClass.html#astroquery.mast.MastMissionsClass.get_column_list",
+            ],
+          ];
+          for (const [index, [text, url]] of links.entries()) {
+            if (index) help.append(document.createTextNode(" · "));
+            const link = document.createElement("a");
+            link.textContent = text;
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            help.append(link);
+          }
+          wrap.append(help);
+        }
+        input.id = `${section}-${key}`;
+        if (def.type !== "boolean")
+          input.setAttribute("aria-label", caption.textContent);
+        const instructions = {
+          mast_radius_arcmin:
+            "Candidate search radius around each sky target (default 6 arcmin); actual overlap is checked during extraction. Increase for larger cutouts or uncertain pointing.",
+          filters: "Comma-separated; leave blank for all filters.",
+          autocorrelation_limit: "Leave blank to disable the quality screen.",
+          retain_full_images:
+            "Saves a full copy of selected images in the output directory. Local originals are never deleted.",
+        };
+        if (instructions[key]) {
+          const help = document.createElement("small");
+          help.id = `${input.id}-help`;
+          help.textContent = instructions[key];
+          input.setAttribute("aria-describedby", help.id);
+          if (def.type === "boolean") {
+            const group = document.createElement("div");
+            group.append(wrap, help);
+            return group;
+          }
+          wrap.append(help);
+        }
+        return wrap;
+      }
+      function renderSettings() {
+        const container = $("settings");
+        container.replaceChildren();
+        for (const [section, title] of Object.entries(titles)) {
+          const details = document.createElement("details");
+          details.className = "section";
+          details.open = [
+            "inputs",
+            "selection",
+            "extraction",
+            "storage",
+          ].includes(section);
+          const summary = document.createElement("summary");
+          summary.textContent = title;
+          details.append(summary);
+          const body = document.createElement("div");
+          const definition =
+            schema.$defs[schema.properties[section].$ref.split("/").pop()];
+          for (const [key, def] of Object.entries(definition.properties))
+            body.append(field(section, key, def));
+          if (section === "inputs") {
+            const note = document.createElement("p");
+            note.className = "caption";
+            note.textContent =
+              "MAST searches use your RA/Dec targets and selections, defaulting to calibrated Level 2 images within 6 arcmin. Leave additional criteria as {} unless you need a program or other constraint. Pixel-only targets require archive criteria. Restricted access uses MAST_API_TOKEN in the server environment.";
+            body.prepend(note);
+          }
+          if (section === "astrometry") {
+            const note = document.createElement("p");
+            note.className = "caption";
+            note.textContent =
+              "Validation checks numerical consistency, not absolute sky accuracy. Corrected mode requires an existing corrected WCS file.";
+            body.prepend(note);
+          }
+          details.append(body);
+          container.append(details);
+        }
+      }
+      function renderTargets() {
+        const targets = config.targets;
+        $("targetCount").textContent =
+          `${targets.length} target${targets.length === 1 ? "" : "s"}`;
+        const holder = $("targetTable");
+        holder.replaceChildren();
+        holder.className = targets.length ? "table-wrap" : "empty";
+        if (!targets.length) {
+          holder.textContent = "No targets";
+          return;
+        }
+        const table = document.createElement("table");
+        const header = document.createElement("tr");
+        for (const title of ["Target", "Coordinates", "Metadata", ""]) {
+          const th = document.createElement("th");
+          th.textContent = title;
+          header.append(th);
+        }
+        const thead = document.createElement("thead");
+        thead.append(header);
+        table.append(thead);
+        const body = document.createElement("tbody");
+        targets.slice(0, 50).forEach((target, index) => {
+          const row = document.createElement("tr");
+          const coords =
+            target.ra !== null && target.ra !== undefined
+              ? `${target.ra}, ${target.dec} deg`
+              : `${target.x}, ${target.y} px`;
+          for (const text of [
+            target.id,
+            coords,
+            Object.keys(target.metadata || {}).join(", ") || "—",
+          ]) {
+            const cell = document.createElement("td");
+            cell.textContent = text;
+            row.append(cell);
+          }
+          const action = document.createElement("td"),
+            button = document.createElement("button");
+          button.textContent = "×";
+          button.setAttribute("aria-label", `Remove ${target.id}`);
+          button.onclick = () => {
+            config.targets.splice(index, 1);
+            renderTargets();
+            changed();
+          };
+          action.append(button);
+          row.append(action);
+          body.append(row);
+        });
+        table.append(body);
+        holder.append(table);
+        if (targets.length > 50) {
+          const note = document.createElement("p");
+          note.className = "caption";
+          note.textContent = `Showing 50 of ${targets.length}. All included.`;
+          holder.append(note);
+        }
+      }
+      async function importCsv(text) {
+        try {
+          const data = await api("/api/targets", { csv: text });
+          config.targets = data.targets;
+          renderTargets();
+          errorAt("targetError", "");
+          changed();
+        } catch (e) {
+          errorAt("targetError", e.message);
+        }
+      }
+      function download(text, name, type = "text/yaml") {
+        const url = URL.createObjectURL(new Blob([text], { type }));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      async function applyYaml(text) {
+        try {
+          const data = await api("/api/validate", {
+            yaml: text,
+            base_directory: $("baseDirectory").value,
+          });
+          config = data.configuration;
+          renderSettings();
+          renderTargets();
+          changed();
+        } catch (e) {
+          errorAt("configError", e.message);
+        }
+      }
+      async function poll() {
+        if (!jobId) return;
+        try {
+          const job = await api("/api/jobs/" + jobId);
+          $("runState").textContent =
+            job.state === "complete"
+              ? "Complete"
+              : job.state === "failed"
+                ? "Failed"
+                : job.state === "queued"
+                  ? "Queued"
+                  : "Running…";
+          $("logs").textContent = job.logs.join("\n") || "Starting pipeline…";
+          $("logs").scrollTop = $("logs").scrollHeight;
+          if (job.summary)
+            $("runSummary").textContent =
+              `${job.summary.complete} complete · ${job.summary.skipped} skipped · ${job.summary.failed} failed cutouts`;
+          $("manifestPath").textContent = job.manifest || "";
+          $("downloadManifest").classList.toggle("hidden", !job.manifest);
+          errorAt("runError", job.error);
+          if (["complete", "failed"].includes(job.state)) {
+            running = false;
+            $("run").disabled = !validYaml;
+            return;
+          }
+          setTimeout(poll, 800);
+        } catch (e) {
+          errorAt(
+            "runError",
+            "Progress connection interrupted: " + e.message + " Retrying…",
+          );
+          setTimeout(poll, 2000);
+        }
+      }
+      $("baseDirectory").oninput = changed;
+      $("csvUpload").onchange = async (event) => {
+        if (event.target.files[0])
+          await importCsv(await event.target.files[0].text());
+      };
+      $("importCsv").onclick = () => importCsv($("csvText").value);
+      $("clearTargets").onclick = () => {
+        config.targets = [];
+        renderTargets();
+        changed();
+      };
+      $("coordinateMode").onchange = () => {
+        const sky = $("coordinateMode").value === "sky";
+        $("coordALabel").textContent = sky ? "RA (degrees)" : "x (pixels)";
+        $("coordBLabel").textContent = sky ? "Dec (degrees)" : "y (pixels)";
+      };
+      $("addTarget").onclick = async () => {
+        if ($("coordA").value === "" || $("coordB").value === "") {
+          errorAt("targetError", "Both coordinates are required.");
+          return;
+        }
+        let id = $("targetId").value.trim(),
+          index = 1;
+        while (!id) {
+          const candidate = "target-" + String(index++).padStart(6, "0");
+          if (!config.targets.some((t) => t.id === candidate)) id = candidate;
+        }
+        const target = {
+          id,
+          ...($("coordinateMode").value === "sky"
+            ? { ra: Number($("coordA").value), dec: Number($("coordB").value) }
+            : { x: Number($("coordA").value), y: Number($("coordB").value) }),
+        };
+        try {
+          await api("/api/validate", {
+            yaml: JSON.stringify({
+              ...config,
+              targets: [...config.targets, target],
+            }),
+            base_directory: $("baseDirectory").value,
+          });
+          config.targets.push(target);
+          renderTargets();
+          changed();
+          errorAt("targetError", "");
+        } catch (e) {
+          errorAt("targetError", e.message);
+        }
+      };
+      $("yamlUpload").onchange = async (event) => {
+        if (event.target.files[0])
+          await applyYaml(await event.target.files[0].text());
+      };
+      $("applyYaml").onclick = () => applyYaml($("yamlEditor").value);
+      $("downloadYaml").onclick = () => {
+        if (validYaml) download(validYaml, "roman-cutouts.yaml");
+      };
+      $("run").onclick = async () => {
+        if (running || !validYaml) return;
+        running = true;
+        $("run").disabled = true;
+        $("runState").textContent = "Starting…";
+        $("logs").textContent = "Submitting validated configuration…";
+        $("manifestPath").textContent = "";
+        $("runSummary").textContent = "";
+        $("downloadManifest").classList.add("hidden");
+        errorAt("runError", "");
+        try {
+          const job = await api("/api/run", {
+            yaml: validYaml,
+            base_directory: $("baseDirectory").value,
+          });
+          jobId = job.id;
+          poll();
+        } catch (e) {
+          running = false;
+          $("run").disabled = !validYaml;
+          errorAt("runError", e.message);
+          $("runState").textContent = "Could not start";
+        }
+      };
+      $("downloadManifest").onclick = async () => {
+        try {
+          const response = await fetch("/api/jobs/" + jobId + "/manifest", {
+            headers: { "X-Roman-Token": BOOT.token },
+          });
+          if (!response.ok) throw new Error("Manifest could not be downloaded");
+          download(await response.text(), "manifest.json", "application/json");
+        } catch (e) {
+          errorAt("runError", e.message);
+        }
+      };
+      (async () => {
+        try {
+          const data = await api("/api/defaults");
+          config = data.configuration;
+          schema = data.schema;
+          $("baseDirectory").value = data.workspace;
+          renderSettings();
+          renderTargets();
+          if (data.last_job) {
+            jobId = data.last_job.id;
+            running = ["queued", "running"].includes(data.last_job.state);
+            poll();
+          }
+          if (config.targets.length) changed();
+        } catch (e) {
+          errorAt("configError", e.message);
+        }
+      })();
+    </script>
+  </body>
+</html>

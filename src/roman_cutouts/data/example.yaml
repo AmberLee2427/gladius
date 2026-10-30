@@ -1,0 +1,49 @@
+# Paths are relative to this YAML file. Dates select exposure starts in UTC [start, end).
+schema_version: 1
+# Or override these targets with --targets targets.csv on run/validate.
+targets:
+  - id: example-event
+    ra: 270.0                    # ICRS degrees; a prediction, not a measured centroid
+    dec: -29.0
+    # Alternatively supply x/y (zero-based parent SCI coordinates), without ra/dec.
+inputs:
+  mode: directory               # directory | mast (install the [mast] extra)
+  directory: images
+  pattern: '*_cal.asdf'          # FITS SCI/ERR/DQ parents are supported too
+  recursive: false
+  mast_criteria: {}              # optional overrides; pixel-only MAST targets need e.g. {program: 1043}
+  mast_radius_arcmin: 6.0        # candidate search around each RA/Dec target
+  product_suffix: _cal
+  query_limit: 50000
+selection:
+  start: null                   # e.g. '2026-01-01T00:00:00'
+  end: null                     # exclusive; '2026-02-01' excludes all February
+  detectors: []                 # [] means all; otherwise 1 through 18
+  filters: []                   # e.g. [F062, F146]
+extraction:
+  size: 150                     # square, native pixels; odd and even sizes supported
+  edge: pad                     # pad | strict
+  no_overlap: pad               # pad | skip | error
+astrometry:
+  mode: validate                # use | validate | corrected
+  corrected_directory: null
+  corrected_pattern: '{stem}_gaiawcs.asdf'
+  roundtrip_tolerance_pixels: 0.001
+  fits_tolerance_pixels: 0.01
+quality:
+  autocorrelation_limit: null   # disabled; set a calibrated threshold to enable
+  tile_size: 64
+  radius: 15
+  exclude_from_stacks: true     # native cutouts are always retained
+stacks:
+  enabled: false                # display-only, grouped by target and filter
+  max_exposures: 100
+  max_memory_mb: 512
+storage:
+  output_directory: cutouts
+  retain_full_images: false     # local originals are NEVER deleted
+  formats: [asdf, fits]
+execution:
+  resume: true
+  continue_on_error: false      # when true, record failures and proceed; CLI still returns nonzero
+  lock_timeout_seconds: 0

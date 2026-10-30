@@ -1,0 +1,427 @@
+{
+  "$defs": {
+    "Astrometry": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "validate",
+          "enum": [
+            "use",
+            "validate",
+            "corrected"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "corrected_directory": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Corrected Directory"
+        },
+        "corrected_pattern": {
+          "default": "{stem}_gaiawcs.asdf",
+          "title": "Corrected Pattern",
+          "type": "string"
+        },
+        "roundtrip_tolerance_pixels": {
+          "default": 0.001,
+          "exclusiveMinimum": 0,
+          "title": "Roundtrip Tolerance Pixels",
+          "type": "number"
+        },
+        "fits_tolerance_pixels": {
+          "default": 0.01,
+          "exclusiveMinimum": 0,
+          "title": "Fits Tolerance Pixels",
+          "type": "number"
+        }
+      },
+      "title": "Astrometry",
+      "type": "object"
+    },
+    "Execution": {
+      "additionalProperties": false,
+      "properties": {
+        "resume": {
+          "default": true,
+          "title": "Resume",
+          "type": "boolean"
+        },
+        "continue_on_error": {
+          "default": false,
+          "title": "Continue On Error",
+          "type": "boolean"
+        },
+        "lock_timeout_seconds": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Lock Timeout Seconds",
+          "type": "number"
+        }
+      },
+      "title": "Execution",
+      "type": "object"
+    },
+    "Extraction": {
+      "additionalProperties": false,
+      "properties": {
+        "size": {
+          "default": 150,
+          "exclusiveMinimum": 0,
+          "title": "Size",
+          "type": "integer"
+        },
+        "edge": {
+          "default": "pad",
+          "enum": [
+            "pad",
+            "strict"
+          ],
+          "title": "Edge",
+          "type": "string"
+        },
+        "no_overlap": {
+          "default": "pad",
+          "enum": [
+            "pad",
+            "skip",
+            "error"
+          ],
+          "title": "No Overlap",
+          "type": "string"
+        }
+      },
+      "title": "Extraction",
+      "type": "object"
+    },
+    "Inputs": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "directory",
+          "enum": [
+            "directory",
+            "mast"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "directory": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "images",
+          "title": "Directory"
+        },
+        "pattern": {
+          "default": "*_cal.asdf",
+          "title": "Pattern",
+          "type": "string"
+        },
+        "recursive": {
+          "default": false,
+          "title": "Recursive",
+          "type": "boolean"
+        },
+        "mast_criteria": {
+          "additionalProperties": true,
+          "title": "Mast Criteria",
+          "type": "object"
+        },
+        "mast_radius_arcmin": {
+          "default": 6.0,
+          "exclusiveMinimum": 0,
+          "maximum": 30,
+          "title": "Mast Radius Arcmin",
+          "type": "number"
+        },
+        "product_suffix": {
+          "default": "_cal",
+          "title": "Product Suffix",
+          "type": "string"
+        },
+        "query_limit": {
+          "default": 50000,
+          "exclusiveMinimum": 0,
+          "title": "Query Limit",
+          "type": "integer"
+        }
+      },
+      "title": "Inputs",
+      "type": "object"
+    },
+    "Quality": {
+      "additionalProperties": false,
+      "properties": {
+        "autocorrelation_limit": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Autocorrelation Limit"
+        },
+        "tile_size": {
+          "default": 64,
+          "maximum": 512,
+          "minimum": 16,
+          "title": "Tile Size",
+          "type": "integer"
+        },
+        "radius": {
+          "default": 15,
+          "minimum": 2,
+          "title": "Radius",
+          "type": "integer"
+        },
+        "exclude_from_stacks": {
+          "default": true,
+          "title": "Exclude From Stacks",
+          "type": "boolean"
+        }
+      },
+      "title": "Quality",
+      "type": "object"
+    },
+    "Selection": {
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start"
+        },
+        "end": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End"
+        },
+        "detectors": {
+          "items": {
+            "maximum": 18,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "title": "Detectors",
+          "type": "array"
+        },
+        "filters": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Filters",
+          "type": "array"
+        }
+      },
+      "title": "Selection",
+      "type": "object"
+    },
+    "Stacks": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "max_exposures": {
+          "default": 100,
+          "exclusiveMinimum": 0,
+          "title": "Max Exposures",
+          "type": "integer"
+        },
+        "max_memory_mb": {
+          "default": 512,
+          "exclusiveMinimum": 0,
+          "title": "Max Memory Mb",
+          "type": "integer"
+        }
+      },
+      "title": "Stacks",
+      "type": "object"
+    },
+    "Storage": {
+      "additionalProperties": false,
+      "properties": {
+        "output_directory": {
+          "default": "cutouts",
+          "format": "path",
+          "title": "Output Directory",
+          "type": "string"
+        },
+        "retain_full_images": {
+          "default": false,
+          "title": "Retain Full Images",
+          "type": "boolean"
+        },
+        "formats": {
+          "items": {
+            "enum": [
+              "asdf",
+              "fits"
+            ],
+            "type": "string"
+          },
+          "title": "Formats",
+          "type": "array"
+        }
+      },
+      "title": "Storage",
+      "type": "object"
+    },
+    "Target": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "ra": {
+          "anyOf": [
+            {
+              "exclusiveMaximum": 360,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ra"
+        },
+        "dec": {
+          "anyOf": [
+            {
+              "maximum": 90,
+              "minimum": -90,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dec"
+        },
+        "x": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "X"
+        },
+        "y": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Y"
+        },
+        "metadata": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Target",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "All settings recorded with a run, including resolved defaults.",
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "targets": {
+      "items": {
+        "$ref": "#/$defs/Target"
+      },
+      "minItems": 1,
+      "title": "Targets",
+      "type": "array"
+    },
+    "inputs": {
+      "$ref": "#/$defs/Inputs"
+    },
+    "selection": {
+      "$ref": "#/$defs/Selection"
+    },
+    "extraction": {
+      "$ref": "#/$defs/Extraction"
+    },
+    "astrometry": {
+      "$ref": "#/$defs/Astrometry"
+    },
+    "quality": {
+      "$ref": "#/$defs/Quality"
+    },
+    "stacks": {
+      "$ref": "#/$defs/Stacks"
+    },
+    "storage": {
+      "$ref": "#/$defs/Storage"
+    },
+    "execution": {
+      "$ref": "#/$defs/Execution"
+    }
+  },
+  "required": [
+    "targets"
+  ],
+  "title": "RunConfig",
+  "type": "object"
+}

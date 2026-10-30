@@ -1,0 +1,14 @@
+{
+  "template": "https://github.com/spacetelescope/stsci-package-template",
+  "commit": "66493a33c6dc744f449782dd5516fd2d75884ce7",
+  "directory": "python-package",
+  "generator": "cookiecutter",
+  "context": {
+    "project_name": "roman-event-cutouts",
+    "package_name": "roman_cutouts",
+    "python_version": ">=3.11",
+    "python_build_backend": "setuptools",
+    "task_runner": "tox"
+  },
+  "adaptations": "Independent project identity; explicit version without a git requirement; local scientific workflow; CI and distribution exclude commissioning snapshots. No automatic template updates."
+}
