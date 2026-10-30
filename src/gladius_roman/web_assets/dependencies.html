@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Gladius · Dependencies and acknowledgements</title
+  ><link rel="icon" href="/assets/gladius-emblem.png" /><style>
+    body {
+      margin: 0;
+      background: #faf7fd;
+      color: #241b29;
+      font:
+        15px/1.6 system-ui,
+        sans-serif;
+    }
+    main {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    a {
+      color: #361d49;
+      text-underline-offset: 3px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+    }
+    td,
+    th {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e1d8e9;
+    }
+    thead {
+      background: #eee6f5;
+    }
+    p {
+      max-width: 80ch;
+    }
+    .table {
+      overflow: auto;
+    }
+    small {
+      color: #6d6173;
+    }
+  </style>
+  <main>
+    <a href="/">← Gladius</a>
+    <h1>Dependencies and acknowledgements</h1>
+    <p>
+      Gladius builds on the work of these projects and their contributors.
+      Optional extras are labelled below.
+    </p>
+    <div class="table">
+      <table>
+        <thead>
+          <tr>
+            <th>Project / license</th>
+            <th>Use in Gladius</th>
+            <th>Principal license</th>
+            <th>Reviewed version</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/numpy/numpy/blob/main/LICENSE.txt"
+                target="_blank"
+                rel="noopener noreferrer"
+                >NumPy</a
+              >
+            </th>
+            <td>Array operations</td>
+            <td>BSD-3-Clause</td>
+            <td>2.5.4</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/astropy/astropy/blob/main/LICENSE.rst"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Astropy</a
+              >
+            </th>
+            <td>Coordinates, time and FITS</td>
+            <td>BSD-3-Clause</td>
+            <td>8.0.2</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/asdf-format/asdf/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                >ASDF</a
+              >
+            </th>
+            <td>Scientific data serialization</td>
+            <td>BSD-3-Clause</td>
+            <td>6.0.0</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/astropy/asdf-astropy/blob/main/LICENSE.rst"
+                target="_blank"
+                rel="noopener noreferrer"
+                >ASDF–Astropy</a
+              >
+            </th>
+            <td>Astropy object serialization</td>
+            <td>BSD-3-Clause</td>
+            <td>0.11.0</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/spacetelescope/gwcs/blob/main/licenses/LICENSE.rst"
+                target="_blank"
+                rel="noopener noreferrer"
+                >GWCS</a
+              >
+            </th>
+            <td>Generalized coordinate transforms</td>
+            <td>BSD-3-Clause</td>
+            <td>1.0.3</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/scipy/scipy/blob/main/LICENSE.txt"
+                target="_blank"
+                rel="noopener noreferrer"
+                >SciPy</a
+              >
+            </th>
+            <td>Scientific calculations</td>
+            <td>BSD-3-Clause</td>
+            <td>1.18.1</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/pydantic/pydantic/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Pydantic</a
+              >
+            </th>
+            <td>Configuration validation</td>
+            <td>MIT</td>
+            <td>2.14.2</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/yaml/pyyaml/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                >PyYAML</a
+              >
+            </th>
+            <td>YAML parsing and writing</td>
+            <td>MIT</td>
+            <td>6.0.3</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/tox-dev/filelock/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                >filelock</a
+              >
+            </th>
+            <td>Run locking</td>
+            <td>MIT</td>
+            <td>4.2.4</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/astropy/astroquery/blob/main/LICENSE.rst"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Astroquery (optional)</a
+              >
+            </th>
+            <td>MAST access</td>
+            <td>BSD-3-Clause</td>
+            <td>0.4.11</td>
+          </tr>
+          <tr>
+            <th scope="row">
+              <a
+                href="https://github.com/spacetelescope/roman_datamodels/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Roman datamodels (optional)</a
+              >
+            </th>
+            <td>Roman data format support</td>
+            <td>BSD-3-Clause</td>
+            <td>1.2.0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <a href="/dependency-licenses">Reviewed dependency license texts</a> ·
+      <a href="/license">Gladius BSD-3-Clause license</a> ·
+      <a href="/notices">Project attribution and notices</a>
+    </p>
+    <p>
+      <small
+        >Review snapshot: 2026-10-30. Versions shown identify the reviewed
+        license texts, not necessarily the versions in your current environment.
+        This covers direct dependencies and the two optional runtime extras, not
+        every transitive dependency. Binary wheels can contain additional
+        components under separate licenses; retain the notices shipped with the
+        exact packages you redistribute.</small
+      >
+    </p>
+    <p>
+      The STScI package template is credited in Gladius’s project notices.
+      Third-party packages retain their own copyrights and licenses.
+    </p>
+  </main>
+</html>

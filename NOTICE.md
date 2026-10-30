@@ -26,3 +26,8 @@ The Gladius logo drafts in assets/brand were generated from the user-supplied
 concept. The bundled RGES-PIT logo was supplied through the team's local website
 source. Project branding retains its respective ownership; the package's BSD
 license is not a grant of rights to RGES-PIT names or logos.
+
+Direct runtime dependency acknowledgements are recorded in THIRD_PARTY.md and
+the GUI Dependencies & acknowledgements page. Reviewed dependency license texts
+identify their corresponding versions; they do not replace notices provided by
+the dependencies installed or redistributed with a particular environment.

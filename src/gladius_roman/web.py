@@ -23,6 +23,9 @@ MAX_REQUEST_BYTES = 16 * 1024 * 1024
 
 # Fixed resource map: never turn a URL into an arbitrary filesystem path.
 GUI_RESOURCES = {
+    "/assets/gladius-logo.png": ("gladius-logo.png", "image/png"),
+    "/dependencies": ("dependencies.html", "text/html; charset=utf-8"),
+    "/dependency-licenses": ("dependency-licenses.txt", "text/plain; charset=utf-8"),
     "/assets/gladius-emblem.png": ("gladius-emblem.png", "image/png"),
     "/assets/rges-pit.png": ("rges-pit.png", "image/png"),
     "/license": ("license.txt", "text/plain; charset=utf-8"),

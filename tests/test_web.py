@@ -115,12 +115,17 @@ def test_bundled_branding_and_license_resources(gui):
     for url in ("https://rges-pit.org/", "https://github.com/AmberLee2427/gladius",
                 "https://archive.stsci.edu/missions-and-data/roman", "https://mldb.rges-pit.com"):
         assert url.encode() in page
-    for route in ("/assets/gladius-emblem.png", "/assets/rges-pit.png"):
+    assert b'src="/assets/gladius-logo.png"' in page
+    for route in ("/assets/gladius-emblem.png", "/assets/gladius-logo.png", "/assets/rges-pit.png"):
         status, png = request(gui, route, token=False)
         assert status == 200 and png.startswith(b"\x89PNG\r\n\x1a\n")
     status, license_text = request(gui, "/license", token=False)
     assert status == 200 and b"Redistribution and use" in license_text
     status, notices = request(gui, "/notices", token=False)
     assert status == 200 and b"RGES-PIT" in notices
+    status, dependencies = request(gui, "/dependencies", token=False)
+    assert status == 200 and b"Astropy" in dependencies and b"Pydantic" in dependencies
+    status, licenses = request(gui, "/dependency-licenses", token=False)
+    assert status == 200 and b"Copyright" in licenses and b"NumPy" in licenses
     assert request(gui, "/assets/unknown.png", token=False)[0] == 404
     assert request(gui, "/assets/../config.py", token=False)[0] == 404
