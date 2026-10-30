@@ -13,6 +13,7 @@ Gladius thanks the contributors to these direct runtime dependencies and optiona
 | [Pydantic](https://github.com/pydantic/pydantic/blob/main/LICENSE) | Configuration validation | MIT |
 | [PyYAML](https://github.com/yaml/pyyaml/blob/main/LICENSE) | YAML parsing and writing | MIT |
 | [filelock](https://github.com/tox-dev/filelock/blob/main/LICENSE) | Run locking | MIT |
+| [python-dotenv](https://github.com/theskumar/python-dotenv/blob/main/LICENSE) | Local environment files | BSD-3-Clause |
 | [Astroquery (optional)](https://github.com/astropy/astroquery/blob/main/LICENSE.rst) | MAST access | BSD-3-Clause |
 | [Roman datamodels (optional)](https://github.com/spacetelescope/roman_datamodels/blob/main/LICENSE) | Roman data format support | BSD-3-Clause |
 

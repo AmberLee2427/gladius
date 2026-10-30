@@ -214,6 +214,37 @@ GLADIUS_LIVE_MAST=1 python -m pytest tests/integration -m live_mast -v
 ```
 
 
+## Local MAST authentication
+
+Copy the repository's `.env.example` to `.env`, then edit it locally:
+
+```text
+MAST_API_TOKEN=your_token_here
+```
+
+Use your own MAST token from an account authorized for the requested Roman data.
+Do not paste it into YAML, the browser, logs or Git. The repository ignores `.env`
+and `.env.*` except the empty `.env.example` template. In a different repository,
+add your own ignore rule. Restrict the file to your account on shared machines
+(for example, `chmod 600 .env` on macOS/Linux).
+
+- **GUI:** put `.env` directly in the `--workspace` directory. Without
+  `--workspace`, this is the directory where you launch Gladius. It is loaded
+  once at server startup. After changing the file, stop and restart the server;
+  reloading the browser is insufficient. Editing the UI's Working directory or
+  loading a YAML does not load a different environment file.
+- **CLI:** `gladius run /path/to/config.yaml` loads `/path/to/.env` before running.
+  Validation and configuration-generation commands do not load it.
+- **Python:** call `load_environment("/path/to/workspace")` explicitly before
+  `run(config)`. Importing Gladius and loading YAML do not change the environment.
+
+Only the specified directory is checked; parent directories are not searched.
+Already-set environment variables win, including empty values. Remove an old
+shell variable with `unset MAST_API_TOKEN` before launching if you want the file
+to supply it. Values are read literally, without shell execution or `${...}`
+interpolation. Tokens are not included in downloaded YAML or job configurations.
+A GitHub Actions secret is separate and cannot supply a local GUI token.
+
 ## GUI controls and testing
 
 The GUI’s **Make cutouts** button calls the same pipeline as `gladius run`.

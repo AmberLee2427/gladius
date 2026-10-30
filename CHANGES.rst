@@ -1,6 +1,8 @@
 0.1.0a2 (unreleased)
 ===================
 
+* Load local .env credentials at CLI/GUI startup without overriding shell values,
+  and document local MAST authentication in the GUI and configuration guide.
 * Add a real-MAST GUI test preset, Galactic/ecliptic input conversion, zero/unlimited
   stack limits, context-sensitive help, and icon-only theme controls.
 * Rename the project to Gladius, distribution gladius-roman, import gladius_roman

@@ -115,6 +115,14 @@ been published to PyPI or assigned a DOI.
 
 ## Local web GUI and target CSVs
 
+For restricted MAST access, copy `.env.example` to `.env` in your workspace
+and set `MAST_API_TOKEN=your_token_here`. The GUI loads that file when the server
+starts; restart the server after editing it. Existing shell variables take
+precedence. For `gladius run config.yaml`, place `.env` beside the YAML instead.
+Keep `.env` private and out of Git; the repository already ignores it. GitHub
+Actions secrets do not populate this local file. See the
+[authentication instructions](docs/configuration.md#local-mast-authentication).
+
 ```sh
 gladius gui --workspace . --port 8768
 ```

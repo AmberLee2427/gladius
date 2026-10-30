@@ -605,6 +605,18 @@
             downloads nothing until Make. Archive access may require
             MAST_API_TOKEN.
           </p>
+          <details>
+            <summary>MAST authentication</summary>
+            <p class="caption">
+              Create a file named <code>.env</code> in the directory passed to
+              <code>gladius gui --workspace</code> (the launch folder by default).
+              Add <code>MAST_API_TOKEN=your_token_here</code>, save it, then restart
+              the GUI server. Reloading the tab is not enough. Changing Working
+              directory above does not load another .env file. Existing shell
+              variables take precedence. Keep the token out of YAML and Git;
+              GitHub Actions secrets are separate from this local file.
+            </p>
+          </details>
           <pre id="yamlPreview" class="code">No targets.</pre>
           <details>
             <summary>Edit YAML</summary>

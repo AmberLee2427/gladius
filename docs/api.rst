@@ -56,3 +56,12 @@ array operation and does not query, download or write files.
 .. autofunction:: gladius_roman.web.serve
 
 .. autofunction:: gladius_roman.target_from_coordinates
+
+Local credentials can be loaded explicitly before running:
+
+.. code-block:: python
+
+   from gladius_roman import load_environment
+   load_environment("/path/to/workspace")  # reads only /path/to/workspace/.env
+
+.. autofunction:: gladius_roman.load_environment

@@ -126,6 +126,9 @@ class GuiServer(ThreadingHTTPServer):
         self.workspace = Path(workspace).expanduser().resolve()
         if not self.workspace.is_dir():
             raise ValueError("GUI workspace must be an existing directory")
+        from .environment import load_environment
+
+        load_environment(self.workspace)
         self.token = secrets.token_urlsafe(32)
         self.jobs = Jobs(self.workspace, runner)
         super().__init__(("127.0.0.1", port), Handler)

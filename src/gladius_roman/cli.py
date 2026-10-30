@@ -11,6 +11,7 @@ import yaml
 from . import __version__
 from .config import RunConfig, load_config
 from .demo import create_demo
+from .environment import load_environment
 from .pipeline import run
 
 
@@ -59,6 +60,7 @@ def main(argv=None):
             print("Configuration is valid (no input access or network operations performed).")
         else:
             path = create_demo(args.directory) if args.command == "demo" else args.config
+            load_environment(path.expanduser().resolve().parent)
             manifest = run(load_config(path, targets_path=getattr(args, "targets", None)))
             print(f"Manifest: {manifest}")
             return 0 if json.loads(manifest.read_text())["status"] == "complete" else 1
