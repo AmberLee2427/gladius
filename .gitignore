@@ -117,6 +117,7 @@ pyrightconfig.json
 
 # Generated science products and local validation artifacts
 cutouts/
+gladius-example/
 .agents/validation/
 
 .gladius-gui/
