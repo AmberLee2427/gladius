@@ -119,7 +119,7 @@ pyrightconfig.json
 cutouts/
 .agents/validation/
 
-.roman-cutouts-gui/
+.gladius-gui/
 
 # Local commissioning source archives and assistant session artifacts
 local-snapshot/
@@ -131,3 +131,6 @@ nexus-source-snapshot.zip
 !.env.example
 mast-live-report.json
 mast-live-results.xml
+
+# Pre-Gladius local run records remain local
+.roman-cutouts-gui/

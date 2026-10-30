@@ -8,7 +8,7 @@ recursive-include examples *.yaml *.csv
 prune local-snapshot
 prune nexus-snapshot
 prune .agents
-prune .roman-cutouts-gui
+prune .gladius-gui
 prune .github
 prune docs/_build
 exclude nexus-source-snapshot.zip

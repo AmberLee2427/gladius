@@ -1,5 +1,5 @@
-Roman event cutouts
-===================
+Gladius
+========
 
 Native detector products with explicit coordinate mapping, parent metadata and
 astrometry provenance. This is an independent alpha package.
@@ -13,4 +13,4 @@ astrometry provenance. This is an independent alpha package.
    api
 
 Install from this checkout with ``python -m pip install -e '.[roman]'``.
-Run ``roman-cutouts demo /tmp/roman-example`` for an offline synthetic example.
+Run ``gladius demo /tmp/roman-example`` for an offline synthetic example.

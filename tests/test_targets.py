@@ -3,10 +3,10 @@ import json
 import pytest
 import yaml
 
-from roman_cutouts.cli import main
-from roman_cutouts.config import load_config
-from roman_cutouts.io import read_cutout
-from roman_cutouts.targets import parse_targets_csv, read_targets_csv
+from gladius_roman.cli import main
+from gladius_roman.config import load_config
+from gladius_roman.io import read_cutout
+from gladius_roman.targets import parse_targets_csv, read_targets_csv
 
 
 def test_csv_aliases_bom_extra_metadata_and_default_ids(tmp_path):

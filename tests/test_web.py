@@ -7,8 +7,8 @@ from urllib.request import Request, urlopen
 import pytest
 import yaml
 
-from roman_cutouts.config import load_config
-from roman_cutouts.web import GuiServer
+from gladius_roman.config import load_config
+from gladius_roman.web import GuiServer
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def request(gui, path, payload=None, *, token=True, origin=None):
 
 def test_gui_home_session_protection_and_validation(gui):
     status, page = request(gui, "/", token=False)
-    assert status == 200 and b"Roman cutouts" in page
+    assert status == 200 and b"Gladius" in page
     assert b"__BOOTSTRAP__" not in page
     assert request(gui, "/api/defaults", token=False)[0] == 403
     assert request(gui, "/api/defaults", origin="https://example.com")[0] == 403
@@ -59,7 +59,7 @@ def test_gui_home_session_protection_and_validation(gui):
     assert status == 200 and config["configuration"]["storage"]["output_directory"] == str(
         gui.workspace / "cutouts"
     )
-    assert not (gui.workspace / ".roman-cutouts-gui").exists()
+    assert not (gui.workspace / ".gladius-gui").exists()
 
 
 def test_real_pipeline_run_from_gui(gui, demo):
@@ -76,7 +76,7 @@ def test_real_pipeline_run_from_gui(gui, demo):
     assert result["summary"]["complete"] == 2
     status, manifest = request(gui, "/api/jobs/" + job["id"] + "/manifest")
     assert status == 200 and json.loads(manifest)["status"] == "complete"
-    assert (gui.workspace / ".roman-cutouts-gui" / job["id"] / "config.yaml").is_file()
+    assert (gui.workspace / ".gladius-gui" / job["id"] / "config.yaml").is_file()
     _, defaults = request(gui, "/api/defaults")
     assert defaults["last_job"]["id"] == job["id"]
     assert defaults["configuration"]["targets"][0]["id"] == "demo-event"

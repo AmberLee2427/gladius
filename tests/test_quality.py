@@ -1,7 +1,7 @@
 import numpy as np
 
-from roman_cutouts.config import Quality
-from roman_cutouts.quality import assess
+from gladius_roman.config import Quality
+from gladius_roman.quality import assess
 
 
 def test_round_and_elongated_sources():

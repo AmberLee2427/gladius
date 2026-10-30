@@ -1,6 +1,6 @@
 # Derived product format
 
-The custom schema identifier is `roman-cutouts/derived-1.0`. It represents derived
+The custom schema identifier is `gladius/derived-1.0`. It represents derived
 cutouts and does not claim compliance with Roman ImageModel schemas.
 
 | Field | Meaning |
@@ -32,7 +32,7 @@ An entirely padded cutout has no valid `s_region`.
 ## ASDF
 
 ASDF stores all fields directly, including serializable GWCS/Time/Quantity
-objects. Use `roman_cutouts.io.read_cutout(path)` to obtain arrays, mapping,
+objects. Use `gladius_roman.io.read_cutout(path)` to obtain arrays, mapping,
 parent metadata, provenance and exact WCS through a common Python interface.
 
 ## FITS

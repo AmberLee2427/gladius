@@ -92,7 +92,7 @@ def discover(config: RunConfig):
     try:
         from astroquery.mast import MastMissions
     except ImportError as exc:
-        raise ImportError('MAST input requires pip install "roman-event-cutouts[mast]"') from exc
+        raise ImportError('MAST input requires pip install "gladius-roman[mast]"') from exc
     missions = MastMissions(mission="roman")
     if os.environ.get("MAST_API_TOKEN"):
         missions.login(token=os.environ["MAST_API_TOKEN"])

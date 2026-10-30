@@ -8,10 +8,10 @@ import yaml
 from astropy.io import fits
 from astropy.modeling.models import Shift
 
-from roman_cutouts.cli import main
-from roman_cutouts.config import load_config
-from roman_cutouts.io import read_cutout, sha256
-from roman_cutouts.pipeline import run
+from gladius_roman.cli import main
+from gladius_roman.config import load_config
+from gladius_roman.io import read_cutout, sha256
+from gladius_roman.pipeline import run
 
 
 def configure(demo, **sections):

@@ -38,9 +38,9 @@ jobs:
       - name: Query and download one small Roman product
         env:
           MAST_API_TOKEN: ${{ secrets.MAST_API_TOKEN }}
-          ROMAN_CUTOUTS_LIVE_MAST: '1'
-          ROMAN_MAST_REQUIRE_CALIBRATED: ${{ inputs.require_calibrated && '1' || '0' }}
-          ROMAN_MAST_REPORT: mast-live-report.json
+          GLADIUS_LIVE_MAST: '1'
+          GLADIUS_MAST_REQUIRE_CALIBRATED: ${{ inputs.require_calibrated && '1' || '0' }}
+          GLADIUS_MAST_REPORT: mast-live-report.json
         run: >-
           python -m pytest tests/integration/test_mast_live.py -m live_mast
           -v -s --tb=short --junitxml=mast-live-results.xml

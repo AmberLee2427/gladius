@@ -3,9 +3,9 @@ import shutil
 import pytest
 from astropy.table import Table
 
-from roman_cutouts.config import RunConfig, Selection
-from roman_cutouts.inputs import discover, selected, staged
-from roman_cutouts.pipeline import run
+from gladius_roman.config import RunConfig, Selection
+from gladius_roman.inputs import discover, selected, staged
+from gladius_roman.pipeline import run
 
 
 def test_selection_missing_metadata_and_exclusive_dates():
@@ -98,7 +98,7 @@ def test_archive_download_failure_and_context_cleanup(tmp_path):
 
 
 def test_automatic_mast_queries_and_overrides():
-    from roman_cutouts.inputs import mast_queries
+    from gladius_roman.inputs import mast_queries
 
     config = RunConfig(
         targets=[{"id": "a", "ra": 359.99, "dec": -29},

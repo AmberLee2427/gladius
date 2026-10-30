@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 from astropy.wcs import WCS, Sip
 
-from roman_cutouts.config import Extraction, Target
-from roman_cutouts.core import NoOverlapError, make_cutout, pixel_to_world, validate_wcs
+from gladius_roman.config import Extraction, Target
+from gladius_roman.core import NoOverlapError, make_cutout, pixel_to_world, validate_wcs
 
 
 @pytest.mark.parametrize(

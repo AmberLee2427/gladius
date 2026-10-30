@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Roman cutouts</title>
+    <title>Gladius</title>
     <style>
       :root {
         --ink: #241b29;
@@ -411,7 +411,7 @@
   <body>
     <header>
       <div>
-        <div class="brand">Roman cutouts</div>
+        <div class="brand">Gladius</div>
       </div>
       <div class="pill">Local</div>
     </header>
@@ -1096,7 +1096,7 @@
       };
       $("applyYaml").onclick = () => applyYaml($("yamlEditor").value);
       $("downloadYaml").onclick = () => {
-        if (validYaml) download(validYaml, "roman-cutouts.yaml");
+        if (validYaml) download(validYaml, "gladius.yaml");
       };
       $("run").onclick = async () => {
         if (running || !validYaml) return;

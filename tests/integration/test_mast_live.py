@@ -50,15 +50,15 @@ def bounded_files():
 
 @pytest.mark.live_mast
 @pytest.mark.skipif(
-    os.environ.get("ROMAN_CUTOUTS_LIVE_MAST") != "1",
-    reason="Set ROMAN_CUTOUTS_LIVE_MAST=1 to enable real authenticated downloads",
+    os.environ.get("GLADIUS_LIVE_MAST") != "1",
+    reason="Set GLADIUS_LIVE_MAST=1 to enable real authenticated downloads",
 )
 def test_authenticated_roman_download(tmp_path, record_property):
     from astroquery.mast import MastMissions
 
-    from roman_cutouts import RunConfig, Target, make_cutout
-    from roman_cutouts.inputs import mast_queries, staged
-    from roman_cutouts.io import read_exposure, write_cutout
+    from gladius_roman import RunConfig, Target, make_cutout
+    from gladius_roman.inputs import mast_queries, staged
+    from gladius_roman.io import read_exposure, write_cutout
 
     token = os.environ.get("MAST_API_TOKEN")
     assert token, "Live MAST tests require the MAST_API_TOKEN environment variable"
@@ -93,7 +93,7 @@ def test_authenticated_roman_download(tmp_path, record_property):
     products = missions.get_unique_product_list(observations)
     assert len(products), "Sample datasets have no associated products"
     product = choose_product(
-        products, require_calibrated=os.environ.get("ROMAN_MAST_REQUIRE_CALIBRATED") == "1"
+        products, require_calibrated=os.environ.get("GLADIUS_MAST_REQUIRE_CALIBRATED") == "1"
     )
     advertised = int(product["size"])
     calibrated = str(product["filename"]).lower().endswith(("_cal.asdf", "_cal.fits"))
@@ -129,7 +129,7 @@ def test_authenticated_roman_download(tmp_path, record_property):
     result = {"downloaded_bytes": actual, "sha256": digest,
               "coverage": "calibrated-image-and-cutout" if calibrated else "associated-product-download",
               "generated_target_query": "passed", "temporary_cleanup": "passed"}
-    report = os.environ.get("ROMAN_MAST_REPORT")
+    report = os.environ.get("GLADIUS_MAST_REPORT")
     if report:
         Path(report).write_text(json.dumps(result, indent=2) + "\n")
     for key, value in result.items():
@@ -190,7 +190,7 @@ def test_live_harness_with_synthetic_archive(demo, tmp_path, monkeypatch):
     module.MastMissions = lambda **kwargs: Missions()
     monkeypatch.setitem(sys.modules, "astroquery.mast", module)
     monkeypatch.setenv("MAST_API_TOKEN", "synthetic-test-token")
-    monkeypatch.setenv("ROMAN_MAST_REPORT", str(report))
+    monkeypatch.setenv("GLADIUS_MAST_REPORT", str(report))
     test_authenticated_roman_download(tmp_path, lambda *_: None)
     result = json.loads(report.read_text())
     assert result["coverage"] == "calibrated-image-and-cutout"

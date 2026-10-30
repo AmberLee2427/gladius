@@ -1,6 +1,6 @@
 # Configuration and execution
 
-Generate an annotated file with `roman-cutouts init-config config.yaml`. The full
+Generate an annotated file with `gladius init-config config.yaml`. The full
 example is in `examples/config.yaml`. Keys omitted from YAML receive documented
 defaults; every resolved value is saved in the run's `resolved-config.yaml` and
 manifest. Paths are resolved relative to the YAML file, independently of the
@@ -84,7 +84,7 @@ See science.md for centering and flag conventions.
 ## Quality and stacks
 
 `quality.autocorrelation_limit: null` disables the screen. A finite threshold
-above one enables the independent `roman-cutouts-acf-positive-moments-v1` method.
+above one enables the independent `gladius-acf-positive-moments-v1` method.
 The method, tile size, radius, measured ratio, threshold and decision are stored.
 Failure to measure is a rejected screen, never deletion of the native cutout.
 `exclude_from_stacks` controls whether these flags affect display stacks.
@@ -143,7 +143,7 @@ with leading zeroes. UTF-8 CSVs with a byte-order mark are supported.
 
 ## Local run studio
 
-`roman-cutouts gui --workspace /path/to/work --port 8768` launches the bundled web
+`gladius gui --workspace /path/to/work --port 8768` launches the bundled web
 GUI using the standard Python library; no extra GUI dependency is required. It
 binds to 127.0.0.1. Open the printed URL, upload/paste a CSV or enter targets,
 configure processing, and download YAML or press Run. Uploads stay on the local
@@ -167,7 +167,7 @@ cleanup. Only one GUI-owned run can execute at a time. Existing pipeline locks
 also protect runs initiated through other processes.
 
 Each submitted configuration and job record is saved in
-`<workspace>/.roman-cutouts-gui/<job-id>/`. These job records and scientific
+`<workspace>/.gladius-gui/<job-id>/`. These job records and scientific
 outputs are local working data, not package assets. They are never published by
 the GUI. Job history is retained on disk across server restarts; it is not loaded
 into a new server session automatically.
@@ -205,5 +205,5 @@ For a local opt-in run on Linux/macOS, with `MAST_API_TOKEN` already set:
 
 ```sh
 python -m pip install '.[test,roman,mast]'
-ROMAN_CUTOUTS_LIVE_MAST=1 python -m pytest tests/integration -m live_mast -v
+GLADIUS_LIVE_MAST=1 python -m pytest tests/integration -m live_mast -v
 ```

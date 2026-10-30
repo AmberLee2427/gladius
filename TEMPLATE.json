@@ -10,5 +10,5 @@
     "python_build_backend": "setuptools",
     "task_runner": "tox"
   },
-  "adaptations": "Independent project identity; explicit version without a git requirement; local scientific workflow; CI and distribution exclude commissioning snapshots. No automatic template updates."
+  "adaptations": "Independent project identity; explicit version without a git requirement; local scientific workflow; CI and distribution exclude commissioning snapshots. No automatic template updates. Project renamed to Gladius after generation; original cookiecutter context retained as provenance."
 }

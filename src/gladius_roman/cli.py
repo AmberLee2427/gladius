@@ -16,7 +16,7 @@ from .pipeline import run
 
 def main(argv=None):
     """Return zero on success, nonzero for invalid config or any failed exposure."""
-    parser = argparse.ArgumentParser(prog="roman-cutouts", description=__doc__)
+    parser = argparse.ArgumentParser(prog="gladius", description=__doc__)
     parser.add_argument("--version", action="version", version=__version__)
     commands = parser.add_subparsers(dest="command", required=True)
     init = commands.add_parser("init-config", help="write an annotated YAML configuration")
@@ -45,7 +45,7 @@ def main(argv=None):
             serve(args.workspace, port=args.port)
         elif args.command == "init-config":
             with args.path.open("x") as stream:
-                stream.write(files("roman_cutouts").joinpath("data/example.yaml").read_text())
+                stream.write(files("gladius_roman").joinpath("data/example.yaml").read_text())
             print(args.path.resolve())
         elif args.command == "config-schema":
             with args.path.open("x") as stream:
@@ -63,6 +63,6 @@ def main(argv=None):
             print(f"Manifest: {manifest}")
             return 0 if json.loads(manifest.read_text())["status"] == "complete" else 1
     except (Exception, KeyboardInterrupt) as exc:
-        print(f"roman-cutouts: {type(exc).__name__}: {exc}", file=sys.stderr)
+        print(f"gladius: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 130 if isinstance(exc, KeyboardInterrupt) else 1
     return 0

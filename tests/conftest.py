@@ -3,8 +3,8 @@ from copy import deepcopy
 import asdf
 import pytest
 
-from roman_cutouts.demo import create_demo
-from roman_cutouts.io import read_exposure
+from gladius_roman.demo import create_demo
+from gladius_roman.io import read_exposure
 
 
 @pytest.fixture

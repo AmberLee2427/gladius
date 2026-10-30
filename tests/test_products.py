@@ -4,9 +4,9 @@ import asdf
 import numpy as np
 from astropy.io import fits
 
-from roman_cutouts.config import Extraction, Target
-from roman_cutouts.core import make_cutout, pixel_to_world
-from roman_cutouts.io import read_cutout, read_exposure, write_cutout
+from gladius_roman.config import Extraction, Target
+from gladius_roman.core import make_cutout, pixel_to_world
+from gladius_roman.io import read_cutout, read_exposure, write_cutout
 
 
 def test_all_metadata_and_arrays_survive_in_both_formats(exposure, tmp_path):
@@ -92,7 +92,7 @@ def test_fits_parent_duplicate_headers_and_extra_arrays(exposure, tmp_path):
 def test_nonspatial_quantity_metadata_retains_units(exposure, tmp_path):
     from astropy import units as u
 
-    from roman_cutouts.io import _partition
+    from gladius_roman.io import _partition
 
     original = {"calibration_wavelengths": np.arange(4) * u.nm}
     parent_metadata = _partition(original, (96, 96), {})

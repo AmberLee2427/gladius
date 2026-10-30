@@ -1,4 +1,6 @@
-# Roman event cutouts
+# Gladius
+
+Native image cutouts for the Roman Space Telescope.
 
 Native detector cutouts from calibrated Roman images, with explicit parent-pixel
 mapping, separately retained parent metadata, exact stored astrometry, and optional
@@ -11,10 +13,10 @@ Python 3.11 or newer is required. From this checkout:
 
 ```sh
 python -m pip install -e '.[roman]'
-roman-cutouts init-config config.yaml
+gladius init-config config.yaml
 # Edit targets and inputs in config.yaml.
-roman-cutouts validate config.yaml
-roman-cutouts run config.yaml
+gladius validate config.yaml
+gladius run config.yaml
 ```
 
 For archive access, install `'.[roman,mast]'` and set `inputs.mode: mast` with
@@ -24,7 +26,7 @@ Directory mode does not perform archive queries or downloads.
 Try a complete offline example with no credentials or mission data:
 
 ```sh
-roman-cutouts demo /tmp/my-roman-cutouts-demo
+gladius demo /tmp/my-gladius-demo
 ```
 
 This creates two synthetic ASDF exposures, a YAML file, native ASDF/FITS cutouts,
@@ -36,7 +38,7 @@ folder; existing demo inputs are not overwritten.
 [examples/config.yaml](examples/config.yaml) documents every option. Paths are
 relative to the configuration file. Unknown keys, duplicate YAML keys, invalid
 coordinates and inconsistent settings are rejected before input discovery.
-`roman-cutouts config-schema schema.json` writes JSON Schema for editor support.
+`gladius config-schema schema.json` writes JSON Schema for editor support.
 
 - Select exposure-start dates in a UTC `[start, end)` interval, detectors 1–18,
   and filters. Empty detector/filter lists mean all; missing metadata needed for
@@ -114,7 +116,7 @@ been published to PyPI or assigned a DOI.
 ## Local web GUI and target CSVs
 
 ```sh
-roman-cutouts gui --workspace . --port 8768
+gladius gui --workspace . --port 8768
 ```
 
 Open the printed local URL. The GUI builds the same validated configuration used
@@ -125,8 +127,8 @@ downloaded YAML contains absolute paths. The server binds only to loopback.
 Keep its terminal open during runs; closing a browser tab does not cancel a run.
 
 ```sh
-roman-cutouts validate config.yaml --targets targets.csv
-roman-cutouts run config.yaml --targets targets.csv
+gladius validate config.yaml --targets targets.csv
+gladius run config.yaml --targets targets.csv
 ```
 
 `--targets` replaces YAML targets before validation, so the YAML may omit targets
@@ -146,7 +148,7 @@ Invalid rows and duplicate IDs fail explicitly. The GUI preview shows the first
 50 targets; all rows are included in the configuration and run.
 
 Each GUI submission saves its resolved YAML and progress record in
-`.roman-cutouts-gui/` under the workspace; scientific outputs still go to the
+`.gladius-gui/` under the workspace; scientific outputs still go to the
 configured output directory. Only one GUI-owned run is active at a time. Reloading
 the page reconnects to the last run while the server remains open. After a server
 restart, run history remains on disk rather than being automatically restarted.
@@ -157,7 +159,7 @@ The CLI and GUI use the same importable functions:
 
 ```python
 from pathlib import Path
-from roman_cutouts import RunConfig, load_config, read_targets_csv, run
+from gladius_roman import RunConfig, load_config, read_targets_csv, run
 
 # Existing YAML, with an optional CSV override:
 config = load_config("config.yaml", targets_path="targets.csv")

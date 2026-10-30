@@ -1,6 +1,8 @@
 0.1.0a2 (unreleased)
 ===================
 
+* Rename the project to Gladius, distribution gladius-roman, import gladius_roman
+  and CLI gladius.
 * Add an opt-in authenticated live MAST download workflow with a 20 MiB cap,
   generated-query checks, cleanup checks and explicit image/associated-product coverage.
 * Add a bundled loopback web GUI with target CSV upload, configuration builder,

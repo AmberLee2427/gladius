@@ -43,7 +43,7 @@ class Jobs:
 
     def _save(self, identifier):
         atomic_json(
-            self.workspace / ".roman-cutouts-gui" / identifier / "job.json", self.jobs[identifier]
+            self.workspace / ".gladius-gui" / identifier / "job.json", self.jobs[identifier]
         )
 
     def submit(self, config):
@@ -51,7 +51,7 @@ class Jobs:
             if any(j["state"] in ("queued", "running") for j in self.jobs.values()):
                 raise BusyError("A run is already active. Wait for it to finish.")
             identifier = uuid4().hex
-            directory = self.workspace / ".roman-cutouts-gui" / identifier
+            directory = self.workspace / ".gladius-gui" / identifier
             directory.mkdir(parents=True)
             (directory / "config.yaml").write_text(
                 yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False)
@@ -169,7 +169,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         if path == "/":
-            page = files("roman_cutouts").joinpath("web_assets/index.html").read_text()
+            page = files("gladius_roman").joinpath("web_assets/index.html").read_text()
             bootstrap = json.dumps({"token": self.server.token}).replace("<", "\\u003c")
             page = page.replace("__BOOTSTRAP__", bootstrap).replace("__NONCE__", self.server.token)
             self._reply(200, page.encode(), "text/html; charset=utf-8")
@@ -184,7 +184,7 @@ class Handler(BaseHTTPRequestHandler):
                     identifier = next(reversed(self.server.jobs.jobs))
                     last_job = self.server.jobs.snapshot(identifier)
                     configuration = load_config(
-                        self.server.workspace / ".roman-cutouts-gui" / identifier / "config.yaml"
+                        self.server.workspace / ".gladius-gui" / identifier / "config.yaml"
                     ).model_dump(mode="json")
             self._reply(
                 200,
@@ -264,7 +264,7 @@ class Handler(BaseHTTPRequestHandler):
 def serve(workspace: Path, *, port=8768):
     """Start the local GUI; the workspace defines relative paths and job records."""
     server = GuiServer(workspace, port)
-    print(f"Roman cutouts GUI: {server.url}", flush=True)
+    print(f"Gladius GUI: {server.url}", flush=True)
     print(f"Workspace: {server.workspace}", flush=True)
     try:
         server.serve_forever()

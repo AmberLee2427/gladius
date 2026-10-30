@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install '.[test]'
-      - run: python -m pytest --cov=roman_cutouts
+      - run: python -m pytest --cov=gladius_roman
   roman:
     runs-on: ubuntu-latest
     steps:

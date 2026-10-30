@@ -3,32 +3,37 @@ requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "roman-event-cutouts"
+name = "gladius-roman"
 version = "0.1.0a2"
 description = "Native Roman detector cutouts with parent metadata and explicit astrometry provenance"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "BSD-3-Clause"
 license-files = ["LICENSE.txt", "NOTICE.md", "licenses/*"]
-authors = [{name = "Roman event cutouts contributors"}]
+authors = [{name = "Gladius contributors"}]
 classifiers = ["Development Status :: 3 - Alpha", "Intended Audience :: Science/Research", "Programming Language :: Python :: 3", "Topic :: Scientific/Engineering :: Astronomy"]
 dependencies = ["numpy>=1.24", "astropy>=6", "asdf>=4.1", "asdf-astropy>=0.6", "gwcs>=0.21", "scipy>=1.10", "pydantic>=2.7,<3", "PyYAML>=6", "filelock>=3.12"]
+
+[project.urls]
+Homepage = "https://github.com/AmberLee2427/gladius"
+Repository = "https://github.com/AmberLee2427/gladius"
+Issues = "https://github.com/AmberLee2427/gladius/issues"
 
 [project.optional-dependencies]
 roman = ["roman_datamodels>=0.25"]
 mast = ["astroquery>=0.4.11"]
 test = ["pytest>=8", "pytest-cov>=4"]
 docs = ["sphinx>=7", "myst-parser>=2"]
-dev = ["roman-event-cutouts[test,docs]", "ruff>=0.9", "build>=1", "twine>=5", "tox>=4"]
+dev = ["gladius-roman[test,docs]", "ruff>=0.9", "build>=1", "twine>=5", "tox>=4"]
 
 [project.scripts]
-roman-cutouts = "roman_cutouts.cli:main"
+gladius = "gladius_roman.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-roman_cutouts = ["data/*.yaml", "web_assets/*.html", "py.typed"]
+gladius_roman = ["data/*.yaml", "web_assets/*.html", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -36,7 +41,7 @@ addopts = "-ra"
 markers = ["live_mast: opt-in authenticated Roman archive queries and downloads"]
 
 [tool.coverage.run]
-source = ["roman_cutouts"]
+source = ["gladius_roman"]
 branch = true
 
 [tool.coverage.report]

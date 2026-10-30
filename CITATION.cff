@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "Please cite the package name and version; an archival DOI has not yet been assigned."
-title: "Roman event cutouts"
+title: "Gladius"
 type: software
 version: 0.1.0a2
 authors:
-  - name: "Roman event cutouts contributors"
+  - name: "Gladius contributors"
 license: BSD-3-Clause

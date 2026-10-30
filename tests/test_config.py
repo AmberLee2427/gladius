@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from roman_cutouts.config import RunConfig, Selection, Target, load_config
+from gladius_roman.config import RunConfig, Selection, Target, load_config
 
 
 def test_unknown_duplicate_nonfinite_and_invalid_fields(tmp_path):

@@ -7,7 +7,7 @@ required when constructing a ``RunConfig`` directly.
 .. code-block:: python
 
    from pathlib import Path
-   from roman_cutouts import RunConfig, read_targets_csv, run
+   from gladius_roman import RunConfig, read_targets_csv, run
 
    config = RunConfig(
        targets=read_targets_csv("targets.csv"),
@@ -25,32 +25,32 @@ To run a saved configuration, use ``run(load_config("config.yaml"))``.
 ``continue_on_error`` is enabled. ``make_cutout`` is the lower-level in-memory
 array operation and does not query, download or write files.
 
-.. autofunction:: roman_cutouts.parse_config
+.. autofunction:: gladius_roman.parse_config
 
-.. autoclass:: roman_cutouts.Target
+.. autoclass:: gladius_roman.Target
 
-.. autofunction:: roman_cutouts.inputs.mast_queries
+.. autofunction:: gladius_roman.inputs.mast_queries
 
 
-.. autofunction:: roman_cutouts.load_config
+.. autofunction:: gladius_roman.load_config
 
-.. autoclass:: roman_cutouts.RunConfig
+.. autoclass:: gladius_roman.RunConfig
 
-.. autofunction:: roman_cutouts.make_cutout
+.. autofunction:: gladius_roman.make_cutout
 
-.. autoclass:: roman_cutouts.Cutout
+.. autoclass:: gladius_roman.Cutout
    :members:
 
-.. autofunction:: roman_cutouts.run
+.. autofunction:: gladius_roman.run
 
-.. autofunction:: roman_cutouts.io.read_exposure
+.. autofunction:: gladius_roman.io.read_exposure
 
-.. autofunction:: roman_cutouts.io.read_cutout
+.. autofunction:: gladius_roman.io.read_cutout
 
-.. autofunction:: roman_cutouts.io.write_cutout
+.. autofunction:: gladius_roman.io.write_cutout
 
-.. autofunction:: roman_cutouts.targets.read_targets_csv
+.. autofunction:: gladius_roman.targets.read_targets_csv
 
-.. autofunction:: roman_cutouts.targets.parse_targets_csv
+.. autofunction:: gladius_roman.targets.parse_targets_csv
 
-.. autofunction:: roman_cutouts.web.serve
+.. autofunction:: gladius_roman.web.serve

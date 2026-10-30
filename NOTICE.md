@@ -1,6 +1,6 @@
 # Attribution and license scope
 
-The new installable package under src/roman_cutouts, its tests and project
+The new installable package under src/gladius_roman, its tests and project
 documentation are licensed under BSD-3-Clause (LICENSE.txt). The distribution is
 independent: no Astropy affiliation, STScI ownership or institutional endorsement
 is claimed. The contributor copyright label does not override any underlying

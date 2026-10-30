@@ -7,7 +7,7 @@ from scipy.signal import fftconvolve
 
 from .config import Quality
 
-METHOD = "roman-cutouts-acf-positive-moments-v1"
+METHOD = "gladius-acf-positive-moments-v1"
 
 
 def assess(data, dq, options: Quality):

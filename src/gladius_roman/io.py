@@ -22,7 +22,7 @@ from astropy.wcs import WCS
 from . import __version__
 from .core import Cutout, pixel_to_world
 
-SCHEMA = "roman-cutouts/derived-1.0"
+SCHEMA = "gladius/derived-1.0"
 
 
 @dataclass
