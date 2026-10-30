@@ -87,4 +87,3 @@ Existing environment variables take precedence. Never put the token in YAML or a
 notebook cell. The GUI's **Load test** queries real archive metadata and selects
 one image; it does not download that image until **Make cutouts**. Authentication
 and permission are provided by your own MAST account.
-
