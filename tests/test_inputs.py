@@ -159,17 +159,16 @@ def test_overlapping_mast_queries_deduplicate_before_download(monkeypatch):
 
 def test_mast_unauthorized_error_is_actionable(monkeypatch):
     import sys
-    from types import ModuleType
+    from types import ModuleType, SimpleNamespace
 
-    from requests import HTTPError, Response
+    class Unauthorized(Exception):
+        response = SimpleNamespace(status_code=401)
 
     class Missions:
         dataset_kwds = {"roman": "fileSetName"}
 
         def query_criteria(self, **criteria):
-            response = Response()
-            response.status_code = 401
-            raise HTTPError(response=response)
+            raise Unauthorized()
 
     module = ModuleType("astroquery.mast")
     module.MastMissions = lambda **kwargs: Missions()

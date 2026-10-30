@@ -185,7 +185,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         if path == "/":
-            page = files("gladius_roman").joinpath("web_assets/index.html").read_text()
+            page = files("gladius_roman").joinpath("web_assets/index.html").read_text(encoding="utf-8")
             bootstrap = json.dumps({"token": self.server.token}).replace("<", "\\u003c")
             page = page.replace("__BOOTSTRAP__", bootstrap).replace("__NONCE__", self.server.token)
             self._reply(200, page.encode(), "text/html; charset=utf-8")

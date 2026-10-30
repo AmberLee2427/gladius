@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 from pydantic import ValidationError
 
@@ -45,7 +43,9 @@ def test_date_interval_and_paths(tmp_path, monkeypatch):
     path.write_text(
         "targets: [{id: event, ra: 2, dec: 3}]\nselection: {start: 2026-01-01, end: 2026-02-01}\n"
     )
-    monkeypatch.chdir(Path("/tmp"))
+    launch = tmp_path / "launch"
+    launch.mkdir()
+    monkeypatch.chdir(launch)
     config = load_config(path)
     assert config.inputs.directory == tmp_path / "images"
     assert config.selection.start == "2026-01-01"
