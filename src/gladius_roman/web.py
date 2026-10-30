@@ -21,6 +21,14 @@ from .targets import parse_targets_csv
 
 MAX_REQUEST_BYTES = 16 * 1024 * 1024
 
+# Fixed resource map: never turn a URL into an arbitrary filesystem path.
+GUI_RESOURCES = {
+    "/assets/gladius-emblem.png": ("gladius-emblem.png", "image/png"),
+    "/assets/rges-pit.png": ("rges-pit.png", "image/png"),
+    "/license": ("license.txt", "text/plain; charset=utf-8"),
+    "/notices": ("notices.txt", "text/plain; charset=utf-8"),
+}
+
 
 class BusyError(ValueError):
     """The GUI already owns an active pipeline run."""
@@ -173,6 +181,10 @@ class Handler(BaseHTTPRequestHandler):
             bootstrap = json.dumps({"token": self.server.token}).replace("<", "\\u003c")
             page = page.replace("__BOOTSTRAP__", bootstrap).replace("__NONCE__", self.server.token)
             self._reply(200, page.encode(), "text/html; charset=utf-8")
+        elif path in GUI_RESOURCES:
+            resource, content_type = GUI_RESOURCES[path]
+            raw = files("gladius_roman").joinpath("web_assets", resource).read_bytes()
+            self._reply(200, raw, content_type)
         elif path == "/api/defaults":
             configuration = RunConfig(targets=[Target(id="example", ra=270, dec=-29)]).model_dump(
                 mode="json"

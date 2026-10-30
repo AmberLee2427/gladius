@@ -1,0 +1,38 @@
+[
+  {
+    "file": "gladius-primary-dark.png",
+    "size_px": [
+      1560,
+      1008
+    ],
+    "mode": "RGB",
+    "source": "exec-d7628e83-5602-413b-a14c-be208538a673.png"
+  },
+  {
+    "file": "gladius-primary-light.png",
+    "size_px": [
+      1559,
+      1009
+    ],
+    "mode": "RGB",
+    "source": "exec-bd3fc9e4-2a41-44a8-ab90-e8cbfb5401cc.png"
+  },
+  {
+    "file": "gladius-emblem-dark.png",
+    "size_px": [
+      1254,
+      1254
+    ],
+    "mode": "RGB",
+    "source": "exec-7387afbd-3124-40fd-8a2c-51d5f5753658.png"
+  },
+  {
+    "file": "gladius-single-colour-study.png",
+    "size_px": [
+      1558,
+      1010
+    ],
+    "mode": "RGBA",
+    "source": "exec-77959fd3-2e5d-43e0-9d29-e8fbd7459b20.png"
+  }
+]

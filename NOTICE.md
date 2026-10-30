@@ -21,3 +21,8 @@ This package license does not relicense those collections. In particular,
 nexus-snapshot/external_reference/gaia_wcs_correction.py is not distributed or
 imported by the package; its separate ownership/licensing remains unresolved.
 No external Gaia solving code was incorporated.
+
+The Gladius logo drafts in assets/brand were generated from the user-supplied
+concept. The bundled RGES-PIT logo was supplied through the team's local website
+source. Project branding retains its respective ownership; the package's BSD
+license is not a grant of rights to RGES-PIT names or logos.
