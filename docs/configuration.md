@@ -40,10 +40,12 @@ the calibrated files from the resulting product lists.
 Queries reaching `query_limit` (per cone or combined unique observations) are
 rejected as potentially incomplete. Install the `mast` extra. Restricted data
 require an authorized account and `MAST_API_TOKEN` in the launching shell/server
-environment, never in YAML. No commissioning environment file is read. A live
-anonymous Roman search on 2026-10-23 returned HTTP 401; automatic query construction
-is tested, but a successful authorized archive query/download is still required
-to validate against currently accessible Roman data.
+environment, never in YAML. Local environment loading is described under
+[authentication](#local-mast-authentication); the package does not search
+commissioning infrastructure for credentials. The authenticated live CI smoke
+test checks a bounded archive download, which may be an associated product rather
+than a calibrated science image. It is not full scientific validation of real
+Roman cutouts.
 
 Query syntax and columns follow [Astroquery mission searches](https://astroquery.readthedocs.io/en/stable/mast/mast_missions.html);
 Roman column names were checked against the live MAST column-list service.

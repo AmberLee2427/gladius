@@ -102,8 +102,7 @@ python -m build
 ```
 
 Historical source snapshots are local reference material and are excluded from
-distributions. [RELEASE_REVIEW.md](RELEASE_REVIEW.md) defines the proposed public
-release and pending project/branding decisions. [TEMPLATE.json](TEMPLATE.json) records the
+distributions. [TEMPLATE.json](TEMPLATE.json) records the
 Cookiecutter template and exact commit; [NOTICE.md](NOTICE.md) explains license
 scope and attribution. The copied external Gaia solver has not been incorporated
 into the package.
@@ -114,6 +113,10 @@ See [contributing](CONTRIBUTING.md), [conduct](CODE_OF_CONDUCT.md),
 been published to PyPI or assigned a DOI.
 
 ## Local web GUI and target CSVs
+
+The separate [Nexus notebook](notebooks/README.md) queries real MAST data and
+requires an explicit path to your credential file. It is not part of the docs
+site. Install its plotting/kernel dependencies with `pip install -e '.[roman,mast,notebook]'`.
 
 For restricted MAST access, copy `.env.example` to `.env` in your workspace
 and set `MAST_API_TOKEN=your_token_here`. The GUI loads that file when the server

@@ -1,8 +1,11 @@
 0.1.0a2 (unreleased)
 ===================
 
-* Prepare a public-release review scope, exclude internal handoff material from
-  distributions, enforce archive content checks in CI, and fix minimal-dependency
+* Add Read the Docs build configuration, branded light/dark documentation and a
+  getting-started guide. Add a separate real-MAST Nexus notebook requiring an
+  explicit credential-file path; notebook outputs are excluded from distributions.
+* Exclude internal handoff material from distributions, enforce archive content
+  checks in CI, and fix minimal-dependency
   and Windows validation failures.
 * Load local .env credentials at CLI/GUI startup without overriding shell values,
   and document local MAST authentication in the GUI and configuration guide.

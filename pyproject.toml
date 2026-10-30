@@ -23,7 +23,8 @@ Issues = "https://github.com/AmberLee2427/gladius/issues"
 roman = ["roman_datamodels>=0.25"]
 mast = ["astroquery>=0.4.11"]
 test = ["pytest>=8", "pytest-cov>=4"]
-docs = ["sphinx>=7", "myst-parser>=2"]
+docs = ["sphinx>=7", "myst-parser>=2", "furo>=2024.8.6"]
+notebook = ["ipykernel>=6", "matplotlib>=3.8"]
 dev = ["gladius-roman[test,docs]", "ruff>=0.9", "build>=1", "twine>=5", "tox>=4"]
 
 [project.scripts]

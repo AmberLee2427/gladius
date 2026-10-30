@@ -1,12 +1,12 @@
 include README.md LICENSE.txt NOTICE.md THIRD_PARTY.md TEMPLATE.json CITATION.cff CHANGES.rst
 include .env.example
-include RELEASE_REVIEW.md
 recursive-include tools *.py
 include CONTRIBUTING.md CODE_OF_CONDUCT.md AI_POLICY.md TESTING.md tox.ini .ruff.toml .pre-commit-config.yaml
 recursive-include licenses *.txt
 recursive-include src *.py *.typed *.yaml *.html *.css *.js *.png *.txt
 recursive-include tests *.py
-recursive-include docs *.md *.rst *.py *.json
+recursive-include docs *.md *.rst *.py *.json *.css *.png
+recursive-include notebooks *.md *.ipynb
 recursive-include examples *.yaml *.csv
 prune local-snapshot
 prune nexus-snapshot

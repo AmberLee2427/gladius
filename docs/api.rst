@@ -31,6 +31,8 @@ array operation and does not query, download or write files.
 
 .. autofunction:: gladius_roman.inputs.mast_queries
 
+.. autofunction:: gladius_roman.inputs.mast_test_configuration
+
 
 .. autofunction:: gladius_roman.load_config
 
