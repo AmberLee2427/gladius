@@ -1,9 +1,9 @@
 """Reject private working material and science files in built distributions."""
 
 import argparse
-from pathlib import PurePosixPath
 import tarfile
 import zipfile
+from pathlib import PurePosixPath
 
 
 def check(path):
