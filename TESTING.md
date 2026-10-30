@@ -6,6 +6,7 @@ python -m pytest --cov=gladius_roman
 python -m ruff check src tests docs/conf.py
 python -m sphinx -W -b html docs docs/_build/html
 python -m build
+python tools/check_distribution.py dist/*
 python -m twine check dist/*
 ```
 

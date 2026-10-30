@@ -1,5 +1,7 @@
 include README.md LICENSE.txt NOTICE.md THIRD_PARTY.md TEMPLATE.json CITATION.cff CHANGES.rst
 include .env.example
+include RELEASE_REVIEW.md
+recursive-include tools *.py
 include CONTRIBUTING.md CODE_OF_CONDUCT.md AI_POLICY.md TESTING.md tox.ini .ruff.toml .pre-commit-config.yaml
 recursive-include licenses *.txt
 recursive-include src *.py *.typed *.yaml *.html *.css *.js *.png *.txt
@@ -13,4 +15,5 @@ prune .gladius-gui
 prune .github
 prune docs/_build
 exclude nexus-source-snapshot.zip
+exclude docs/commissioning-handoff.md
 global-exclude __pycache__ *.py[cod] .DS_Store

@@ -125,6 +125,7 @@ cutouts/
 local-snapshot/
 nexus-snapshot/
 nexus-source-snapshot.zip
+docs/commissioning-handoff.md
 .agents/
 .DS_Store
 .env.*

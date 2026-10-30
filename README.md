@@ -101,9 +101,9 @@ python -m sphinx -W -b html docs docs/_build/html
 python -m build
 ```
 
-The original source snapshots remain as historical references. Their original
-handoff is preserved in [docs/commissioning-handoff.md](docs/commissioning-handoff.md).
-They are excluded from distributions. [TEMPLATE.json](TEMPLATE.json) records the
+Historical source snapshots are local reference material and are excluded from
+distributions. [RELEASE_REVIEW.md](RELEASE_REVIEW.md) defines the proposed public
+release and pending project/branding decisions. [TEMPLATE.json](TEMPLATE.json) records the
 Cookiecutter template and exact commit; [NOTICE.md](NOTICE.md) explains license
 scope and attribution. The copied external Gaia solver has not been incorporated
 into the package.
