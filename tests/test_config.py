@@ -13,7 +13,7 @@ def test_unknown_duplicate_nonfinite_and_invalid_fields(tmp_path):
         {"extraction": {"size": True}},
         {"selection": {"detectors": [0]}},
         {"targets": [{"id": "e", "x": float("nan"), "y": 1}]},
-        {"astrometry": {"mode": "corrected"}},
+        {"astrometry": {"mode": "corrected", "corrected_directory": None}},
         {"storage": {"formats": []}},
     ):
         with pytest.raises(ValidationError):

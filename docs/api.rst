@@ -54,3 +54,5 @@ array operation and does not query, download or write files.
 .. autofunction:: gladius_roman.targets.parse_targets_csv
 
 .. autofunction:: gladius_roman.web.serve
+
+.. autofunction:: gladius_roman.target_from_coordinates

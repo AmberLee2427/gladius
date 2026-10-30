@@ -119,3 +119,19 @@ def test_cli_validation_failure_exit_and_quality_retains_native(demo, tmp_path):
     assert json.loads((manifest.parent / "stack-manifest.json").read_text())["products"] == []
     configure(demo, astrometry={"mode": "corrected", "corrected_directory": "missing"})
     assert main(["run", str(demo)]) == 1
+
+
+def test_unlimited_stacks_and_preserved_cutouts_on_limit_failure(demo):
+    config = configure(demo, stacks={"enabled": True, "max_exposures": 0, "max_memory_mb": 0})
+    manifest = run(config, progress=lambda _: None)
+    assert json.loads(manifest.read_text())["status"] == "complete"
+    assert len(json.loads((manifest.parent / "stack-manifest.json").read_text())["products"]) == 1
+    for limits, message in [({"max_exposures": 1, "max_memory_mb": 0}, "max_exposures"),
+                            ({"max_exposures": 0, "max_memory_mb": 1}, "max_memory_mb")]:
+        config = configure(demo, stacks={"enabled": True, **limits}, extraction={"size": 150})
+        with pytest.raises(ValueError, match=message):
+            run(config, progress=lambda _: None)
+        records = list(config.storage.output_directory.glob("runs/*/manifest.json"))
+        failed = [json.loads(p.read_text()) for p in records if json.loads(p.read_text())["status"] == "failed"]
+        assert failed and all(entry["status"] == "complete" for entry in failed[-1]["entries"].values())
+        assert len(failed[-1]["entries"]) == 2

@@ -26,19 +26,19 @@ extraction:
   no_overlap: pad               # pad | skip | error
 astrometry:
   mode: validate                # use | validate | corrected
-  corrected_directory: null
+  corrected_directory: gaia_wcs  # external solver default; existing files only
   corrected_pattern: '{stem}_gaiawcs.asdf'
   roundtrip_tolerance_pixels: 0.001
   fits_tolerance_pixels: 0.01
 quality:
-  autocorrelation_limit: null   # disabled; set a calibrated threshold to enable
+  autocorrelation_limit: null   # disabled; exploratory starting point 2.0, review 1.5–3.0
   tile_size: 64
   radius: 15
   exclude_from_stacks: true     # native cutouts are always retained
 stacks:
   enabled: false                # display-only, grouped by target and filter
-  max_exposures: 100
-  max_memory_mb: 512
+  max_exposures: 100           # per target/filter; 0 disables check
+  max_memory_mb: 512           # preflight estimate; 0 disables check
 storage:
   output_directory: cutouts
   retain_full_images: false     # local originals are NEVER deleted

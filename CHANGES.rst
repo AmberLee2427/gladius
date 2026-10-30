@@ -1,6 +1,8 @@
 0.1.0a2 (unreleased)
 ===================
 
+* Add a real-MAST GUI test preset, Galactic/ecliptic input conversion, zero/unlimited
+  stack limits, context-sensitive help, and icon-only theme controls.
 * Rename the project to Gladius, distribution gladius-roman, import gladius_roman
   and CLI gladius.
 * Add an opt-in authenticated live MAST download workflow with a 20 MiB cap,

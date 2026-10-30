@@ -47,6 +47,9 @@ a:focus-visible {
   color: #f7f0fc;
   padding: 8px 12px;
   min-height: 36px;
+  min-width: 38px;
+  font-size: 20px;
+  line-height: 1;
   font: inherit;
   cursor: pointer;
 }

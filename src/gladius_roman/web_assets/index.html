@@ -480,7 +480,7 @@
           aria-label="Toggle dark mode"
           aria-pressed="false"
         >
-          Dark mode
+          ☾
         </button>
       </div>
     </header>
@@ -529,6 +529,10 @@
                   ><span>Coordinates</span
                   ><select id="coordinateMode">
                     <option value="sky">RA / Dec · ICRS degrees</option>
+                    <option value="galactic">l / b · Galactic degrees</option>
+                    <option value="ecliptic">
+                      λ / β · Ecliptic J2000 degrees
+                    </option>
                     <option value="pixel">x / y · Parent pixels</option>
                   </select></label
                 ><label class="field"
@@ -539,6 +543,9 @@
                   ><input id="coordB" type="number" step="any"
                 /></label>
               </div>
+              <p id="coordinateHelp" class="caption">
+                Sky coordinates are saved as RA/Dec ICRS degrees in YAML.
+              </p>
               <button id="addTarget">Add</button>
             </div>
           </details>
@@ -563,7 +570,9 @@
               title="Resolve relative paths from this directory"
           /></label>
           <p class="muted">
-            Relative paths resolve from the working directory above.
+            Defaults to the directory supplied with --workspace, or the folder
+            where you launched Gladius. Relative paths resolve here; this is
+            editable.
           </p>
           <div id="settings"></div>
         </section>
@@ -579,6 +588,7 @@
             reuse the run settings, or load an existing YAML file to edit them.
           </p>
           <div class="toolbar">
+            <button id="loadTest" type="button">Load test</button>
             <button id="downloadYaml" disabled>Download YAML</button
             ><label class="file-button"
               >Load YAML
@@ -590,6 +600,11 @@
                 aria-label="Load YAML file"
             /></label>
           </div>
+          <p id="testPresetInfo" class="caption" role="status">
+            Load test queries MAST metadata for one real calibrated image; it
+            downloads nothing until Make. Archive access may require
+            MAST_API_TOKEN.
+          </p>
           <pre id="yamlPreview" class="code">No targets.</pre>
           <details>
             <summary>Edit YAML</summary>
@@ -607,10 +622,10 @@
         <section class="card">
           <div class="runline">
             <div>
-              <h2>Run</h2>
+              <h2>Make</h2>
               <span id="runState" class="state" role="status">Idle</span>
             </div>
-            <button id="run" class="primary" disabled>Run cutouts</button>
+            <button id="run" class="primary" disabled>Make cutouts</button>
           </div>
           <p class="caption">
             Runs on this machine. Closing the tab does not stop a run; keep the
@@ -714,12 +729,13 @@
         mast_criteria: "Additional MAST criteria (JSON)",
         mast_radius_arcmin: "MAST search radius (arcmin)",
         product_suffix: "Product suffix",
+        product_filename: "Exact product filename",
         query_limit: "Query limit",
         start: "Start (UTC, inclusive)",
         end: "End (UTC, exclusive)",
         detectors: "Detectors",
         filters: "Filters",
-        size: "Size (pixels)",
+        size: "Square side (pixels)",
         edge: "Detector edge policy",
         no_overlap: "No overlap",
         corrected_directory: "Corrected WCS directory",
@@ -727,8 +743,8 @@
         roundtrip_tolerance_pixels: "Numerical WCS tolerance (pixels)",
         fits_tolerance_pixels: "FITS approximation tolerance (pixels)",
         autocorrelation_limit: "Autocorrelation limit",
-        tile_size: "Tile size (pixels)",
-        radius: "Lag radius (pixels)",
+        tile_size: "Autocorrelation tile side (pixels)",
+        radius: "Autocorrelation lag radius (pixels)",
         exclude_from_stacks: "Exclude flagged cutouts from stacks",
         enabled: "Build display stacks",
         max_exposures: "Max. exposures",
@@ -736,7 +752,7 @@
         output_directory: "Output directory",
         retain_full_images: "Retain full images",
         formats: "Formats",
-        resume: "Resume",
+        resume: "Reuse completed cutouts",
         continue_on_error: "Continue on error",
         lock_timeout_seconds: "Lock timeout (seconds)",
       };
@@ -888,6 +904,16 @@
           input.value = value;
           input.onchange = () => {
             config[section][key] = input.value;
+            if (section === "astrometry" && key === "mode") {
+              if (
+                input.value === "corrected" &&
+                !config.astrometry.corrected_directory
+              ) {
+                config.astrometry.corrected_directory = "gaia_wcs";
+                $("astrometry-corrected_directory").value = "gaia_wcs";
+              }
+              updateAstrometryHelp();
+            }
             changed();
           };
           wrap.append(input);
@@ -947,9 +973,11 @@
           retain_full_images: "Save a full copy of each selected parent image",
         };
         if (tips[key]) wrap.title = tips[key];
-        if (section === "astrometry" && key === "mode")
+        if (section === "astrometry" && key === "mode") {
+          input.setAttribute("aria-describedby", "astrometryPolicyHelp");
           input.title =
             "Numerical consistency does not establish absolute sky accuracy. Corrected mode requires a corrected WCS file.";
+        }
         if (key === "filters") input.placeholder = "All filters";
         if (key === "autocorrelation_limit") input.placeholder = "Disabled";
         if (key === "mast_criteria") {
@@ -986,7 +1014,27 @@
           mast_radius_arcmin:
             "Candidate search radius around each sky target (default 6 arcmin); actual overlap is checked during extraction. Increase for larger cutouts or uncertain pointing.",
           filters: "Comma-separated; leave blank for all filters.",
-          autocorrelation_limit: "Leave blank to disable the quality screen.",
+          autocorrelation_limit:
+            "Start with 2.0 and explore 1.5–3.0 while inspecting results. This is the autocorrelation major/minor axis ratio: near 1 is round; values at or above the limit are flagged. This metric is provisional, not a calibrated trailing classifier. Blank disables it; native cutouts are still saved.",
+          tile_size:
+            "Side of the central square region used for autocorrelation. 64 means 64 × 64 cutout pixels. The cutout must be at least this large; otherwise the enabled screen flags insufficient tile size.",
+          radius:
+            "Maximum pixel offset (lag) from zero shift in the autocorrelation map used to measure its shape. 15 includes offsets within a 15-pixel circle. Keep it below half the tile side; it is not a sky aperture.",
+          size: "Side length of a square cutout: 150 produces a 150 × 150 pixel array. Pixels keep their native sampling; this does not force square pixels on the sky.",
+          max_exposures:
+            "Maximum inputs per target/filter stack. 0 disables this check. Exceeding a nonzero limit fails the stack phase without dropping exposures; native cutouts already saved remain available.",
+          max_memory_mb:
+            "Preflight estimate for the median cube and reprojection work arrays. Exceeding this limit fails the stack phase; native cutouts remain saved. 0 disables the estimate check, but the system can still run out of RAM. It is not a hard cap on process memory.",
+          corrected_directory:
+            "Default gaia_wcs matches the external correction tool’s output directory, relative to your working directory. Gladius reads existing {stem}_gaiawcs.asdf files; it does not perform the correction or create this folder.",
+          product_filename:
+            "Optional: download only this exact product. Load test pins one calibrated image here.",
+          lock_timeout_seconds:
+            "Seconds to wait if another process holds this same run’s output lock. 0 fails immediately. This prevents two processes writing the same run; it is not a MAST network timeout.",
+          resume:
+            "For identical settings, code and dependency versions, reuse cutouts whose recorded identity and file checksums match. An interrupted run makes missing/failed/corrupt outputs again. With no previous run, starts normally. Parent discovery and reading still occur.",
+          continue_on_error:
+            "Record per-image download/read/WCS failures and per-target conversion/extraction/write failures, then try later inputs. The run still finishes Failed if errors were recorded. Invalid configuration, initial MAST discovery, run-lock and stack-phase errors stop the run. Quality flags are recorded and may exclude stacks; they do not trigger this switch.",
           retain_full_images:
             "Saves a full copy of selected images in the output directory. Local originals are never deleted.",
         };
@@ -1034,13 +1082,25 @@
           if (section === "astrometry") {
             const note = document.createElement("p");
             note.className = "caption";
-            note.textContent =
-              "Validation checks numerical consistency, not absolute sky accuracy. Corrected mode requires an existing corrected WCS file.";
+            note.id = "astrometryPolicyHelp";
+            note.setAttribute("aria-live", "polite");
             body.prepend(note);
           }
           details.append(body);
           container.append(details);
         }
+        updateAstrometryHelp();
+      }
+      function updateAstrometryHelp() {
+        const descriptions = {
+          use: "Use the supplied parent WCS without the numerical consistency screen. Coordinate inversion or output validation can still fail. No absolute sky accuracy is established.",
+          validate:
+            "Check the supplied WCS on a 5 × 5 grid for finite coordinates, positive scale and inverse round trips within the tolerance. An inconsistent parent image fails before its targets are made; Continue on error can try later images. A consistently wrong sky solution can still pass.",
+          corrected:
+            "Read each parent’s existing corrected ASDF WCS from the correction directory, then apply the same numerical checks. Missing, unreadable or inconsistent corrections fail that image; Continue on error can try later images. Gladius does not run a Gaia fit, and retains the original WCS separately.",
+        };
+        const note = $("astrometryPolicyHelp");
+        if (note) note.textContent = descriptions[config.astrometry.mode];
       }
       function renderTargets() {
         const targets = config.targets;
@@ -1180,9 +1240,21 @@
         changed();
       };
       $("coordinateMode").onchange = () => {
-        const sky = $("coordinateMode").value === "sky";
-        $("coordALabel").textContent = sky ? "RA (degrees)" : "x (pixels)";
-        $("coordBLabel").textContent = sky ? "Dec (degrees)" : "y (pixels)";
+        const frame = $("coordinateMode").value;
+        const labels = {
+          sky: ["RA (degrees)", "Dec (degrees)"],
+          galactic: ["l (degrees)", "b (degrees)"],
+          ecliptic: ["λ (degrees)", "β (degrees)"],
+          pixel: ["x (pixels)", "y (pixels)"],
+        };
+        [$("coordALabel").textContent, $("coordBLabel").textContent] =
+          labels[frame];
+        $("coordinateHelp").textContent =
+          frame === "ecliptic"
+            ? "Barycentric true ecliptic, equinox J2000. Astropy converts to RA/Dec ICRS degrees for YAML; the input frame is retained in target metadata."
+            : frame === "pixel"
+              ? "Zero-based parent image pixels; the same x/y is used on every selected image."
+              : "Astropy converts sky inputs to RA/Dec ICRS degrees for YAML.";
       };
       $("addTarget").onclick = async () => {
         if ($("coordA").value === "" || $("coordB").value === "") {
@@ -1195,13 +1267,13 @@
           const candidate = "target-" + String(index++).padStart(6, "0");
           if (!config.targets.some((t) => t.id === candidate)) id = candidate;
         }
-        const target = {
-          id,
-          ...($("coordinateMode").value === "sky"
-            ? { ra: Number($("coordA").value), dec: Number($("coordB").value) }
-            : { x: Number($("coordA").value), y: Number($("coordB").value) }),
-        };
         try {
+          const { target } = await api("/api/target-coordinate", {
+            id,
+            frame: $("coordinateMode").value,
+            longitude: Number($("coordA").value),
+            latitude: Number($("coordB").value),
+          });
           await api("/api/validate", {
             yaml: JSON.stringify({
               ...config,
@@ -1215,6 +1287,39 @@
           errorAt("targetError", "");
         } catch (e) {
           errorAt("targetError", e.message);
+        }
+      };
+      $("loadTest").onclick = async () => {
+        const current = ++revision;
+        clearTimeout(timer);
+        validYaml = "";
+        $("run").disabled = true;
+        $("downloadYaml").disabled = true;
+        $("loadTest").disabled = true;
+        $("testPresetInfo").textContent =
+          "Querying MAST metadata… No images are being downloaded.";
+        try {
+          const data = await api("/api/test-config", {
+            base_directory: $("baseDirectory").value,
+          });
+          if (revision !== current) {
+            $("testPresetInfo").textContent =
+              "Test settings were not loaded because you edited the configuration during discovery.";
+            return;
+          }
+          config = data.configuration;
+          renderSettings();
+          renderTargets();
+          changed();
+          errorAt("configError", "");
+          $("testPresetInfo").textContent =
+            `Test: ${data.filename}. Make will download one full parent image (MAST advertises ${(data.download_bytes / 1048576).toFixed(1)} MiB) and save a 64 × 64 ASDF cutout. Stacks and quality screening are off. No image has been downloaded yet.`;
+        } catch (e) {
+          $("testPresetInfo").textContent =
+            `MAST test discovery did not complete: ${e.message} No test settings or images were loaded.`;
+          if (revision === current) changed();
+        } finally {
+          $("loadTest").disabled = false;
         }
       };
       $("yamlUpload").onchange = async (event) => {

@@ -51,6 +51,7 @@ class Inputs(Options):
     mast_criteria: dict[str, Any] = Field(default_factory=dict)
     mast_radius_arcmin: Annotated[float, Field(gt=0, le=30, allow_inf_nan=False)] = 6.0
     product_suffix: str = "_cal"
+    product_filename: str | None = None
     query_limit: PositiveInt = 50000
 
     @model_validator(mode="after")
@@ -106,7 +107,7 @@ class Extraction(Options):
 
 class Astrometry(Options):
     mode: Literal["use", "validate", "corrected"] = "validate"
-    corrected_directory: Path | None = None
+    corrected_directory: Path | None = Path("gaia_wcs")
     corrected_pattern: str = "{stem}_gaiawcs.asdf"
     roundtrip_tolerance_pixels: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 0.001
     fits_tolerance_pixels: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 0.01
@@ -140,8 +141,8 @@ class Quality(Options):
 
 class Stacks(Options):
     enabled: bool = False
-    max_exposures: PositiveInt = 100
-    max_memory_mb: PositiveInt = 512
+    max_exposures: Annotated[int, Field(strict=True, ge=0)] = 100
+    max_memory_mb: Annotated[int, Field(strict=True, ge=0)] = 512
 
 
 class Storage(Options):

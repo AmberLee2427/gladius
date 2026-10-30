@@ -30,12 +30,12 @@ def build_stacks(entries, run_directory: Path, config):
         groups[(entry["target_id"], entry["filter"])].append((key, entry))
     products = []
     for (target, band), rows in groups.items():
-        if len(rows) > config.stacks.max_exposures:
+        if config.stacks.max_exposures and len(rows) > config.stacks.max_exposures:
             raise ValueError("Stack exceeds stacks.max_exposures; no inputs silently dropped")
         n = config.extraction.size
         # Median stack plus reprojection work arrays; conservatively bound memory.
         estimate = (len(rows) + 20) * n * n * 8 / 1024**2
-        if estimate > config.stacks.max_memory_mb:
+        if config.stacks.max_memory_mb and estimate > config.stacks.max_memory_mb:
             raise ValueError(f"Stack needs approximately {estimate:.0f} MiB; exceeds max_memory_mb")
         units = {entry["data_units"] for _, entry in rows}
         if len(units) != 1:

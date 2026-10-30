@@ -136,3 +136,59 @@ def test_bundled_branding_and_license_resources(gui):
     assert status == 200 and b"Copyright" in licenses and b"NumPy" in licenses
     assert request(gui, "/assets/unknown.png", token=False)[0] == 404
     assert request(gui, "/assets/../config.py", token=False)[0] == 404
+
+
+def test_coordinate_conversion_and_workspace_are_portable(gui):
+    status, data = request(gui, "/api/target-coordinate",
+                           {"id": "gc", "frame": "galactic", "longitude": 0, "latitude": 0})
+    assert status == 200
+    assert data["target"]["ra"] == pytest.approx(266.405, abs=0.002)
+    assert data["target"]["x"] is None
+    assert request(gui, "/api/target-coordinate",
+                   {"id": "bad", "frame": "galactic", "longitude": 0, "latitude": 91})[0] == 400
+    _, defaults = request(gui, "/api/defaults")
+    assert defaults["workspace"] == str(gui.workspace)
+    assert defaults["configuration"]["astrometry"]["corrected_directory"] == "gaia_wcs"
+
+
+def test_real_archive_test_configuration_uses_metadata_without_downloading(gui, monkeypatch):
+    import sys
+    from types import ModuleType
+
+    from astropy.table import Table
+
+    class Missions:
+        dataset_kwds = {"roman": "fileSetName"}
+
+        def query_criteria(self, **criteria):
+            assert criteria["productLevel"] == "2" and criteria["limit"] == 5
+            return Table(rows=[("data-a", 270., -29.), ("data-b", 271., -30.)],
+                         names=["fileSetName", "ra", "dec"])
+
+        def get_unique_product_list(self, rows):
+            dataset = str(rows[0]["fileSetName"])
+            return Table(rows=[(dataset+"_cal.asdf", 2000 if dataset == "data-a" else 1000)],
+                         names=["filename", "size"])
+
+        def filter_products(self, products, **criteria):
+            assert criteria == {"file_suffix": "_cal"}
+            return products
+
+        def download_products(self, *args, **kwargs):
+            pytest.fail("Load test must never download images")
+
+    module = ModuleType("astroquery.mast")
+    module.MastMissions = lambda **kwargs: Missions()
+    monkeypatch.setitem(sys.modules, "astroquery.mast", module)
+    monkeypatch.delenv("MAST_API_TOKEN", raising=False)
+    status, data = request(gui, "/api/test-config", {"base_directory": str(gui.workspace)})
+    assert status == 200
+    config = data["configuration"]
+    assert data["download_bytes"] == 1000
+    assert config["inputs"]["mast_criteria"] == {"fileSetName": "data-b"}
+    assert config["inputs"]["product_filename"] == "data-b_cal.asdf"
+    assert config["targets"][0]["ra"] == 271
+    assert config["extraction"]["size"] == 64 and not config["stacks"]["enabled"]
+    assert config["storage"]["output_directory"] == str(gui.workspace / "gladius-mast-test")
+    assert not (gui.workspace / "gladius-mast-test").exists()
+    assert not (gui.workspace / ".gladius-gui").exists()

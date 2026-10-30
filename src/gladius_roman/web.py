@@ -17,7 +17,7 @@ import yaml
 from .config import RunConfig, Target, load_config, parse_config
 from .io import atomic_json
 from .pipeline import run
-from .targets import parse_targets_csv
+from .targets import parse_targets_csv, target_from_coordinates
 
 MAX_REQUEST_BYTES = 16 * 1024 * 1024
 
@@ -250,7 +250,20 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(payload, dict):
                 raise ValueError("Expected a JSON object")
             path = urlsplit(self.path).path
-            if path == "/api/targets":
+            if path == "/api/target-coordinate":
+                target = target_from_coordinates(
+                    target_id=payload["id"], frame=payload["frame"],
+                    longitude=payload["longitude"], latitude=payload["latitude"],
+                )
+                self._reply(200, {"target": target.model_dump(mode="json")})
+            elif path == "/api/test-config":
+                from .inputs import mast_test_configuration
+
+                base = Path(payload.get("base_directory") or self.server.workspace).expanduser()
+                if not base.is_absolute():
+                    base = self.server.workspace / base
+                self._reply(200, mast_test_configuration(base))
+            elif path == "/api/targets":
                 if not isinstance(payload.get("csv"), str):
                     raise ValueError("csv must be UTF-8 CSV text")
                 targets = parse_targets_csv(payload["csv"])

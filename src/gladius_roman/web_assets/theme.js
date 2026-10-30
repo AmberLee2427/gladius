@@ -14,7 +14,8 @@
     document.documentElement.dataset.theme = dark ? "dark" : "light";
     const button = document.getElementById("themeToggle");
     if (button) {
-      button.textContent = dark ? "Light mode" : "Dark mode";
+      button.textContent = dark ? "☀" : "☾";
+      button.title = dark ? "Switch to light mode" : "Switch to dark mode";
       button.setAttribute("aria-pressed", String(dark));
     }
   }

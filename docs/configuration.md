@@ -97,8 +97,13 @@ samples are included only with full valid weight. A COVERAGE image records the
 number contributing at each output pixel. No PSF matching, unit conversion,
 photometric harmonization or uncertainty propagation is performed. No stack is
 made for a group with no eligible inputs. Manifest exclusions explain why.
-`max_exposures` and a conservative `max_memory_mb` estimate bound memory use;
-excess inputs are never silently truncated.
+`max_exposures` and a conservative `max_memory_mb` estimate provide preflight
+checks per target/filter stack. Set either value to `0` to disable that check.
+Exceeding a nonzero limit raises an error and leaves the run failed; already
+saved native cutouts remain available. Earlier completed stack groups can also
+remain on disk. Excess inputs are never silently truncated. The memory estimate
+is not an enforced process-memory cap, and disabling it does not guarantee
+sufficient RAM; the operating system may terminate a process that exhausts RAM.
 
 ## Storage, restarts and failures
 
@@ -207,3 +212,57 @@ For a local opt-in run on Linux/macOS, with `MAST_API_TOKEN` already set:
 python -m pip install '.[test,roman,mast]'
 GLADIUS_LIVE_MAST=1 python -m pytest tests/integration -m live_mast -v
 ```
+
+
+## GUI controls and testing
+
+The GUI’s **Make cutouts** button calls the same pipeline as `gladius run`.
+**Load test** makes real MAST metadata queries for up to five Level 2 datasets,
+selects the smallest known-size calibrated product in that sample, and loads a
+one-target, 64 × 64 ASDF configuration pinned to the dataset and exact product
+filename. It does not download images or start a run. The UI shows the advertised
+full-parent download size; the parent may be much larger than the cutout. Click
+Make to download it. An inaccessible archive, timeout or empty sample produces an
+error, never fabricated example data. Local archive access uses the launching
+environment’s MAST_API_TOKEN; a repository secret is available only to Actions.
+This one-image GUI test is distinct from CI’s 20 MiB associated-product smoke test.
+`inputs.product_filename` optionally restricts products to one exact filename.
+
+Manual targets support ICRS, Galactic and barycentric true ecliptic coordinates
+(equinox J2000), all in decimal degrees, plus zero-based parent pixels. Astropy
+converts sky frames to ICRS before the YAML is written. Non-ICRS input frame and
+coordinates are retained as target metadata. Ecliptic does not infer distance,
+proper motion or a different observing epoch. CSV ingestion still uses its
+explicit ICRS/pixel column conventions.
+
+The working directory starts from `--workspace`, which defaults to the launch
+folder, and is editable. The corrected-WCS directory defaults to `gaia_wcs`, the
+external correction tool’s default output location; Gladius only reads existing
+corrections and does not run that tool or create the correction folder.
+
+The WCS policy help changes with the selection. Numerical validation fails a
+parent before extracting its targets if the supplied transform is inconsistent.
+With continue-on-error enabled later images can be tried. Validation cannot
+establish absolute sky accuracy. Corrected mode reads and validates the separate
+correction and preserves the original transform.
+
+The autocorrelation screen uses the central `tile_size` square in the cutout.
+`radius` is the maximum offset from zero lag in the autocorrelation map used for
+shape moments, not a sky aperture. A threshold of 2.0, with exploratory inspection
+around 1.5–3.0, is a starting suggestion only; this method is uncalibrated. Ratios
+at or above the threshold are flagged. Insufficient tile/signal also flags the
+screen; native cutouts remain saved. A 150-pixel cutout is 150 × 150 native pixels,
+not a promise of square angular pixels.
+
+Resume reuses checksum-verified outputs for identical configuration, code and
+dependency versions; without a previous run it starts normally. Parent discovery
+and reading still occur. Lock timeout is how long to wait for another process
+writing the same run directory; 0 fails immediately, and is unrelated to network
+timeouts. Continue-on-error handles failures inside individual image/target work
+(download, read, WCS, coordinate inversion, extraction, product validation/write).
+It records errors and keeps the final run failed. Configuration, initial archive
+discovery, run-lock and stack-phase failures remain fatal. Quality flags are
+recorded decisions, not exceptions governed by continue-on-error.
+
+Coordinate-frame reference: [Astropy transformations](https://docs.astropy.org/en/stable/coordinates/transforming.html)
+and [BarycentricTrueEcliptic](https://docs.astropy.org/en/stable/api/astropy.coordinates.BarycentricTrueEcliptic.html).

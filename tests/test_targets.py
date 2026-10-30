@@ -59,3 +59,22 @@ def test_cli_csv_replaces_targets_before_yaml_validation(demo, tmp_path):
     product = manifest.parent / next(iter(next(iter(records["entries"].values()))["files"]))
     assert read_cutout(product).provenance["target"]["metadata"] == {"catalogue": "original"}
     assert load_config(demo, targets_path=csv).targets[0].id == "my-event"
+
+
+def test_galactic_ecliptic_and_pixel_coordinates():
+    from gladius_roman.targets import target_from_coordinates
+
+    galactic = target_from_coordinates(target_id="gc", frame="galactic", longitude=0, latitude=0)
+    assert galactic.ra == pytest.approx(266.405, abs=0.002)
+    assert galactic.dec == pytest.approx(-28.936, abs=0.002)
+    assert galactic.metadata["input_frame"] == "galactic"
+    ecliptic = target_from_coordinates(target_id="ec", frame="ecliptic", longitude=90, latitude=0)
+    assert ecliptic.ra == pytest.approx(90, abs=0.01)
+    assert ecliptic.dec == pytest.approx(23.439, abs=0.01)
+    assert ecliptic.metadata["input_equinox"] == "J2000"
+    pixel = target_from_coordinates(target_id="px", frame="pixel", longitude=-2, latitude=12)
+    assert pixel.x == -2 and pixel.ra is None
+    for frame, lon, lat in [("galactic", 361, 0), ("ecliptic", 1, 91),
+                            ("unknown", 1, 2), ("sky", float("nan"), 0)]:
+        with pytest.raises(ValueError):
+            target_from_coordinates(target_id="bad", frame=frame, longitude=lon, latitude=lat)

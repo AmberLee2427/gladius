@@ -146,6 +146,10 @@ def discover(config: RunConfig):
     products = missions.filter_products(products, file_suffix=config.inputs.product_suffix)
     if not len(products):
         raise ValueError("MAST returned no products with the requested product_suffix")
+    if config.inputs.product_filename:
+        products = products[[str(row["filename"]) == config.inputs.product_filename for row in products]]
+        if not len(products):
+            raise ValueError("MAST returned no product matching inputs.product_filename")
     names = [str(row["filename"]) for row in products]
     if len(set(names)) != len(names):
         raise ValueError("MAST returned duplicate filenames; ambiguous product identity")
@@ -175,3 +179,74 @@ def staged(source, missions, work: Path):
         if len(paths) != 1:
             raise RuntimeError("MAST staging did not produce exactly one successful local parent")
         yield paths[0]
+
+
+def mast_test_configuration(base: Path) -> dict:
+    """Query a small real metadata sample and prepare one-image YAML; never download.
+
+    The smallest known-size calibrated product among five sampled L2 datasets is
+    selected. This is a sample, not a claim to find the archive's smallest image.
+    """
+    import math
+
+    import yaml
+
+    try:
+        from astroquery.mast import MastMissions
+    except ImportError as exc:
+        raise ValueError('Load test requires pip install "gladius-roman[mast]"') from exc
+    missions = MastMissions(mission="roman")
+    missions.TIMEOUT = 30
+    if missions.dataset_kwds.get("roman") != "fileSetName":
+        raise ValueError("Load test requires astroquery>=0.4.11")
+    try:
+        if os.environ.get("MAST_API_TOKEN"):
+            missions.login(token=os.environ["MAST_API_TOKEN"], store_token=False)
+        observations = missions.query_criteria(
+            productLevel="2", limit=5, select_cols=["fileSetName", "ra", "dec"]
+        )
+        candidates = []
+        for index, row in enumerate(observations):
+            try:
+                ra, dec = float(row["ra"]), float(row["dec"])
+                if not (math.isfinite(ra) and math.isfinite(dec) and 0 <= ra < 360 and -90 <= dec <= 90):
+                    continue
+            except (ValueError, TypeError):
+                continue
+            products = missions.get_unique_product_list(observations[[index]])
+            if not len(products):
+                continue
+            products = missions.filter_products(products, file_suffix="_cal")
+            for product in products:
+                try:
+                    size = float(product["size"])
+                    if not math.isfinite(size) or size <= 0 or size != int(size):
+                        continue
+                    name = str(product["filename"])
+                    if not name.lower().endswith(("_cal.asdf", "_cal.fits")):
+                        continue
+                    candidates.append((int(size), name, str(row["fileSetName"]), ra, dec))
+                except (ValueError, TypeError, KeyError):
+                    continue
+    except Exception as exc:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        if status in (401, 403):
+            raise ValueError("MAST denied the test query. Set MAST_API_TOKEN in the launching "
+                             "shell/server and verify Roman access; a GitHub secret is only "
+                             "available inside GitHub Actions.") from exc
+        raise ValueError(f"MAST test discovery failed: {type(exc).__name__}: {exc}") from exc
+    if not candidates:
+        raise ValueError("No accessible calibrated image with a known size and sky position "
+                         "was found in the five-dataset MAST sample. No test YAML was loaded.")
+    size, filename, dataset, ra, dec = min(candidates)
+    config = RunConfig.model_validate({
+        "targets": [{"id": "mast-test", "ra": ra, "dec": dec}],
+        "inputs": {"mode": "mast", "mast_criteria": {"fileSetName": dataset},
+                   "product_filename": filename, "query_limit": 100},
+        "extraction": {"size": 64, "no_overlap": "error"},
+        "storage": {"output_directory": "gladius-mast-test", "formats": ["asdf"]},
+        "quality": {"autocorrelation_limit": None}, "stacks": {"enabled": False},
+    }).resolved(base)
+    return {"yaml": yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False),
+            "configuration": config.model_dump(mode="json"), "download_bytes": size,
+            "filename": filename, "dataset": dataset}

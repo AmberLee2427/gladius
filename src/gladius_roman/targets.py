@@ -79,3 +79,35 @@ def parse_targets_csv(text: str) -> list[Target]:
 def read_targets_csv(path: str | Path) -> list[Target]:
     """Load a CSV path relative to the caller's working directory."""
     return parse_targets_csv(Path(path).expanduser().read_text(encoding="utf-8-sig"))
+
+
+def target_from_coordinates(*, target_id: str, frame: str, longitude: float,
+                            latitude: float) -> Target:
+    """Convert decimal-degree sky coordinates with Astropy; preserve input metadata.
+
+    Ecliptic means barycentric true ecliptic at equinox J2000, with no inferred
+    distance, motion or observing epoch. Pixel positions bypass sky conversion.
+    """
+    import math
+
+    from astropy.coordinates import BarycentricTrueEcliptic, SkyCoord
+    from astropy.time import Time
+
+    lon, lat = float(longitude), float(latitude)
+    if not all(math.isfinite(v) for v in (lon, lat)):
+        raise ValueError("Coordinates must be finite")
+    if frame == "pixel":
+        return Target(id=target_id, x=lon, y=lat)
+    if frame not in ("sky", "galactic", "ecliptic"):
+        raise ValueError("Choose ICRS, Galactic, ecliptic or pixel coordinates")
+    if not 0 <= lon < 360 or not -90 <= lat <= 90:
+        raise ValueError("Longitude/RA must be in [0, 360); latitude/Dec in [-90, 90] degrees")
+    if frame == "sky":
+        return Target(id=target_id, ra=lon, dec=lat)
+    system = "galactic" if frame == "galactic" else BarycentricTrueEcliptic(equinox=Time("J2000"))
+    sky = SkyCoord(lon, lat, unit="deg", frame=system).icrs
+    metadata = {"input_frame": frame, "input_longitude_deg": str(lon),
+                "input_latitude_deg": str(lat)}
+    if frame == "ecliptic":
+        metadata.update(input_frame="barycentric_true_ecliptic", input_equinox="J2000")
+    return Target(id=target_id, ra=float(sky.ra.deg), dec=float(sky.dec.deg), metadata=metadata)

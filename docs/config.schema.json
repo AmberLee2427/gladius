@@ -23,7 +23,7 @@
               "type": "null"
             }
           ],
-          "default": null,
+          "default": "gaia_wcs",
           "title": "Corrected Directory"
         },
         "corrected_pattern": {
@@ -154,6 +154,18 @@
           "title": "Product Suffix",
           "type": "string"
         },
+        "product_filename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Product Filename"
+        },
         "query_limit": {
           "default": 50000,
           "exclusiveMinimum": 0,
@@ -259,13 +271,13 @@
         },
         "max_exposures": {
           "default": 100,
-          "exclusiveMinimum": 0,
+          "minimum": 0,
           "title": "Max Exposures",
           "type": "integer"
         },
         "max_memory_mb": {
           "default": 512,
-          "exclusiveMinimum": 0,
+          "minimum": 0,
           "title": "Max Memory Mb",
           "type": "integer"
         }
