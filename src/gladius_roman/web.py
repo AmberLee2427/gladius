@@ -34,6 +34,20 @@ GUI_RESOURCES = {
     "/notices": ("notices.txt", "text/plain; charset=utf-8"),
 }
 
+# Explicitly allow only the bundled family stylesheet, script and fonts.
+GUI_RESOURCES["/assets/family/family-font-0.ttf"] = ("family/family-font-0.ttf", "font/ttf")
+GUI_RESOURCES["/assets/family/family-font-1.ttf"] = ("family/family-font-1.ttf", "font/ttf")
+GUI_RESOURCES["/assets/family/family-font-2.ttf"] = ("family/family-font-2.ttf", "font/ttf")
+GUI_RESOURCES["/assets/family/family-font-3.ttf"] = ("family/family-font-3.ttf", "font/ttf")
+GUI_RESOURCES["/assets/family/family-font-4.ttf"] = ("family/family-font-4.ttf", "font/ttf")
+GUI_RESOURCES["/assets/family/family-font-5.ttf"] = ("family/family-font-5.ttf", "font/ttf")
+GUI_RESOURCES["/assets/family/family-theme.js"] = (
+    "family/family-theme.js",
+    "text/javascript; charset=utf-8",
+)
+GUI_RESOURCES["/assets/family/family.css"] = ("family/family.css", "text/css; charset=utf-8")
+GUI_RESOURCES["/assets/family/fonts.css"] = ("family/fonts.css", "text/css; charset=utf-8")
+
 
 class BusyError(ValueError):
     """The GUI already owns an active pipeline run."""
@@ -185,7 +199,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         if path == "/":
-            page = files("gladius_roman").joinpath("web_assets/index.html").read_text(encoding="utf-8")
+            page = (
+                files("gladius_roman").joinpath("web_assets/index.html").read_text(encoding="utf-8")
+            )
             bootstrap = json.dumps({"token": self.server.token}).replace("<", "\\u003c")
             page = page.replace("__BOOTSTRAP__", bootstrap).replace("__NONCE__", self.server.token)
             self._reply(200, page.encode(), "text/html; charset=utf-8")
@@ -255,8 +271,10 @@ class Handler(BaseHTTPRequestHandler):
             path = urlsplit(self.path).path
             if path == "/api/target-coordinate":
                 target = target_from_coordinates(
-                    target_id=payload["id"], frame=payload["frame"],
-                    longitude=payload["longitude"], latitude=payload["latitude"],
+                    target_id=payload["id"],
+                    frame=payload["frame"],
+                    longitude=payload["longitude"],
+                    latitude=payload["latitude"],
                 )
                 self._reply(200, {"target": target.model_dump(mode="json")})
             elif path == "/api/test-config":

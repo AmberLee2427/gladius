@@ -117,6 +117,10 @@ def test_bundled_branding_and_license_resources(gui):
     assert status == 200 and b"gladius-theme" in theme_script
     status, theme_css = request(gui, "/assets/theme.css", token=False)
     assert status == 200 and b'color-scheme: dark' in theme_css
+    for asset in ("family.css", "fonts.css", "family-theme.js", "family-font-0.ttf"):
+        status, content = request(gui, f"/assets/family/{asset}", token=False)
+        assert status == 200 and content
+    assert request(gui, "/assets/family/../../config.py", token=False)[0] == 404
     for url in ("https://rges-pit.org/", "https://github.com/AmberLee2427/gladius",
                 "https://archive.stsci.edu/missions-and-data/roman", "https://mldb.rges-pit.com"):
         assert url.encode() in page

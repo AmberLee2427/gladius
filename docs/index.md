@@ -1,10 +1,8 @@
 # Gladius
 
-Roman detector cutouts from Python, the command line, or a local browser.
-
-Extract all targets from each image in one pass. Keep native science pixels,
-uncertainties, data-quality flags and parent metadata, with an explicit mapping
-back to the original detector image.
+```{raw} html
+<section class="family-billboard"><div class="family-kicker">Gladius · Roman image cutouts</div><h1>Gladius</h1><p>Roman detector cutouts from Python, the command line, or a local browser. Extract all targets from each image in one pass, retaining uncertainties, flags and parent metadata.</p></section>
+```
 
 ```{raw} html
 <div class="start-grid">

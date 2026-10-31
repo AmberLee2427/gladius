@@ -23,7 +23,7 @@ Issues = "https://github.com/AmberLee2427/gladius/issues"
 roman = ["roman_datamodels>=0.25"]
 mast = ["astroquery>=0.4.11"]
 test = ["pytest>=8", "pytest-cov>=4"]
-docs = ["sphinx>=7", "myst-parser>=2", "furo>=2024.8.6"]
+docs = ["sphinx>=7", "myst-parser>=2", "sphinx-rtd-theme>=3"]
 notebook = ["ipykernel>=6", "matplotlib>=3.8"]
 dev = ["gladius-roman[test,docs]", "ruff>=0.9", "build>=1", "twine>=5", "tox>=4"]
 
@@ -34,7 +34,7 @@ gladius = "gladius_roman.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-gladius_roman = ["data/*.yaml", "web_assets/*.html", "web_assets/*.css", "web_assets/*.js", "web_assets/*.png", "web_assets/*.txt", "py.typed"]
+gladius_roman = ["data/*.yaml", "web_assets/*.html", "web_assets/*.css", "web_assets/*.js", "web_assets/*.png", "web_assets/*.txt", "web_assets/family/*", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
