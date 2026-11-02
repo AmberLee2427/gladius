@@ -136,3 +136,9 @@ mast-live-results.xml
 
 # Pre-Gladius local run records remain local
 .roman-cutouts-gui/
+
+# Editable tutorial copies and Jupyter language-server artifacts
+.virtual_documents/
+gladius-local-example/
+/gladius-local-tutorial*.ipynb
+/gladius-nexus-tutorial*.ipynb

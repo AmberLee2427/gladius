@@ -15,5 +15,22 @@ the resolved configuration. Remove credentials and private data before sharing.
 Do not add external solver code without an explicit compatible license and
 attribution. Contributions must follow CODE_OF_CONDUCT.md and AI_POLICY.md.
 
-There is no hosted repository configured yet. When one is established, use its
-issue tracker and pull requests; this file deliberately does not invent a URL.
+Use [GitHub issues and pull requests](https://github.com/AmberLee2427/gladius)
+for contributions.
+
+## Notebook contributions
+
+Each source notebook lives in its own folder under `notebooks/`, with a sibling
+`requirements.txt`. Keep outputs cleared and credentials/data out of Git. Bundled
+tutorial copies must match those sources. The Nexus notebook requires an explicit
+credential-file path; automation can select it with `GLADIUS_TUTORIAL_ENV_FILE`.
+Its optional live GUI stays disabled for unattended execution.
+
+These conventions follow the [STScI notebook contribution guide](https://github.com/spacetelescope/notebooks/blob/main/CONTRIBUTING.md)
+and [notebook infrastructure workflow](https://spacetelescope.github.io/notebook-infrastructure/contributing_notebooks/).
+Preparing our source does not submit it or imply acceptance. An eventual STScI PR
+needs the chosen repository's layout/footer, scientific and technical review,
+a released version supporting any enabled GUI cells, and an agreed way for its
+CI to access the required real data. Restricted-input outputs must not be exposed
+in a public notebook build. The user-selected credential path remains required;
+we do not replace inaccessible observations with synthetic data.

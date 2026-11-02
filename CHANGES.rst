@@ -1,4 +1,17 @@
-0.1.0a2 (unreleased)
+0.1.0a3 (2026-11-01)
+===================
+
+* Add local and Nexus tutorial launchers, bundled notebooks and matching kernel
+  registration. The Nexus tutorial keeps its real-MAST workflow and explicitly
+  selected credential file; interactive GUI cells are optional.
+* Support notebook GUI iframes with explicit parent-origin permissions, loaded
+  run configuration and shutdown cells. Fix horizontal overflow in narrow frames.
+* Move the GUI theme toggle into the header, replacing the Local badge and
+  keeping the footer clear.
+* Structure tutorials for potential STScI contribution, with learning goals,
+  dependency files, explanations, resources and cleared outputs.
+
+0.1.0a2 (2026-11-01)
 ===================
 
 * Add ``gladius token`` with hidden input and private dotenv persistence, explicit

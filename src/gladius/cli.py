@@ -22,7 +22,21 @@ def main(argv=None):
     """Return zero on success, nonzero for invalid config or any failed exposure."""
     parser = argparse.ArgumentParser(prog="gladius", description=__doc__)
     parser.add_argument("--version", action="version", version=__version__)
-    commands = parser.add_subparsers(dest="command", required=True)
+    tutorial = parser.add_mutually_exclusive_group()
+    tutorial.add_argument(
+        "--nexus-tutorial",
+        action="store_true",
+        help="copy a Nexus tutorial into the current directory and open it in JupyterLab",
+    )
+    tutorial.add_argument(
+        "--tutorial",
+        action="store_true",
+        help="copy a local tutorial into the current directory and start JupyterLab",
+    )
+    parser.add_argument(
+        "--no-open", action="store_true", help="copy a tutorial without opening JupyterLab"
+    )
+    commands = parser.add_subparsers(dest="command")
     init = commands.add_parser("init-config", help="write an annotated YAML configuration")
     init.add_argument("path", type=Path)
     validate = commands.add_parser("validate", help="validate YAML without querying or downloading")
@@ -47,6 +61,10 @@ def main(argv=None):
         action="store_true",
         help="use the Roman Nexus host with this JupyterHub server prefix",
     )
+    gui.add_argument(
+        "--iframe-origin",
+        help="allow notebook embedding from this exact origin, or self for the Jupyter proxy",
+    )
     gui.add_argument("--workspace", type=Path, default=Path.cwd())
     gui.add_argument("--env-file", type=Path, help="load credentials from this dotenv file")
     token = commands.add_parser("token", help="save a MAST token using a hidden prompt")
@@ -68,7 +86,20 @@ def main(argv=None):
         "--max-parent-mib", type=float, help="MAST advertised parent size limit (default: 512)"
     )
     args = parser.parse_args(argv)
+    is_tutorial = args.nexus_tutorial or args.tutorial
+    if is_tutorial and args.command:
+        parser.error("Choose a tutorial flag or a subcommand, not both")
+    if not is_tutorial and (args.no_open or not args.command):
+        parser.error("Choose a subcommand, --tutorial or --nexus-tutorial")
     try:
+        if is_tutorial:
+            from .tutorials import open_tutorial, write_tutorial
+
+            path = write_tutorial(Path.cwd(), nexus=args.nexus_tutorial)
+            print(f"Tutorial: {path}")
+            if not args.no_open:
+                print(open_tutorial(path, nexus=args.nexus_tutorial))
+            return 0
         if args.command == "token":
             path = args.env_file.expanduser().absolute()
             if path.is_symlink() or (path.exists() and not path.is_file()):
@@ -99,7 +130,13 @@ def main(argv=None):
 
             if args.env_file:
                 load_environment(env_file=args.env_file)
-            serve(args.workspace, port=args.port, public_url=args.public_url, nexus=args.nexus)
+            serve(
+                args.workspace,
+                port=args.port,
+                public_url=args.public_url,
+                nexus=args.nexus,
+                iframe_origin=args.iframe_origin,
+            )
         elif args.command == "init-config":
             with args.path.open("x") as stream:
                 stream.write(files("gladius").joinpath("data/example.yaml").read_text())

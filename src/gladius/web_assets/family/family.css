@@ -183,3 +183,6 @@ body.family-gui #configError{background:#f5edd8!important;border:1px solid #c8b4
 .rst-footer-buttons .btn.btn-neutral{background:#a84aeb!important;color:#fff!important;border:1px solid #a84aeb!important;box-shadow:none!important}
 .rst-footer-buttons .btn.btn-neutral:hover{background:#9440d1!important;border-color:#9440d1!important;color:#fff!important}
 .wy-side-nav-search img.logo{filter:none!important;mix-blend-mode:normal!important;opacity:1!important}
+
+/* The run builder keeps its theme control in the header, clear of the footer. */
+body.family-gui .header-actions .family-toggle{position:static;flex-shrink:0;background:transparent!important;color:#f3edde!important;border-color:#89768f!important;box-shadow:none}

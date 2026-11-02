@@ -138,7 +138,16 @@
         grid-template-columns: minmax(0, 1.15fr) minmax(350px, 0.85fr);
         gap: 24px;
       }
+      /* Grid/flex items must shrink when a notebook sidebar reduces the iframe.
+         Otherwise intrinsic form/pre widths push cards beyond the viewport. */
+      .layout > *,
+      .card,
+      .grid > *,
+      .field {
+        min-width: 0;
+      }
       .card {
+        overflow-wrap: anywhere;
         background: var(--surface);
         border: 1px solid var(--line);
         border-radius: 12px;
@@ -200,6 +209,8 @@
       select,
       textarea {
         width: 100%;
+        min-width: 0;
+        max-width: 100%;
         border: 1px solid var(--line);
         border-radius: 7px;
         background: var(--surface);
@@ -214,7 +225,7 @@
       }
       .grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0 16px;
       }
       .check {
@@ -428,7 +439,7 @@
       }
       @media (max-width: 900px) {
         .layout {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
         .sticky {
           position: static;
@@ -445,7 +456,7 @@
       }
       @media (max-width: 480px) {
         .grid {
-          grid-template-columns: 1fr;
+          grid-template-columns: minmax(0, 1fr);
         }
         header .pill {
           display: none;
@@ -474,17 +485,7 @@
           />
         </h1>
       </div>
-      <div class="header-actions">
-        <div class="pill">Local</div>
-        <button
-          id="themeToggle"
-          type="button"
-          aria-label="Toggle dark mode"
-          aria-pressed="false"
-        >
-          ☾
-        </button>
-      </div>
+      <div class="header-actions"></div>
     </header>
     <main class="layout">
       <div>

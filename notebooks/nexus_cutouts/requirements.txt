@@ -1,0 +1,9 @@
+# Python 3.12+ dependency baseline.
+roman-gladius[roman,mast,notebook]>=0.1.0a3,<0.2
+numpy>=2.5.4
+astropy>=8.0.2
+asdf>=6.0.0
+PyYAML>=6.0.3
+python-dotenv>=1.2.4
+matplotlib>=3.11.2
+ipython>=9.18.0

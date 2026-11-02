@@ -112,7 +112,8 @@ def test_bundled_branding_and_license_resources(gui):
     assert status == 200
     assert b"Gladius \xc2\xb7 Roman image cutouts" in page
     assert b'rel="icon"' in page
-    assert b'id="themeToggle"' in page
+    assert b'class="header-actions"' in page
+    assert b'>Local</div>' not in page
     status, theme_script = request(gui, "/assets/theme.js", token=False)
     assert status == 200 and b"gladius-theme" in theme_script
     status, theme_css = request(gui, "/assets/theme.css", token=False)
@@ -309,3 +310,55 @@ def test_startup_prints_named_server_link(tmp_path, monkeypatch, capsys):
     assert "Gladius GUI: https://roman.science.stsci.edu/user/amber/commissioning/proxy/" in output
     assert "Local listener: http://127.0.0.1:" in output
     assert "token" not in output.lower()
+
+
+def test_iframe_policy_is_explicit_and_origin_limited(tmp_path):
+    from gladius.web import _frame_ancestors
+
+    for origin, expected in (
+        (None, "'none'"),
+        ("self", "'self'"),
+        ("http://localhost:8888", "'self' http://localhost:8888"),
+    ):
+        server = GuiServer(tmp_path, port=0, iframe_origin=origin)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with urlopen(server.url) as response:
+                assert f"frame-ancestors {expected};" in response.headers["Content-Security-Policy"]
+            assert request(server, "/api/defaults", token=False)[0] == 403
+            assert request(server, "/api/defaults", origin="http://localhost:8888")[0] == 403
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=3)
+    for origin in (
+        "*",
+        "https://example.com/path",
+        "https://a.example https://b.example",
+        "https://example.com; frame-ancestors *",
+        "//example.com",
+        "https://user:pass@host",
+    ):
+        with pytest.raises(ValueError):
+            _frame_ancestors(origin)
+
+
+def test_embedded_gui_starts_with_notebook_configuration(tmp_path):
+    from gladius.config import RunConfig
+
+    config = RunConfig(targets=[{"id": "notebook-target", "x": 5, "y": 6}], extraction={"size": 42})
+    server = GuiServer(tmp_path, port=0, initial_config=config)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        status, data = request(server, "/api/defaults")
+        assert status == 200
+        assert data["configuration"]["targets"][0]["id"] == "notebook-target"
+        assert data["configuration"]["extraction"]["size"] == 42
+        assert data["configuration"]["inputs"]["directory"] == str(tmp_path / "images")
+        assert not (tmp_path / ".gladius-gui").exists()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)

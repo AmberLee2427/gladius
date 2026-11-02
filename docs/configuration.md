@@ -133,6 +133,60 @@ preferred for named servers: a generic user-redirect link may select a different
 server from the one running Gladius. No login token is included in the printed URL.
 Your MAST token file remains separate from your Nexus login.
 
+### Embed the GUI in a notebook
+
+Tutorial support is newer than the first PyPI `0.1.0a2` release. The local
+`gladius --tutorial` and hosted `gladius --nexus-tutorial` notebooks contain
+complete start, iframe and stop cells. They remain separate from this RTD site.
+
+Within a Nexus notebook, start the server from the kernel and embed its proxy URL:
+
+```python
+import threading
+from pathlib import Path
+
+from IPython.display import IFrame, display
+from gladius.web import GuiServer
+
+workspace = Path.cwd()
+server = GuiServer(workspace, port=0, nexus=True, iframe_origin="self")
+thread = threading.Thread(target=server.serve_forever, daemon=True)
+thread.start()
+
+gladius_ui_url = server.public_url
+display(IFrame(src=gladius_ui_url, width="100%", height=650))
+```
+
+`port=0` selects an unused port. On Nexus the notebook and proxy share one browser
+origin, so `iframe_origin="self"` allows the frame. For a notebook on your laptop,
+omit `nexus=True`, set `iframe_origin` to its exact browser origin (for example
+`"http://localhost:8888"`), and use `server.url + "/"` as the iframe URL. Match the
+scheme, hostname and port shown in your notebook's address bar, without its path
+or any login token. The GUI's separate port is **not** the notebook origin.
+
+You can pass `initial_config=config` with an existing `RunConfig` to populate
+the form without starting a run. Existing GUI job history in that workspace takes
+precedence when restoring the last job. This is how the supplied tutorial loads
+its current settings into the form.
+
+After any active run finishes, stop the embedded server:
+
+```python
+server.shutdown()
+server.server_close()
+thread.join(timeout=5)
+```
+
+The server belongs to the notebook kernel: closing the displayed frame does not
+stop it, while restarting the kernel does. The tutorial's start cell reuses its
+server when rerun; stop it before changing its allowed notebook origin.
+
+For a GUI started separately in a terminal, add `--iframe-origin self` on Nexus,
+or `--iframe-origin http://localhost:8888` for a local notebook. Without this
+explicit option, embedding is blocked. The option changes only the allowed frame
+parent; GUI session tokens and API origin checks remain enabled. The browser
+still requires an authenticated Nexus session for a Nexus iframe.
+
 ## Create or edit YAML directly
 
 For a text-based starting point, generate an annotated file:

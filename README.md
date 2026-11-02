@@ -20,7 +20,7 @@ mkdir gladius-work
 cd gladius-work
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install 'roman-gladius[roman,mast]==0.1.0a2'
+python -m pip install 'roman-gladius[roman,mast]==0.1.0a3'
 gladius gui --workspace .
 ```
 
@@ -258,3 +258,11 @@ remain offline. See the configuration guide for the exact coverage and limits.
 Pushing a matching `v<version>` tag runs the checked PyPI release workflow.
 Store the PyPI upload token as the repository Actions secret `PYPI_API_TOKEN`.
 See [release instructions](TESTING.md#publish-a-release-to-pypi) before pushing a tag.
+
+## Interactive tutorials
+
+`gladius --tutorial` copies and opens a local synthetic tutorial in the current
+directory. `gladius --nexus-tutorial` copies the real-MAST tutorial and opens or
+links it in the running Nexus JupyterLab server. Both demonstrate the GUI inside
+an iframe. Add `--no-open` to copy only. Install the `notebook` extra for local
+JupyterLab; the launcher registers that environment as the notebook kernel. These commands and iframe support are available from `0.1.0a3`.

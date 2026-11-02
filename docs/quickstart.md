@@ -10,7 +10,7 @@ mkdir gladius-work
 cd gladius-work
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install 'roman-gladius[roman,mast]==0.1.0a2'
+python -m pip install 'roman-gladius[roman,mast]==0.1.0a3'
 ```
 
 On Windows, activate with `.venv\Scripts\activate` instead. `roman` adds the
@@ -33,6 +33,41 @@ python -m pip install -e '.[roman,mast]'
 This installs your checkout, which may contain changes newer than the PyPI release.
 
 </details>
+
+## Open an interactive tutorial notebook
+
+Install the notebook extra and copy/open the local tutorial in your current
+directory:
+
+```sh
+python -m pip install 'roman-gladius[roman,mast,notebook]==0.1.0a3'
+gladius --tutorial
+```
+
+In a **Nexus JupyterLab terminal**, use:
+
+```sh
+gladius --nexus-tutorial
+```
+
+Both commands write an editable notebook into the current directory. When
+opening it, Gladius registers the current Python environment as a user Jupyter
+kernel named **Gladius tutorial** and selects it in the copied notebook. Install
+the `notebook` extra in that environment first. Existing
+files are never overwritten: a second copy gets a numbered filename. The local
+command starts JupyterLab; the Nexus command locates the running server's file
+root, prints its notebook link, and requests that it open in the browser. If the
+remote terminal cannot open a tab automatically, click the printed link. When
+the server root cannot be determined, open the copied file in JupyterLab's file
+browser. Use `--no-open` to copy without opening anything.
+
+The local tutorial uses synthetic images with no token. The Nexus tutorial uses
+real MAST data and requires an explicit credential-file path before querying the
+archive. Both demonstrate an embedded GUI, including how to stop it. Copying or
+opening a notebook does not execute its cells, query MAST or download images.
+Tutorials remain separate notebooks; they are not executed or embedded in RTD.
+
+**Availability:** tutorial commands and iframe support require `0.1.0a3` or later.
 
 ## Start with the GUI
 

@@ -173,10 +173,44 @@ def _proxy_url(port, public_url=None, nexus=False):
     return urlunsplit((parts.scheme, parts.netloc, parts.path.rstrip("/") + "/", "", ""))
 
 
+def _frame_ancestors(origin):
+    if origin is None:
+        return "'none'"
+    if origin == "self":
+        return "'self'"
+    parts = urlsplit(origin)
+    if (
+        parts.scheme not in {"http", "https"}
+        or not parts.hostname
+        or parts.username
+        or parts.password
+        or parts.path not in {"", "/"}
+        or parts.query
+        or parts.fragment
+        or any(c.isspace() for c in origin)
+        or any(c in origin for c in '<>"\\')
+    ):
+        raise ValueError(
+            "iframe origin must be 'self' or an exact http(s) origin, e.g. http://localhost:8888"
+        )
+    _ = parts.port
+    return f"'self' {parts.scheme}://{parts.netloc}"
+
+
 class GuiServer(ThreadingHTTPServer):
     """Local service; no remote binding or unauthenticated mutation endpoints."""
 
-    def __init__(self, workspace, port=8768, runner=run, *, public_url=None, nexus=False):
+    def __init__(
+        self,
+        workspace,
+        port=8768,
+        runner=run,
+        *,
+        public_url=None,
+        nexus=False,
+        iframe_origin=None,
+        initial_config=None,
+    ):
         if not 0 <= port <= 65535:
             raise ValueError("port must be between 0 and 65535")
         self.workspace = Path(workspace).expanduser().resolve()
@@ -185,6 +219,8 @@ class GuiServer(ThreadingHTTPServer):
         from .environment import load_environment
 
         load_environment(self.workspace)
+        self.initial_config = initial_config.resolved(self.workspace) if initial_config else None
+        self.frame_ancestors = _frame_ancestors(iframe_origin)
         self.token = secrets.token_urlsafe(32)
         self.jobs = Jobs(self.workspace, runner)
         # Validate before opening the listener, then resolve an ephemeral port if needed.
@@ -218,7 +254,7 @@ class Handler(BaseHTTPRequestHandler):
             "Content-Security-Policy",
             "default-src 'self'; style-src 'self' 'unsafe-inline'; "
             f"script-src 'nonce-{self.server.token}'; connect-src 'self'; "
-            "frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+            f"frame-ancestors {self.server.frame_ancestors}; base-uri 'none'; form-action 'none'",
         )
         if filename:
             self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
@@ -249,9 +285,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         if path == "/":
-            page = (
-                files("gladius").joinpath("web_assets/index.html").read_text(encoding="utf-8")
-            )
+            page = files("gladius").joinpath("web_assets/index.html").read_text(encoding="utf-8")
             bootstrap = json.dumps({"token": self.server.token}).replace("<", "\\u003c")
             page = page.replace("__BOOTSTRAP__", bootstrap).replace("__NONCE__", self.server.token)
             self._reply(200, page.encode(), "text/html; charset=utf-8")
@@ -262,10 +296,13 @@ class Handler(BaseHTTPRequestHandler):
                 raw = raw.replace(b"__NONCE__", self.server.token.encode())
             self._reply(200, raw, content_type)
         elif path == "/api/defaults":
-            configuration = RunConfig(targets=[Target(id="example", ra=270, dec=-29)]).model_dump(
-                mode="json"
-            )
-            configuration["targets"] = []
+            if self.server.initial_config is not None:
+                configuration = self.server.initial_config.model_dump(mode="json")
+            else:
+                configuration = RunConfig(
+                    targets=[Target(id="example", ra=270, dec=-29)]
+                ).model_dump(mode="json")
+                configuration["targets"] = []
             last_job = None
             with self.server.jobs.lock:
                 if self.server.jobs.jobs:
@@ -364,9 +401,24 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(400, {"error": str(exc)})
 
 
-def serve(workspace: Path, *, port=8768, public_url=None, nexus=False):
+def serve(
+    workspace: Path,
+    *,
+    port=8768,
+    public_url=None,
+    nexus=False,
+    iframe_origin=None,
+    initial_config=None,
+):
     """Start the local GUI; the workspace defines relative paths and job records."""
-    server = GuiServer(workspace, port, public_url=public_url, nexus=nexus)
+    server = GuiServer(
+        workspace,
+        port,
+        public_url=public_url,
+        nexus=nexus,
+        iframe_origin=iframe_origin,
+        initial_config=initial_config,
+    )
     print(f"Gladius GUI: {server.public_url or server.url}", flush=True)
     if server.public_url:
         print(f"Local listener: {server.url} (Jupyter proxy access configured)", flush=True)

@@ -45,12 +45,12 @@ Do not put either token in a commit or pass it in the tag command.
 Before tagging, update **both** `pyproject.toml`'s `version` and
 `src/gladius/__init__.py`'s `__version__`, update the changelog, and commit those
 changes together with the release workflow. The workflow rejects tags that do
-not match the package version exactly. For the current `0.1.0a2` version:
+not match the package version exactly. For the current `0.1.0a3` version:
 
 ```sh
 git push origin main
-git tag -a v0.1.0a2 -m "Gladius 0.1.0a2"
-git push origin v0.1.0a2
+git tag -a v0.1.0a3 -m "Gladius 0.1.0a3"
+git push origin v0.1.0a3
 ```
 
 **The final command starts publication.** Use the version you actually intend
