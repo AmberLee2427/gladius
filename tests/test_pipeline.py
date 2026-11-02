@@ -8,10 +8,10 @@ import yaml
 from astropy.io import fits
 from astropy.modeling.models import Shift
 
-from gladius_roman.cli import main
-from gladius_roman.config import load_config
-from gladius_roman.io import read_cutout, sha256
-from gladius_roman.pipeline import run
+from gladius.cli import main
+from gladius.config import load_config
+from gladius.io import read_cutout, sha256
+from gladius.pipeline import run
 
 
 def configure(demo, **sections):
@@ -154,7 +154,7 @@ def test_unlimited_stacks_and_preserved_cutouts_on_limit_failure(demo):
 
 
 def test_stack_boundary_roundoff_does_not_extend_real_coverage():
-    from gladius_roman.stacks import _snap_to_image_edges
+    from gladius.stacks import _snap_to_image_edges
 
     coordinates = np.array([-0.5, -1e-9, 0.0, 1.5, 63 + 1e-9, 63.5, np.nan])
     snapped = _snap_to_image_edges(coordinates, 64)
@@ -186,7 +186,7 @@ def test_animation_only_records_time_order_and_playback(demo):
 def test_animation_uses_one_stretch_and_marks_missing_pixels(tmp_path):
     from PIL import Image
 
-    from gladius_roman.stacks import _write_animation
+    from gladius.stacks import _write_animation
 
     cube = np.array([[[0.0, 1.0, np.nan]], [[0.0, 2.0, np.nan]]])
     path = tmp_path / "preview.gif"
@@ -250,7 +250,7 @@ def test_colour_missing_filters_are_reported(demo):
 
 
 def test_colour_reprojects_every_filter_on_the_same_reference(demo, monkeypatch):
-    import gladius_roman.stacks as module
+    import gladius.stacks as module
 
     path = run(configure(demo, stacks={"enabled": False}), progress=lambda _: None)
     entries = list(json.loads(path.read_text())["entries"].items())

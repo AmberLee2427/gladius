@@ -3,7 +3,7 @@ requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gladius-roman"
+name = "roman-gladius"
 version = "0.1.0a2"
 description = "Native Roman detector cutouts with parent metadata and explicit astrometry provenance"
 readme = "README.md"
@@ -25,16 +25,16 @@ mast = ["astroquery>=0.4.11"]
 test = ["pytest>=8", "pytest-cov>=4"]
 docs = ["sphinx>=7", "myst-parser>=2", "sphinx-rtd-theme>=3"]
 notebook = ["ipykernel>=6", "matplotlib>=3.8"]
-dev = ["gladius-roman[test,docs]", "ruff>=0.9", "build>=1", "twine>=5", "tox>=4"]
+dev = ["roman-gladius[test,docs]", "ruff>=0.9", "build>=1", "twine>=5", "tox>=4"]
 
 [project.scripts]
-gladius = "gladius_roman.cli:main"
+gladius = "gladius.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-gladius_roman = ["data/*.yaml", "web_assets/*.html", "web_assets/*.css", "web_assets/*.js", "web_assets/*.png", "web_assets/*.txt", "web_assets/family/*", "py.typed"]
+gladius = ["data/*.yaml", "web_assets/*.html", "web_assets/*.css", "web_assets/*.js", "web_assets/*.png", "web_assets/*.txt", "web_assets/family/*", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -42,7 +42,7 @@ addopts = "-ra"
 markers = ["live_mast: opt-in authenticated Roman archive queries and downloads"]
 
 [tool.coverage.run]
-source = ["gladius_roman"]
+source = ["gladius"]
 branch = true
 
 [tool.coverage.report]

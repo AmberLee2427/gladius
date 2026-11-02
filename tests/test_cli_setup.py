@@ -8,16 +8,16 @@ from pathlib import Path
 import pytest
 from dotenv import dotenv_values
 
-from gladius_roman import RunConfig, load_config
-from gladius_roman.cli import main
-from gladius_roman.demo import create_mast_demo
+from gladius import RunConfig, load_config
+from gladius.cli import main
+from gladius.demo import create_mast_demo
 
 
 def test_hidden_token_preserves_other_settings_and_permissions(tmp_path, monkeypatch, capsys):
     path = tmp_path / ".env"
     path.write_text("# local settings\nOTHER=keep-me\nMAST_API_TOKEN='old'\n")
     secret = "test-only-$literal'quoted"
-    monkeypatch.setattr("gladius_roman.cli.getpass.getpass", lambda _: secret)
+    monkeypatch.setattr("gladius.cli.getpass.getpass", lambda _: secret)
     monkeypatch.setattr("builtins.input", lambda _: "yes")
     assert main(["token", "--env-file", str(path)]) == 0
     values = dotenv_values(path, interpolate=False)
@@ -30,7 +30,7 @@ def test_hidden_token_preserves_other_settings_and_permissions(tmp_path, monkeyp
 
 def test_token_new_file_declined_replace_and_no_echo_fallback(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("gladius_roman.cli.getpass.getpass", lambda _: "test-only-sentinel")
+    monkeypatch.setattr("gladius.cli.getpass.getpass", lambda _: "test-only-sentinel")
     assert main(["token"]) == 0
     original = Path(".env").read_bytes()
     monkeypatch.setattr("builtins.input", lambda _: "no")
@@ -41,7 +41,7 @@ def test_token_new_file_declined_replace_and_no_echo_fallback(tmp_path, monkeypa
         warnings.warn("Cannot hide input", getpass.GetPassWarning, stacklevel=2)
         pytest.fail("Must not fall back to echoing the token")
 
-    monkeypatch.setattr("gladius_roman.cli.getpass.getpass", no_terminal)
+    monkeypatch.setattr("gladius.cli.getpass.getpass", no_terminal)
     assert main(["token", "--force"]) == 1
     assert Path(".env").read_bytes() == original
 
@@ -77,8 +77,8 @@ def test_real_demo_loads_explicit_credentials_before_query(tmp_path, monkeypatch
         manifest.write_text('{"status": "complete"}')
         return manifest
 
-    monkeypatch.setattr("gladius_roman.inputs.mast_test_configuration", selection)
-    monkeypatch.setattr("gladius_roman.cli.run", run)
+    monkeypatch.setattr("gladius.inputs.mast_test_configuration", selection)
+    monkeypatch.setattr("gladius.cli.run", run)
     assert (
         main(["demo", "mast-demo", "--directory", str(destination), "--env-file", str(env_file)])
         == 0
@@ -89,7 +89,7 @@ def test_real_demo_loads_explicit_credentials_before_query(tmp_path, monkeypatch
 
 def test_mast_demo_rejects_large_parent_before_writing_or_running(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "gladius_roman.inputs.mast_test_configuration", lambda _: {"download_bytes": 513 * 1024**2}
+        "gladius.inputs.mast_test_configuration", lambda _: {"download_bytes": 513 * 1024**2}
     )
     destination = tmp_path / "demo"
     with pytest.raises(ValueError, match="No image was downloaded"):

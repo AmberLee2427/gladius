@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from gladius_roman.config import RunConfig, Selection, Target, load_config
+from gladius.config import RunConfig, Selection, Target, load_config
 
 
 def test_unknown_duplicate_nonfinite_and_invalid_fields(tmp_path):
@@ -77,7 +77,7 @@ def test_complete_example_matches_packaged_template():
 
     root = Path(__file__).resolve().parents[1]
     example = (root / "examples/config.yaml").read_text()
-    assert example == files("gladius_roman").joinpath("data/example.yaml").read_text()
+    assert example == files("gladius").joinpath("data/example.yaml").read_text()
     settings = yaml.safe_load(example)
     config = RunConfig.model_validate(settings)
     # Each settings section should show all its options in the annotated example.

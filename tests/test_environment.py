@@ -1,8 +1,8 @@
 import os
 
-from gladius_roman import load_environment
-from gladius_roman.cli import main
-from gladius_roman.web import GuiServer
+from gladius import load_environment
+from gladius.cli import main
+from gladius.web import GuiServer
 
 
 def test_explicit_file_precedence_and_literal_values(tmp_path, monkeypatch):
@@ -34,7 +34,7 @@ def test_cli_uses_yaml_directory_not_launch_directory(tmp_path, monkeypatch):
         manifest = tmp_path / "manifest.json"
         manifest.write_text('{"status": "complete"}')
         return manifest
-    monkeypatch.setattr("gladius_roman.cli.run", fake_run)
+    monkeypatch.setattr("gladius.cli.run", fake_run)
     assert main(["run", "config/run.yaml"]) == 0
 
 

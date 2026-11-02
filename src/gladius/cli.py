@@ -102,7 +102,7 @@ def main(argv=None):
             serve(args.workspace, port=args.port, public_url=args.public_url, nexus=args.nexus)
         elif args.command == "init-config":
             with args.path.open("x") as stream:
-                stream.write(files("gladius_roman").joinpath("data/example.yaml").read_text())
+                stream.write(files("gladius").joinpath("data/example.yaml").read_text())
             print(args.path.resolve())
         elif args.command == "config-schema":
             with args.path.open("x") as stream:

@@ -250,14 +250,14 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/":
             page = (
-                files("gladius_roman").joinpath("web_assets/index.html").read_text(encoding="utf-8")
+                files("gladius").joinpath("web_assets/index.html").read_text(encoding="utf-8")
             )
             bootstrap = json.dumps({"token": self.server.token}).replace("<", "\\u003c")
             page = page.replace("__BOOTSTRAP__", bootstrap).replace("__NONCE__", self.server.token)
             self._reply(200, page.encode(), "text/html; charset=utf-8")
         elif path in GUI_RESOURCES:
             resource, content_type = GUI_RESOURCES[path]
-            raw = files("gladius_roman").joinpath("web_assets", resource).read_bytes()
+            raw = files("gladius").joinpath("web_assets", resource).read_bytes()
             if content_type.startswith("text/html"):
                 raw = raw.replace(b"__NONCE__", self.server.token.encode())
             self._reply(200, raw, content_type)

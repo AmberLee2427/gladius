@@ -283,7 +283,7 @@ will not all be present.
 ## Inspect the original header records in Python
 
 ```python
-from gladius_roman.io import read_cutout
+from gladius.io import read_cutout
 
 cutout = read_cutout("cutout.fits")  # Also accepts cutout.asdf.
 for header in cutout.parent_metadata.get("fits_headers", []):

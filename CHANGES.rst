@@ -14,7 +14,7 @@
   and document local MAST authentication in the GUI and configuration guide.
 * Add a real-MAST GUI test preset, Galactic/ecliptic input conversion, zero/unlimited
   stack limits, context-sensitive help, and icon-only theme controls.
-* Rename the project to Gladius, distribution gladius-roman, import gladius_roman
+* Rename the project to Gladius, distribution roman-gladius, import gladius
   and CLI gladius.
 * Add an opt-in authenticated live MAST download workflow with a 20 MiB cap,
   generated-query checks, cleanup checks and explicit image/associated-product coverage.
@@ -53,3 +53,6 @@
 * Support the GUI behind Jupyter Server Proxy with relative asset/API paths,
   configured public origins, automatic JupyterHub URL detection, and --nexus /
   --public-url launch options. Print named-server-aware browser links at startup.
+
+* Use ``gladius`` as the Python import and CLI name, and ``roman-gladius`` as
+  the PyPI distribution name (normalized to ``roman_gladius`` in wheel filenames).

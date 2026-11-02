@@ -3,10 +3,10 @@ import json
 import pytest
 import yaml
 
-from gladius_roman.cli import main
-from gladius_roman.config import load_config
-from gladius_roman.io import read_cutout
-from gladius_roman.targets import parse_targets_csv, read_targets_csv
+from gladius.cli import main
+from gladius.config import load_config
+from gladius.io import read_cutout
+from gladius.targets import parse_targets_csv, read_targets_csv
 
 
 def test_csv_aliases_bom_extra_metadata_and_default_ids(tmp_path):
@@ -62,7 +62,7 @@ def test_cli_csv_replaces_targets_before_yaml_validation(demo, tmp_path):
 
 
 def test_galactic_ecliptic_and_pixel_coordinates():
-    from gladius_roman.targets import target_from_coordinates
+    from gladius.targets import target_from_coordinates
 
     galactic = target_from_coordinates(target_id="gc", frame="galactic", longitude=0, latitude=0)
     assert galactic.ra == pytest.approx(266.405, abs=0.002)

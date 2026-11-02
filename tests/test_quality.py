@@ -1,7 +1,7 @@
 import numpy as np
 
-from gladius_roman.config import Quality
-from gladius_roman.quality import assess
+from gladius.config import Quality
+from gladius.quality import assess
 
 
 def test_round_and_elongated_sources():

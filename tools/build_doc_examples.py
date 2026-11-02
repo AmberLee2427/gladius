@@ -22,9 +22,9 @@ def build_images(output: Path):
     from astropy.io import fits
     from astropy.visualization import AsinhStretch, ImageNormalize
 
-    from gladius_roman import load_config, run
-    from gladius_roman.demo import create_demo
-    from gladius_roman.io import read_cutout
+    from gladius import load_config, run
+    from gladius.demo import create_demo
+    from gladius.io import read_cutout
 
     output.mkdir(parents=True, exist_ok=True)
     written = []
@@ -80,8 +80,8 @@ def build_colour_example(output):
     import numpy as np
     import yaml
 
-    from gladius_roman import load_config, run
-    from gladius_roman.demo import create_demo
+    from gladius import load_config, run
+    from gladius.demo import create_demo
 
     with tempfile.TemporaryDirectory(prefix="gladius-colour-docs-") as temporary:
         root = Path(temporary) / "demo"

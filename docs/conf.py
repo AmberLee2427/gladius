@@ -1,6 +1,6 @@
 """Sphinx configuration for the independent package documentation."""
 
-from gladius_roman import __version__
+from gladius import __version__
 
 project = "Gladius"
 author = "Gladius contributors"

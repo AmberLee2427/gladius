@@ -17,7 +17,7 @@
 
 ```python
 from pathlib import Path
-from gladius_roman import RunConfig, read_targets_csv, run
+from gladius import RunConfig, read_targets_csv, run
 
 config = RunConfig(
     targets=read_targets_csv("targets.csv"),

@@ -263,7 +263,7 @@ filters. Use the original cutouts to measure source colours or variability.
 The same reader accepts either output format:
 
 ```python
-from gladius_roman.io import read_cutout
+from gladius.io import read_cutout
 
 # Replace this example path with a cutout path from your run's manifest.
 cutout = read_cutout("cutouts/runs/<run-id>/cutouts/<target-id>/<cutout-id>/cutout.asdf")

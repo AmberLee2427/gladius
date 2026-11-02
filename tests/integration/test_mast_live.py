@@ -56,9 +56,9 @@ def bounded_files():
 def test_authenticated_roman_download(tmp_path, record_property):
     from astroquery.mast import MastMissions
 
-    from gladius_roman import RunConfig, Target, make_cutout
-    from gladius_roman.inputs import mast_queries, staged
-    from gladius_roman.io import read_exposure, write_cutout
+    from gladius import RunConfig, Target, make_cutout
+    from gladius.inputs import mast_queries, staged
+    from gladius.io import read_exposure, write_cutout
 
     token = os.environ.get("MAST_API_TOKEN")
     assert token, "Live MAST tests require the MAST_API_TOKEN environment variable"

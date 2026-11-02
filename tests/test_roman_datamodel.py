@@ -5,9 +5,9 @@ import pytest
 from astropy.io import fits
 from astropy.time import Time
 
-from gladius_roman.config import Extraction, Target
-from gladius_roman.core import make_cutout
-from gladius_roman.io import read_cutout, read_exposure, write_cutout
+from gladius.config import Extraction, Target
+from gladius.core import make_cutout
+from gladius.io import read_cutout, read_exposure, write_cutout
 
 
 def test_tagged_roman_image_and_float16_uncertainty(exposure, tmp_path):

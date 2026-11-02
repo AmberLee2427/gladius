@@ -92,7 +92,7 @@ def discover(config: RunConfig):
     try:
         from astroquery.mast import MastMissions
     except ImportError as exc:
-        raise ImportError('MAST input requires pip install "gladius-roman[mast]"') from exc
+        raise ImportError('MAST input requires pip install "roman-gladius[mast]"') from exc
     missions = MastMissions(mission="roman")
     if os.environ.get("MAST_API_TOKEN"):
         missions.login(token=os.environ["MAST_API_TOKEN"])
@@ -194,7 +194,7 @@ def mast_test_configuration(base: Path) -> dict:
     try:
         from astroquery.mast import MastMissions
     except ImportError as exc:
-        raise ValueError('Load test requires pip install "gladius-roman[mast]"') from exc
+        raise ValueError('Load test requires pip install "roman-gladius[mast]"') from exc
     missions = MastMissions(mission="roman")
     missions.TIMEOUT = 30
     if missions.dataset_kwds.get("roman") != "fileSetName":

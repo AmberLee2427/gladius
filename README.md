@@ -2,6 +2,9 @@
 
 Native image cutouts for the Roman Space Telescope.
 
+Python import and command: `gladius`. Distribution name: `roman-gladius`
+(`roman_gladius` is the equivalent PyPI spelling).
+
 Native detector cutouts from calibrated Roman images, with explicit parent-pixel
 mapping, separately retained parent metadata, exact stored astrometry, and optional
 display stacks. An independent alpha package built from the STScI Cookiecutter
@@ -211,7 +214,7 @@ The CLI and GUI use the same importable functions:
 ```python
 from pathlib import Path
 
-from gladius_roman import RunConfig, load_config, load_environment, read_targets_csv, run
+from gladius import RunConfig, load_config, load_environment, read_targets_csv, run
 
 # Folder containing this example's YAML, targets, and optional .env file.
 workspace = Path.cwd()
@@ -249,3 +252,9 @@ whether it tested a calibrated image/cutout or a small associated product.
 The manual calibrated-image option requires full extraction coverage within the
 same cap. Downloaded science data are not uploaded as artifacts. Normal tests
 remain offline. See the configuration guide for the exact coverage and limits.
+
+## Publishing releases
+
+Pushing a matching `v<version>` tag runs the checked PyPI release workflow.
+Store the PyPI upload token as the repository Actions secret `PYPI_API_TOKEN`.
+See [release instructions](TESTING.md#publish-a-release-to-pypi) before pushing a tag.

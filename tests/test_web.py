@@ -7,8 +7,8 @@ from urllib.request import Request, urlopen
 import pytest
 import yaml
 
-from gladius_roman.config import load_config
-from gladius_roman.web import GuiServer
+from gladius.config import load_config
+from gladius.web import GuiServer
 
 
 @pytest.fixture
@@ -216,7 +216,7 @@ def test_real_archive_test_configuration_uses_metadata_without_downloading(gui, 
 
 
 def test_jupyter_proxy_environment_and_explicit_override(monkeypatch):
-    from gladius_roman.web import _proxy_url
+    from gladius.web import _proxy_url
 
     for key in (
         "JUPYTERHUB_SERVICE_PREFIX",
@@ -298,7 +298,7 @@ def test_browser_paths_remain_within_jupyter_proxy(gui):
 
 
 def test_startup_prints_named_server_link(tmp_path, monkeypatch, capsys):
-    from gladius_roman.web import serve
+    from gladius.web import serve
 
     monkeypatch.setenv("JUPYTERHUB_SERVICE_PREFIX", "/user/amber/commissioning/")
     monkeypatch.delenv("JUPYTERHUB_PUBLIC_URL", raising=False)

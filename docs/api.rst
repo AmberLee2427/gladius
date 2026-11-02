@@ -18,7 +18,7 @@ archive is queried. Existing shell variables take precedence.
    import json
    from pathlib import Path
 
-   from gladius_roman import RunConfig, load_environment, read_targets_csv, run
+   from gladius import RunConfig, load_environment, read_targets_csv, run
 
    # A Path object identifying the directory used for input and output paths.
    workspace = Path.cwd()
@@ -94,7 +94,7 @@ Run a configuration saved by the GUI
 
    from pathlib import Path
 
-   from gladius_roman import load_config, load_environment, run
+   from gladius import load_config, load_environment, run
 
    # A Path to the YAML downloaded from the GUI.
    config_path = Path("config.yaml").resolve()
@@ -113,7 +113,7 @@ Choose a different credential file
 
 .. code-block:: python
 
-   from gladius_roman import load_environment
+   from gladius import load_environment
 
    # Load this particular file instead of workspace/.env.
    load_environment(env_file="/path/to/credentials.env")
@@ -129,38 +129,38 @@ Function and class reference
 It does not query MAST or write files. ``run`` performs the full configured
 pipeline, including reading inputs and saving products.
 
-.. autofunction:: gladius_roman.parse_config
+.. autofunction:: gladius.parse_config
 
-.. autoclass:: gladius_roman.Target
+.. autoclass:: gladius.Target
 
-.. autofunction:: gladius_roman.inputs.mast_queries
+.. autofunction:: gladius.inputs.mast_queries
 
-.. autofunction:: gladius_roman.inputs.mast_test_configuration
+.. autofunction:: gladius.inputs.mast_test_configuration
 
 
-.. autofunction:: gladius_roman.load_config
+.. autofunction:: gladius.load_config
 
-.. autoclass:: gladius_roman.RunConfig
+.. autoclass:: gladius.RunConfig
 
-.. autofunction:: gladius_roman.make_cutout
+.. autofunction:: gladius.make_cutout
 
-.. autoclass:: gladius_roman.Cutout
+.. autoclass:: gladius.Cutout
    :members:
 
-.. autofunction:: gladius_roman.run
+.. autofunction:: gladius.run
 
-.. autofunction:: gladius_roman.io.read_exposure
+.. autofunction:: gladius.io.read_exposure
 
-.. autofunction:: gladius_roman.io.read_cutout
+.. autofunction:: gladius.io.read_cutout
 
-.. autofunction:: gladius_roman.io.write_cutout
+.. autofunction:: gladius.io.write_cutout
 
-.. autofunction:: gladius_roman.targets.read_targets_csv
+.. autofunction:: gladius.targets.read_targets_csv
 
-.. autofunction:: gladius_roman.targets.parse_targets_csv
+.. autofunction:: gladius.targets.parse_targets_csv
 
-.. autofunction:: gladius_roman.web.serve
+.. autofunction:: gladius.web.serve
 
-.. autofunction:: gladius_roman.target_from_coordinates
+.. autofunction:: gladius.target_from_coordinates
 
-.. autofunction:: gladius_roman.load_environment
+.. autofunction:: gladius.load_environment
