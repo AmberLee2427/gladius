@@ -12,15 +12,15 @@ scaffold; it is not affiliated with or endorsed by STScI or Astropy.
 
 ## Install and run
 
-Python 3.11 or newer and Git are required. Gladius is not yet on PyPI; install
-from the public repository:
+Install the published alpha release from [PyPI](https://pypi.org/project/roman-gladius/)
+with Python 3.11 or newer:
 
 ```sh
-git clone https://github.com/AmberLee2427/gladius.git gladius
-cd gladius
+mkdir gladius-work
+cd gladius-work
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[roman,mast]'
+python -m pip install 'roman-gladius[roman,mast]==0.1.0a2'
 gladius gui --workspace .
 ```
 

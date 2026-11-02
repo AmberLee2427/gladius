@@ -2,8 +2,25 @@
 
 ## Install into your own environment
 
-Gladius has not been published to PyPI yet. Install from the public GitHub
-repository using Git and Python 3.11 or newer:
+Install the published alpha release from [PyPI](https://pypi.org/project/roman-gladius/)
+using Python 3.11 or newer. Choose a new work directory:
+
+```sh
+mkdir gladius-work
+cd gladius-work
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install 'roman-gladius[roman,mast]==0.1.0a2'
+```
+
+On Windows, activate with `.venv\Scripts\activate` instead. `roman` adds the
+converters needed for Roman-tagged ASDF images; `mast` adds archive queries and
+downloads. Neither is required for the synthetic demo. Python 3.11+ is required.
+
+<details>
+<summary>Install a development checkout instead</summary>
+
+If you want to modify the code, install Git and use:
 
 ```sh
 git clone https://github.com/AmberLee2427/gladius.git gladius
@@ -13,9 +30,9 @@ source .venv/bin/activate
 python -m pip install -e '.[roman,mast]'
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. `roman` adds the
-converters needed for Roman-tagged ASDF images; `mast` adds archive queries and
-downloads. Neither is required for the synthetic demo. Python 3.11+ is required.
+This installs your checkout, which may contain changes newer than the PyPI release.
+
+</details>
 
 ## Start with the GUI
 
@@ -38,10 +55,10 @@ The notebook does not require a GUI server or port forwarding.
    your JupyterLab server. Choose the server containing the files you want to use.
 2. Open **File → New → Terminal** in JupyterLab. Run the installation commands
    above there if Gladius is not installed yet. If you already made the `.venv`
-   environment in a `gladius` checkout, activate it in this terminal:
+   environment in your work directory, activate it in this terminal:
 
    ```sh
-   cd /path/on/nexus/to/gladius
+   cd /path/on/nexus/to/gladius-work
    source .venv/bin/activate
    ```
 
