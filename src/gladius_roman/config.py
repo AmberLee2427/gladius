@@ -62,7 +62,9 @@ class Inputs(Options):
             raise ValueError("Use MAST_API_TOKEN in the environment, not YAML credentials")
         reserved = {"limit", "offset", "select_cols", "count_only"} & self.mast_criteria.keys()
         if reserved:
-            raise ValueError(f"MAST criteria cannot override managed query options: {sorted(reserved)}")
+            raise ValueError(
+                f"MAST criteria cannot override managed query options: {sorted(reserved)}"
+            )
         return self
 
 
@@ -141,8 +143,19 @@ class Quality(Options):
 
 class Stacks(Options):
     enabled: bool = False
+    rgb_enabled: bool = False
+    red_filter: str = Field(default="F213", pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
+    green_filter: str = Field(default="F184", pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
+    blue_filter: str = Field(default="F062", pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
+    gif_enabled: bool = False
+    gif_frame_ms: Annotated[int, Field(strict=True, ge=20, le=60000, multiple_of=10)] = 500
     max_exposures: Annotated[int, Field(strict=True, ge=0)] = 100
     max_memory_mb: Annotated[int, Field(strict=True, ge=0)] = 512
+
+    @field_validator("red_filter", "green_filter", "blue_filter", mode="before")
+    @classmethod
+    def channel_filter(cls, value):
+        return value.strip().upper() if isinstance(value, str) else value
 
 
 class Storage(Options):

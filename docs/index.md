@@ -26,12 +26,12 @@ config = RunConfig(
     storage={"output_directory": "cutouts"},
 ).resolved(Path.cwd())
 
-manifest = run(config)
+manifest_path = run(config)
 ```
 
 Use calibrated 2D detector images. ASDF retains the exact GWCS; FITS includes
 SCI/ERR/DQ and the stored exact metadata alongside its FITS WCS representation.
-See [the product format](products.md) for what each file contains.
+See [Outputs](products.md) for what each file contains.
 
 ## Choosing an interface
 
@@ -53,6 +53,7 @@ explained in [Scientific conventions](science.md).
 quickstart
 configuration
 products
+headers
 science
 api
 ```

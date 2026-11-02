@@ -52,7 +52,7 @@ def run(config: RunConfig, *, progress=print) -> Path:
     config = config.resolved(Path.cwd())
     settings = config.model_dump(mode="json")
     versions = {name: version(name) for name in ("numpy", "astropy", "asdf", "gwcs")}
-    for name in ("roman_datamodels", "rad", "asdf-astropy", "scipy", "astroquery"):
+    for name in ("roman_datamodels", "rad", "asdf-astropy", "scipy", "pillow", "astroquery"):
         try:
             versions[name] = version(name)
         except PackageNotFoundError:
@@ -284,7 +284,7 @@ def run(config: RunConfig, *, progress=print) -> Path:
             }
             if parents_selected == 0:
                 raise ValueError("No parent exposures passed the selection")
-            if config.stacks.enabled:
+            if config.stacks.enabled or config.stacks.gif_enabled or config.stacks.rgb_enabled:
                 build_stacks(manifest["entries"], directory, config)
             manifest["status"] = "failed" if manifest["errors"] else "complete"
         except BaseException as exc:

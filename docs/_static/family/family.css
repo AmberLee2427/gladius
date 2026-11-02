@@ -183,3 +183,27 @@ body.family-gui #configError{background:#f5edd8!important;border:1px solid #c8b4
 .rst-footer-buttons .btn.btn-neutral{background:#a84aeb!important;color:#fff!important;border:1px solid #a84aeb!important;box-shadow:none!important}
 .rst-footer-buttons .btn.btn-neutral:hover{background:#9440d1!important;border-color:#9440d1!important;color:#fff!important}
 .wy-side-nav-search img.logo{filter:none!important;mix-blend-mode:normal!important;opacity:1!important}
+
+/* Leave room for the array name and its ASDF spelling in the science guide. */
+#what-happens-to-the-pixels table th:first-child,
+#what-happens-to-the-pixels table td:first-child{min-width:170px;width:22%}
+/* All documentation tables share the same wrapping behaviour, with or without
+   the theme's JavaScript-added responsive wrapper. */
+.rst-content table{width:100%;max-width:100%}
+.rst-content table th,
+.rst-content table td{white-space:normal!important;overflow-wrap:anywhere}
+.rst-content table code,
+.rst-content table .pre{white-space:normal!important;overflow-wrap:anywhere}
+
+/* Image examples retain their relative pixel scale, without plot furniture. */
+.demo-image-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:660px}
+.demo-image-grid figure,.demo-stack-image{margin:0 0 1.5rem!important;min-width:0}
+.demo-image-grid figcaption,.demo-stack-image figcaption{font-weight:600;margin-bottom:.6rem}
+.demo-parent{position:relative;width:100%;max-width:288px;line-height:0}
+.demo-parent img{width:100%;image-rendering:pixelated}
+.demo-region{position:absolute;border:1px solid #c8a447;box-sizing:border-box;pointer-events:none}
+.demo-image-grid img.demo-cutout{width:66.666667%;max-width:192px;image-rendering:pixelated}
+.demo-stack-image img{width:192px;image-rendering:pixelated}
+@media(max-width:480px){.demo-image-grid{gap:.75rem}}
+
+.pixel-preview{image-rendering:pixelated}

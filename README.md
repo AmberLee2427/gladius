@@ -9,18 +9,32 @@ scaffold; it is not affiliated with or endorsed by STScI or Astropy.
 
 ## Install and run
 
-Python 3.11 or newer is required. From this checkout:
+Python 3.11 or newer and Git are required. Gladius is not yet on PyPI; install
+from the public repository:
 
 ```sh
-python -m pip install -e '.[roman]'
+git clone https://github.com/AmberLee2427/gladius.git gladius
+cd gladius
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[roman,mast]'
+gladius gui --workspace .
+```
+
+On Windows, activate with `.venv\Scripts\activate` instead. Open the printed
+GUI URL to add targets, choose images and processing, and download a YAML file or
+make cutouts. For the manual YAML workflow:
+
+```sh
 gladius init-config config.yaml
 # Edit targets and inputs in config.yaml.
 gladius validate config.yaml
 gladius run config.yaml
 ```
 
-For archive access, install `'.[roman,mast]'` and set `inputs.mode: mast` with
-bounded `mast_criteria`. Restricted data use `MAST_API_TOKEN` from the environment.
+For archive access, set `inputs.mode: mast`. Searches use your targets by default;
+`mast_criteria` adds optional archive constraints. Restricted data use
+`MAST_API_TOKEN` from the environment.
 Directory mode does not perform archive queries or downloads.
 
 Try a complete offline example with no credentials or mission data:
@@ -30,8 +44,24 @@ gladius demo /tmp/my-gladius-demo
 ```
 
 This creates two synthetic ASDF exposures, a YAML file, native ASDF/FITS cutouts,
-a display stack, a resolved configuration and a run manifest. Choose a new demo
+a display stack, an exposure GIF, a resolved configuration and a run manifest. Choose a new demo
 folder; existing demo inputs are not overwritten.
+
+Or, with the `roman` and `mast` extras installed, try a real archive image.
+First sign in at the [MAST token page](https://auth.mast.stsci.edu/tokens), create
+an API token, and copy it for the hidden prompt below. The token identifies your
+account; restricted observations still require permission for that account:
+
+```sh
+gladius token             # Hidden prompt; saves MAST_API_TOKEN in .env here.
+gladius demo mast-demo    # Queries MAST, downloads one parent, and makes cutouts.
+```
+
+The MAST demo writes `mast-demo/demo.yaml` and ASDF/FITS cutouts under
+`mast-demo/output/`. It rejects parents advertised above 512 MiB before download;
+use `--max-parent-mib` to change that limit. It uses an explicit 0.01-pixel WCS
+round-trip tolerance and makes no display stack. See the
+[real-data quickstart](docs/quickstart.md#try-one-real-image-from-mast).
 
 ## Configuration
 
@@ -50,10 +80,11 @@ coordinates and inconsistent settings are rejected before input discovery.
   display stacks. Native cutouts remain available regardless of quality flags.
 - Retain full parent images or keep only their derived products. Local input
   files are never deleted. Archive parents are staged one at a time.
+- Create median display stacks, exposure GIFs and configurable false-colour composites.
 - Choose ASDF, FITS or both; configure bounded display stacks, resume and failure
   handling. Resolved defaults and dependency versions are recorded for each run.
 
-See [configuration](docs/configuration.md), [product format](docs/products.md),
+See [configuration](docs/configuration.md), [outputs](docs/products.md),
 [scientific conventions](docs/science.md), and [Python API](docs/api.rst).
 
 ## Scientific contract
@@ -118,10 +149,13 @@ The separate [Nexus notebook](notebooks/README.md) queries real MAST data and
 requires an explicit path to your credential file. It is not part of the docs
 site. Install its plotting/kernel dependencies with `pip install -e '.[roman,mast,notebook]'`.
 
-For restricted MAST access, copy `.env.example` to `.env` in your workspace
+For restricted MAST access, run `gladius token` in your workspace to save the
+token through a hidden prompt. Alternatively copy `.env.example` to `.env`
 and set `MAST_API_TOKEN=your_token_here`. The GUI loads that file when the server
 starts; restart the server after editing it. Existing shell variables take
 precedence. For `gladius run config.yaml`, place `.env` beside the YAML instead.
+Use `--env-file /path/to/credentials.env` with `token`, `run`, `gui`, or the MAST
+demo to select a different credential file.
 Keep `.env` private and out of Git; the repository already ignores it. GitHub
 Actions secrets do not populate this local file. See the
 [authentication instructions](docs/configuration.md#local-mast-authentication).
@@ -164,24 +198,38 @@ configured output directory. Only one GUI-owned run is active at a time. Reloadi
 the page reconnects to the last run while the server remains open. After a server
 restart, run history remains on disk rather than being automatically restarted.
 
+On Nexus, start the GUI in a JupyterLab terminal with
+`gladius gui --workspace /path/on/nexus/to/work --nexus` and open the printed
+proxy link. Gladius detects a supplied JupyterHub public URL automatically;
+`--public-url` provides an explicit override. See the
+[Nexus and SSH instructions](docs/configuration.md#roman-research-nexus-and-jupyterhub).
+
 ## Python API
 
 The CLI and GUI use the same importable functions:
 
 ```python
 from pathlib import Path
-from gladius_roman import RunConfig, load_config, read_targets_csv, run
 
-# Existing YAML, with an optional CSV override:
-config = load_config("config.yaml", targets_path="targets.csv")
+from gladius_roman import RunConfig, load_config, load_environment, read_targets_csv, run
+
+# Folder containing this example's YAML, targets, and optional .env file.
+workspace = Path.cwd()
+
+# Python callers explicitly load credentials for restricted MAST access.
+# Reads workspace/.env if present; existing environment variables take precedence.
+load_environment(workspace)
+
+# Existing YAML, with an optional CSV override: returns a validated RunConfig.
+config = load_config(workspace / "config.yaml", targets_path=workspace / "targets.csv")
 manifest_path = run(config, progress=print)
 
 # Or construct the configuration directly:
 config = RunConfig(
-    targets=read_targets_csv("targets.csv"),
+    targets=read_targets_csv(workspace / "targets.csv"),
     inputs={"mode": "mast"},
     extraction={"size": 150, "no_overlap": "skip"},
-).resolved(Path.cwd())
+).resolved(workspace)
 # manifest_path = run(config)
 ```
 

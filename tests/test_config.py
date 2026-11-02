@@ -58,3 +58,29 @@ def test_yaml_timestamp_with_utc_timezone(tmp_path):
     path = tmp_path / "utc.yaml"
     path.write_text("targets: [{id: e, x: 0, y: 0}]\nselection: {start: 2026-01-01T00:00:00Z}\n")
     assert load_config(path).selection.start == "2026-01-01T00:00:00"
+
+
+def test_documentation_schema_matches_runtime():
+    import json
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    schema = json.loads((root / "docs/config.schema.json").read_text())
+    assert schema == RunConfig.model_json_schema(), "Regenerate docs/config.schema.json"
+
+
+def test_complete_example_matches_packaged_template():
+    from importlib.resources import files
+    from pathlib import Path
+
+    import yaml
+
+    root = Path(__file__).resolve().parents[1]
+    example = (root / "examples/config.yaml").read_text()
+    assert example == files("gladius_roman").joinpath("data/example.yaml").read_text()
+    settings = yaml.safe_load(example)
+    config = RunConfig.model_validate(settings)
+    # Each settings section should show all its options in the annotated example.
+    for section, value in config.model_dump().items():
+        if isinstance(value, dict):
+            assert set(settings[section]) == set(value), f"Incomplete example section: {section}"

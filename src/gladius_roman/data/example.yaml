@@ -5,6 +5,7 @@ targets:
   - id: example-event
     ra: 270.0                    # ICRS degrees; a prediction, not a measured centroid
     dec: -29.0
+    metadata: {}                # optional catalogue fields saved with this target
     # Alternatively supply x/y (zero-based parent SCI coordinates), without ra/dec.
 inputs:
   mode: directory               # directory | mast (install the [mast] extra)
@@ -14,6 +15,7 @@ inputs:
   mast_criteria: {}              # optional overrides; pixel-only MAST targets need e.g. {program: 1043}
   mast_radius_arcmin: 6.0        # candidate search around each RA/Dec target
   product_suffix: _cal
+  product_filename: null       # optional exact MAST product filename; Load test pins one
   query_limit: 50000
 selection:
   start: null                   # e.g. '2026-01-01T00:00:00'
@@ -37,6 +39,12 @@ quality:
   exclude_from_stacks: true     # native cutouts are always retained
 stacks:
   enabled: false                # display-only, grouped by target and filter
+  rgb_enabled: false            # false-colour PNG from three filter medians
+  red_filter: F213
+  green_filter: F184
+  blue_filter: F062
+  gif_enabled: false            # aligned individual exposures; independent of median stack
+  gif_frame_ms: 500             # playback time per frame; multiples of 10 ms
   max_exposures: 100           # per target/filter; 0 disables check
   max_memory_mb: 512           # preflight estimate; 0 disables check
 storage:

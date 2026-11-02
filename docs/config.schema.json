@@ -269,6 +269,42 @@
           "title": "Enabled",
           "type": "boolean"
         },
+        "rgb_enabled": {
+          "default": false,
+          "title": "Rgb Enabled",
+          "type": "boolean"
+        },
+        "red_filter": {
+          "default": "F213",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$",
+          "title": "Red Filter",
+          "type": "string"
+        },
+        "green_filter": {
+          "default": "F184",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$",
+          "title": "Green Filter",
+          "type": "string"
+        },
+        "blue_filter": {
+          "default": "F062",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$",
+          "title": "Blue Filter",
+          "type": "string"
+        },
+        "gif_enabled": {
+          "default": false,
+          "title": "Gif Enabled",
+          "type": "boolean"
+        },
+        "gif_frame_ms": {
+          "default": 500,
+          "maximum": 60000,
+          "minimum": 20,
+          "multipleOf": 10,
+          "title": "Gif Frame Ms",
+          "type": "integer"
+        },
         "max_exposures": {
           "default": 100,
           "minimum": 0,

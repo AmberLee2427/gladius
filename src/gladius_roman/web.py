@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import threading
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
 
 import yaml
@@ -131,10 +132,51 @@ class Jobs:
                 self._save(identifier)
 
 
+def _proxy_url(port, public_url=None, nexus=False):
+    """Use explicit public settings or JupyterHub's own server URL, never headers."""
+    if public_url:
+        candidate = public_url
+    else:
+        prefix = os.environ.get("JUPYTERHUB_SERVICE_PREFIX", "")
+        hub_public = os.environ.get("JUPYTERHUB_PUBLIC_URL", "")
+        nexus_url = os.environ.get("NEXUS_SERVER_URL", "")
+        hub_host = os.environ.get("JUPYTERHUB_HOST", "")
+        if hub_public:
+            candidate = hub_public.rstrip("/") + f"/proxy/{port}/"
+        elif prefix and nexus_url and urlsplit(nexus_url).hostname == "roman.science.stsci.edu":
+            candidate = nexus_url.rstrip("/") + f"/proxy/{port}/"
+        elif prefix and (nexus or urlsplit(hub_host).hostname == "roman.science.stsci.edu"):
+            candidate = "https://roman.science.stsci.edu" + prefix.rstrip("/") + f"/proxy/{port}/"
+        elif prefix and hub_host:
+            candidate = hub_host.rstrip("/") + prefix.rstrip("/") + f"/proxy/{port}/"
+        elif nexus:
+            raise ValueError(
+                "--nexus needs JUPYTERHUB_SERVICE_PREFIX; use --public-url with the full proxy URL"
+            )
+        else:
+            return None
+    parts = urlsplit(candidate)
+    if (
+        parts.scheme not in {"http", "https"}
+        or not parts.hostname
+        or parts.username
+        or parts.password
+        or parts.query
+        or parts.fragment
+        or any(c in candidate for c in '<>"\\')
+        or any(c.isspace() for c in candidate)
+    ):
+        raise ValueError(
+            "public GUI URL must be an http(s) URL without credentials, query or fragment"
+        )
+    _ = parts.port  # Validate the optional port.
+    return urlunsplit((parts.scheme, parts.netloc, parts.path.rstrip("/") + "/", "", ""))
+
+
 class GuiServer(ThreadingHTTPServer):
     """Local service; no remote binding or unauthenticated mutation endpoints."""
 
-    def __init__(self, workspace, port=8768, runner=run):
+    def __init__(self, workspace, port=8768, runner=run, *, public_url=None, nexus=False):
         if not 0 <= port <= 65535:
             raise ValueError("port must be between 0 and 65535")
         self.workspace = Path(workspace).expanduser().resolve()
@@ -145,7 +187,10 @@ class GuiServer(ThreadingHTTPServer):
         load_environment(self.workspace)
         self.token = secrets.token_urlsafe(32)
         self.jobs = Jobs(self.workspace, runner)
+        # Validate before opening the listener, then resolve an ephemeral port if needed.
+        _proxy_url(port, public_url, nexus)
         super().__init__(("127.0.0.1", port), Handler)
+        self.public_url = _proxy_url(self.server_port, public_url, nexus)
 
     @property
     def url(self):
@@ -183,9 +228,14 @@ class Handler(BaseHTTPRequestHandler):
     def _authorized(self):
         host = self.headers.get("Host")
         allowed = {f"127.0.0.1:{self.server.server_port}", f"localhost:{self.server.server_port}"}
+        origins = {f"http://{h}" for h in allowed}
+        if self.server.public_url:
+            external = urlsplit(self.server.public_url)
+            allowed.add(external.netloc)
+            origins.add(f"{external.scheme}://{external.netloc}")
         origin = self.headers.get("Origin")
-        if host not in allowed or (origin and origin not in {f"http://{h}" for h in allowed}):
-            self._reply(403, {"error": "Only this local GUI origin is allowed"})
+        if host not in allowed or (origin and origin not in origins):
+            self._reply(403, {"error": "Only the configured GUI origin is allowed"})
             return False
         if urlsplit(self.path).path.startswith("/api/") and not secrets.compare_digest(
             self.headers.get("X-Roman-Token", ""), self.server.token
@@ -314,10 +364,21 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(400, {"error": str(exc)})
 
 
-def serve(workspace: Path, *, port=8768):
+def serve(workspace: Path, *, port=8768, public_url=None, nexus=False):
     """Start the local GUI; the workspace defines relative paths and job records."""
-    server = GuiServer(workspace, port)
-    print(f"Gladius GUI: {server.url}", flush=True)
+    server = GuiServer(workspace, port, public_url=public_url, nexus=nexus)
+    print(f"Gladius GUI: {server.public_url or server.url}", flush=True)
+    if server.public_url:
+        print(f"Local listener: {server.url} (Jupyter proxy access configured)", flush=True)
+        print(
+            "Keep this process and your Jupyter server running. Open the full link including its trailing slash.",
+            flush=True,
+        )
+    elif os.environ.get("JUPYTERHUB_SERVICE_PREFIX"):
+        print(
+            "JupyterHub detected, but its public address is unavailable. On Roman Nexus add --nexus; otherwise set --public-url to the full /proxy/PORT/ URL.",
+            flush=True,
+        )
     print(f"Workspace: {server.workspace}", flush=True)
     try:
         server.serve_forever()

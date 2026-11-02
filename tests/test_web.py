@@ -116,15 +116,19 @@ def test_bundled_branding_and_license_resources(gui):
     status, theme_script = request(gui, "/assets/theme.js", token=False)
     assert status == 200 and b"gladius-theme" in theme_script
     status, theme_css = request(gui, "/assets/theme.css", token=False)
-    assert status == 200 and b'color-scheme: dark' in theme_css
+    assert status == 200 and b"color-scheme: dark" in theme_css
     for asset in ("family.css", "fonts.css", "family-theme.js", "family-font-0.ttf"):
         status, content = request(gui, f"/assets/family/{asset}", token=False)
         assert status == 200 and content
     assert request(gui, "/assets/family/../../config.py", token=False)[0] == 404
-    for url in ("https://rges-pit.org/", "https://github.com/AmberLee2427/gladius",
-                "https://archive.stsci.edu/missions-and-data/roman", "https://mldb.rges-pit.com"):
+    for url in (
+        "https://rges-pit.org/",
+        "https://github.com/AmberLee2427/gladius",
+        "https://archive.stsci.edu/missions-and-data/roman",
+        "https://mldb.rges-pit.com",
+    ):
         assert url.encode() in page
-    assert b'src="/assets/gladius-logo.png"' in page
+    assert b'src="./assets/gladius-logo.png"' in page
     for route in ("/assets/gladius-emblem.png", "/assets/gladius-logo.png", "/assets/rges-pit.png"):
         status, png = request(gui, route, token=False)
         assert status == 200 and png.startswith(b"\x89PNG\r\n\x1a\n")
@@ -143,13 +147,22 @@ def test_bundled_branding_and_license_resources(gui):
 
 
 def test_coordinate_conversion_and_workspace_are_portable(gui):
-    status, data = request(gui, "/api/target-coordinate",
-                           {"id": "gc", "frame": "galactic", "longitude": 0, "latitude": 0})
+    status, data = request(
+        gui,
+        "/api/target-coordinate",
+        {"id": "gc", "frame": "galactic", "longitude": 0, "latitude": 0},
+    )
     assert status == 200
     assert data["target"]["ra"] == pytest.approx(266.405, abs=0.002)
     assert data["target"]["x"] is None
-    assert request(gui, "/api/target-coordinate",
-                   {"id": "bad", "frame": "galactic", "longitude": 0, "latitude": 91})[0] == 400
+    assert (
+        request(
+            gui,
+            "/api/target-coordinate",
+            {"id": "bad", "frame": "galactic", "longitude": 0, "latitude": 91},
+        )[0]
+        == 400
+    )
     _, defaults = request(gui, "/api/defaults")
     assert defaults["workspace"] == str(gui.workspace)
     assert defaults["configuration"]["astrometry"]["corrected_directory"] == "gaia_wcs"
@@ -166,13 +179,17 @@ def test_real_archive_test_configuration_uses_metadata_without_downloading(gui, 
 
         def query_criteria(self, **criteria):
             assert criteria["productLevel"] == "2" and criteria["limit"] == 5
-            return Table(rows=[("data-a", 270., -29.), ("data-b", 271., -30.)],
-                         names=["fileSetName", "ra", "dec"])
+            return Table(
+                rows=[("data-a", 270.0, -29.0), ("data-b", 271.0, -30.0)],
+                names=["fileSetName", "ra", "dec"],
+            )
 
         def get_unique_product_list(self, rows):
             dataset = str(rows[0]["fileSetName"])
-            return Table(rows=[(dataset+"_cal.asdf", 2000 if dataset == "data-a" else 1000)],
-                         names=["filename", "size"])
+            return Table(
+                rows=[(dataset + "_cal.asdf", 2000 if dataset == "data-a" else 1000)],
+                names=["filename", "size"],
+            )
 
         def filter_products(self, products, **criteria):
             assert criteria == {"file_suffix": "_cal"}
@@ -196,3 +213,99 @@ def test_real_archive_test_configuration_uses_metadata_without_downloading(gui, 
     assert config["storage"]["output_directory"] == str(gui.workspace / "gladius-mast-test")
     assert not (gui.workspace / "gladius-mast-test").exists()
     assert not (gui.workspace / ".gladius-gui").exists()
+
+
+def test_jupyter_proxy_environment_and_explicit_override(monkeypatch):
+    from gladius_roman.web import _proxy_url
+
+    for key in (
+        "JUPYTERHUB_SERVICE_PREFIX",
+        "JUPYTERHUB_PUBLIC_URL",
+        "NEXUS_SERVER_URL",
+        "JUPYTERHUB_HOST",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    assert _proxy_url(8768) is None
+    monkeypatch.setenv("JUPYTERHUB_SERVICE_PREFIX", "/user/amber/commissioning/")
+    assert _proxy_url(8768) is None  # A generic Hub prefix does not identify Nexus.
+    assert (
+        _proxy_url(8768, nexus=True)
+        == "https://roman.science.stsci.edu/user/amber/commissioning/proxy/8768/"
+    )
+    monkeypatch.setenv("JUPYTERHUB_PUBLIC_URL", "https://hub.example/user/amber/analysis/")
+    assert _proxy_url(8768) == "https://hub.example/user/amber/analysis/proxy/8768/"
+    assert (
+        _proxy_url(8768, "https://custom.example/work/proxy/8768/")
+        == "https://custom.example/work/proxy/8768/"
+    )
+    for value in (
+        "//evil.example/",
+        "https://user:secret@host/",
+        "https://host/?token=secret",
+        'https://host/"bad',
+    ):
+        with pytest.raises(ValueError):
+            _proxy_url(8768, value)
+
+
+def test_proxy_origin_is_explicit_not_inferred_from_headers(tmp_path):
+    server = GuiServer(
+        tmp_path, port=0, public_url="https://roman.science.stsci.edu/user/amber/named/proxy/8768/"
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        assert request(server, "/api/defaults", origin="https://roman.science.stsci.edu")[0] == 200
+        assert request(server, "/api/defaults", origin="https://evil.example")[0] == 403
+        assert (
+            request(server, "/api/defaults", token=False, origin="https://roman.science.stsci.edu")[
+                0
+            ]
+            == 403
+        )
+        req = Request(
+            server.url + "/",
+            headers={"Host": "evil.example", "X-Forwarded-Host": "roman.science.stsci.edu"},
+        )
+        with pytest.raises(HTTPError) as error:
+            urlopen(req)
+        assert error.value.code == 403
+        req = Request(server.url + "/", headers={"Host": "roman.science.stsci.edu"})
+        with urlopen(req) as response:
+            assert response.status == 200
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=3)
+
+
+def test_browser_paths_remain_within_jupyter_proxy(gui):
+    import re
+    from urllib.parse import urljoin
+
+    base = "https://roman.science.stsci.edu/user/amber/named/proxy/8768/"
+    for route in ("/", "/dependencies"):
+        _, raw = request(gui, route, token=False)
+        html = raw.decode()
+        for link in re.findall(r'(?:href|src)="([^"]+)"', html):
+            if link.startswith("https:"):
+                continue
+            assert urljoin(base + route.lstrip("/"), link).startswith(base)
+        assert 'href="/assets/' not in html and 'src="/assets/' not in html
+    _, page = request(gui, "/", token=False)
+    assert b'fetch("." + path' in page
+    assert b'fetch("./api/jobs/"' in page
+
+
+def test_startup_prints_named_server_link(tmp_path, monkeypatch, capsys):
+    from gladius_roman.web import serve
+
+    monkeypatch.setenv("JUPYTERHUB_SERVICE_PREFIX", "/user/amber/commissioning/")
+    monkeypatch.delenv("JUPYTERHUB_PUBLIC_URL", raising=False)
+    monkeypatch.delenv("NEXUS_SERVER_URL", raising=False)
+    monkeypatch.setattr(GuiServer, "serve_forever", lambda self: None)
+    serve(tmp_path, port=0, nexus=True)
+    output = capsys.readouterr().out
+    assert "Gladius GUI: https://roman.science.stsci.edu/user/amber/commissioning/proxy/" in output
+    assert "Local listener: http://127.0.0.1:" in output
+    assert "token" not in output.lower()

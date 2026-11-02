@@ -5,7 +5,7 @@ include CONTRIBUTING.md CODE_OF_CONDUCT.md AI_POLICY.md TESTING.md tox.ini .ruff
 recursive-include licenses *.txt
 recursive-include src *.py *.typed *.yaml *.html *.css *.js *.png *.txt *.ttf
 recursive-include tests *.py
-recursive-include docs *.md *.rst *.py *.json *.css *.png *.js *.ttf *.txt
+recursive-include docs *.md *.rst *.py *.json *.css *.png *.jpg *.gif *.js *.ttf *.txt
 recursive-include notebooks *.md *.ipynb
 recursive-include examples *.yaml *.csv
 prune local-snapshot

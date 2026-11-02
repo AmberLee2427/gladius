@@ -1,5 +1,6 @@
-"""Small deterministic generic ASDF fixture; no Roman data or credentials needed."""
+"""Offline synthetic and real MAST examples with saved, reusable configurations."""
 
+import math
 from pathlib import Path
 
 import asdf
@@ -24,6 +25,7 @@ def create_demo(directory: Path) -> Path:
     images.mkdir()
     yy, xx = np.indices((96, 96))
     rng = np.random.default_rng(42)
+    noise_sigma = 2.0  # Visible independent Gaussian background noise, in DN/s.
     for index, dx in enumerate((0.0, 1.5)):
         transform = (
             (models.Shift(-48 - dx) & models.Shift(-48))
@@ -39,13 +41,13 @@ def create_demo(directory: Path) -> Path:
         )
         wcs.bounding_box = ((-0.5, 95.5), (-0.5, 95.5))
         data = (
-            rng.normal(0, 0.05, xx.shape)
+            rng.normal(0, noise_sigma, xx.shape)
             + 100 * np.exp(-((xx - 48 - dx) ** 2 + (yy - 48) ** 2) / 8)
         ).astype(np.float32)
         tree = {
             "roman": {
                 "data": data,
-                "err": np.full(xx.shape, 0.05, np.float32),
+                "err": np.full(xx.shape, noise_sigma, np.float32),
                 "dq": np.zeros(xx.shape, np.uint32),
                 "var_poisson": np.maximum(data, 0),
                 "meta": {
@@ -69,8 +71,42 @@ def create_demo(directory: Path) -> Path:
         "targets": [{"id": "demo-event", "ra": 270.0, "dec": -29.0}],
         "inputs": {"directory": "images"},
         "extraction": {"size": 64},
-        "stacks": {"enabled": True},
+        "stacks": {"enabled": True, "gif_enabled": True},
         "storage": {"output_directory": "output"},
     }
     config_path.write_text(yaml.safe_dump(config, sort_keys=False))
+    return config_path
+
+
+def create_mast_demo(directory: Path, *, max_parent_mib: float = 512) -> Path:
+    """Discover one real parent and write demo YAML; do not download the image.
+
+    The size check uses MAST's advertised bytes, not a streaming download cap.
+    The demo explicitly uses a 0.01-pixel numerical WCS tolerance, matching the
+    real-data notebook; the package default remains 0.001 pixels.
+    """
+    from .config import RunConfig
+    from .inputs import mast_test_configuration
+
+    if not math.isfinite(max_parent_mib) or max_parent_mib <= 0:
+        raise ValueError("max_parent_mib must be finite and positive")
+    directory = directory.expanduser().resolve()
+    if directory.exists() and (not directory.is_dir() or any(directory.iterdir())):
+        raise FileExistsError("MAST demo requires a new or empty destination directory")
+    selection = mast_test_configuration(directory)
+    size_mib = selection["download_bytes"] / 1024**2
+    if size_mib > max_parent_mib:
+        raise ValueError(
+            f"Selected parent is advertised as {size_mib:.1f} MiB, exceeding "
+            f"--max-parent-mib {max_parent_mib:g}. No image was downloaded."
+        )
+    settings = selection["configuration"]
+    settings["extraction"]["size"] = 150
+    settings["astrometry"]["roundtrip_tolerance_pixels"] = 0.01
+    settings["storage"].update(output_directory=str(directory / "output"), formats=["asdf", "fits"])
+    config = RunConfig.model_validate(settings).resolved(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    config_path = directory / "demo.yaml"
+    with config_path.open("x") as stream:
+        stream.write(yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False))
     return config_path

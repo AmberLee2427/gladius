@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gladius · Roman image cutouts</title>
-    <link rel="icon" type="image/png" href="/assets/gladius-emblem.png" />
-    <link rel="apple-touch-icon" href="/assets/gladius-emblem.png" />
+    <link rel="icon" type="image/png" href="./assets/gladius-emblem.png" />
+    <link rel="apple-touch-icon" href="./assets/gladius-emblem.png" />
     <meta name="application-name" content="Gladius" />
-    <script nonce="__NONCE__" src="/assets/theme.js"></script>
+    <script nonce="__NONCE__" src="./assets/theme.js"></script>
     <style>
       :root {
         --ink: #241b29;
@@ -458,16 +458,16 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="/assets/theme.css" />
-    <link rel="stylesheet" href="/assets/family/family.css" />
-    <script nonce="__NONCE__" src="/assets/family/family-theme.js"></script>
+    <link rel="stylesheet" href="./assets/theme.css" />
+    <link rel="stylesheet" href="./assets/family/family.css" />
+    <script nonce="__NONCE__" src="./assets/family/family-theme.js"></script>
   </head>
   <body class="family-gui">
     <header>
       <div>
         <h1 class="brand">
           <img
-            src="/assets/gladius-logo.png"
+            src="./assets/gladius-logo.png"
             alt="Gladius"
             width="160"
             height="104"
@@ -610,10 +610,15 @@
           <details>
             <summary>MAST authentication</summary>
             <p class="caption">
-              Create a file named <code>.env</code> in the directory passed to
+              First <a href="https://auth.mast.stsci.edu/tokens" target="_blank" rel="noopener noreferrer">open MAST API tokens</a>,
+              sign in with your STScI account, create a token, and copy it.
+              A token identifies your account; restricted observations still require
+              permission for that account. Run <code>gladius token</code> in the directory passed to
               <code>gladius gui --workspace</code> (the launch folder by default).
-              Add <code>MAST_API_TOKEN=your_token_here</code>, save it, then restart
-              the GUI server. Reloading the tab is not enough. Changing Working
+              Enter your token at the hidden prompt to save it in <code>.env</code>,
+              then restart the GUI server. You can also create that file manually
+              with <code>MAST_API_TOKEN=your_token_here</code>.
+              Reloading the tab is not enough. Changing Working
               directory above does not load another .env file. Existing shell
               variables take precedence. Keep the token out of YAML and Git;
               GitHub Actions secrets are separate from this local file.
@@ -664,7 +669,7 @@
       >
         <img
           class="team-logo"
-          src="/assets/rges-pit.png"
+          src="./assets/rges-pit.png"
           alt="Roman Galactic Exoplanet Survey Project Infrastructure Team"
           width="100"
           height="100"
@@ -699,15 +704,15 @@
         </nav>
         <p class="footer-license">
           Gladius contributors ·
-          <a href="/license" target="_blank" rel="noopener noreferrer"
+          <a href="./license" target="_blank" rel="noopener noreferrer"
             >BSD-3-Clause license</a
           >
           ·
-          <a href="/notices" target="_blank" rel="noopener noreferrer"
+          <a href="./notices" target="_blank" rel="noopener noreferrer"
             >Attribution &amp; notices</a
           >
           ·
-          <a href="/dependencies" target="_blank" rel="noopener noreferrer"
+          <a href="./dependencies" target="_blank" rel="noopener noreferrer"
             >Dependencies &amp; acknowledgements</a
           >
         </p>
@@ -731,7 +736,7 @@
         extraction: "Cutout geometry",
         astrometry: "Astrometry",
         quality: "Quality screen",
-        stacks: "Display stacks",
+        stacks: "Stacks, animations & colour",
         storage: "Output & full images",
         execution: "Execution",
       };
@@ -760,7 +765,13 @@
         tile_size: "Autocorrelation tile side (pixels)",
         radius: "Autocorrelation lag radius (pixels)",
         exclude_from_stacks: "Exclude flagged cutouts from stacks",
-        enabled: "Build display stacks",
+        enabled: "Build median display stacks",
+        rgb_enabled: "Create colour composites",
+        red_filter: "Red channel filter",
+        green_filter: "Green channel filter",
+        blue_filter: "Blue channel filter",
+        gif_enabled: "Create animated GIFs",
+        gif_frame_ms: "GIF frame duration (ms)",
         max_exposures: "Max. exposures",
         max_memory_mb: "Memory limit (MiB)",
         output_directory: "Output directory",
@@ -771,7 +782,7 @@
         lock_timeout_seconds: "Lock timeout (seconds)",
       };
       async function api(path, body) {
-        const response = await fetch(path, {
+        const response = await fetch("." + path, {
           method: body === undefined ? "GET" : "POST",
           headers: {
             "X-Roman-Token": BOOT.token,
@@ -946,8 +957,9 @@
               ? "number"
               : "text";
             if (input.type === "number") {
-              input.step = def.type === "integer" ? "1" : "any";
+              input.step = def.multipleOf ?? (def.type === "integer" ? "1" : "any");
               if (def.minimum !== undefined) input.min = def.minimum;
+              if (def.maximum !== undefined) input.max = def.maximum;
             }
             input.value = value ?? "";
           }
@@ -1035,6 +1047,15 @@
           radius:
             "Maximum pixel offset (lag) from zero shift in the autocorrelation map used to measure its shape. 15 includes offsets within a 15-pixel circle. Keep it below half the tile side; it is not a sky aperture.",
           size: "Side length of a square cutout: 150 produces a 150 × 150 pixel array. Pixels keep their native sampling; this does not force square pixels on the sky.",
+          rgb_enabled:
+            "Make a false-colour PNG per target: align all three filters to one sky grid, median each filter, and normalize each channel independently with z-scale. Missing channels skip the composite; missing pixels are grey. Display colour, not physical colour ratios.",
+          red_filter: "Default F213. Set the filter assigned to red; it must be present among eligible cutouts.",
+          green_filter: "Default F184. Set the filter assigned to green.",
+          blue_filter: "Default F062. Set the filter assigned to blue; a blue exposure defines the common sky grid.",
+          gif_enabled:
+            "Animate individual exposures aligned to the same sky grid, grouped by target/filter. Uses the same quality exclusions and input limits as stacks. One shared brightness stretch preserves visible changes between frames. Display only.",
+          gif_frame_ms:
+            "Time shown per exposure. 500 ms gives two frames per second. Use multiples of 10 ms; playback timing does not represent elapsed observing time.",
           max_exposures:
             "Maximum inputs per target/filter stack. 0 disables this check. Exceeding a nonzero limit fails the stack phase without dropping exposures; native cutouts already saved remain available.",
           max_memory_mb:
@@ -1370,7 +1391,7 @@
       };
       $("downloadManifest").onclick = async () => {
         try {
-          const response = await fetch("/api/jobs/" + jobId + "/manifest", {
+          const response = await fetch("./api/jobs/" + jobId + "/manifest", {
             headers: { "X-Roman-Token": BOOT.token },
           });
           if (!response.ok) throw new Error("Manifest could not be downloaded");
