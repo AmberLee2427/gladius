@@ -81,8 +81,9 @@ def read_targets_csv(path: str | Path) -> list[Target]:
     return parse_targets_csv(Path(path).expanduser().read_text(encoding="utf-8-sig"))
 
 
-def target_from_coordinates(*, target_id: str, frame: str, longitude: float,
-                            latitude: float) -> Target:
+def target_from_coordinates(
+    *, target_id: str, frame: str, longitude: float, latitude: float
+) -> Target:
     """Convert decimal-degree sky coordinates with Astropy; preserve input metadata.
 
     Ecliptic means barycentric true ecliptic at equinox J2000, with no inferred
@@ -106,8 +107,11 @@ def target_from_coordinates(*, target_id: str, frame: str, longitude: float,
         return Target(id=target_id, ra=lon, dec=lat)
     system = "galactic" if frame == "galactic" else BarycentricTrueEcliptic(equinox=Time("J2000"))
     sky = SkyCoord(lon, lat, unit="deg", frame=system).icrs
-    metadata = {"input_frame": frame, "input_longitude_deg": str(lon),
-                "input_latitude_deg": str(lat)}
+    metadata = {
+        "input_frame": frame,
+        "input_longitude_deg": str(lon),
+        "input_latitude_deg": str(lat),
+    }
     if frame == "ecliptic":
         metadata.update(input_frame="barycentric_true_ecliptic", input_equinox="J2000")
     return Target(id=target_id, ra=float(sky.ra.deg), dec=float(sky.dec.deg), metadata=metadata)

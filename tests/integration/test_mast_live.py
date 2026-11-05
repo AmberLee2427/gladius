@@ -70,15 +70,28 @@ def test_authenticated_roman_download(tmp_path, record_property):
     # This intentionally samples up to five datasets; it is not a complete survey.
     # No invented program ID or hard-coded dataset can silently go stale.
     observations = missions.query_criteria(
-        productLevel="2", limit=5,
-        select_cols=["fileSetName", "ra", "dec", "detector", "optical_element",
-                     "exposure_start_time"],
+        productLevel="2",
+        limit=5,
+        select_cols=[
+            "fileSetName",
+            "ra",
+            "dec",
+            "detector",
+            "optical_element",
+            "exposure_start_time",
+        ],
     )
     assert len(observations), "No accessible Roman Level 2 datasets found"
 
     # Exercise the package's generated cone syntax using an actual archive position.
-    position = next((row for row in observations
-                     if np.isfinite(float(row["ra"])) and np.isfinite(float(row["dec"]))), None)
+    position = next(
+        (
+            row
+            for row in observations
+            if np.isfinite(float(row["ra"])) and np.isfinite(float(row["dec"]))
+        ),
+        None,
+    )
     assert position is not None, "Sample has no finite Roman archive sky positions"
     config = RunConfig(
         targets=[Target(id="archive-smoke", ra=float(position["ra"]), dec=float(position["dec"]))],
@@ -86,8 +99,9 @@ def test_authenticated_roman_download(tmp_path, record_property):
     )
     query = mast_queries(config)[0]
     nearby = missions.query_criteria(
-        **query, limit=5, select_cols=["fileSetName", "detector", "optical_element",
-                                      "exposure_start_time"],
+        **query,
+        limit=5,
+        select_cols=["fileSetName", "detector", "optical_element", "exposure_start_time"],
     )
     assert len(nearby), "Generated target query did not recover any candidate observations"
     products = missions.get_unique_product_list(observations)
@@ -111,7 +125,8 @@ def test_authenticated_roman_download(tmp_path, record_property):
             exposure = read_exposure(path)
             ny, nx = exposure.arrays["data"].shape
             cutout = make_cutout(
-                exposure.arrays, exposure.wcs,
+                exposure.arrays,
+                exposure.wcs,
                 Target(id="archive-smoke", x=(nx - 1) / 2, y=(ny - 1) / 2),
                 parent_metadata=exposure.parent_metadata,
                 ancillary_arrays=exposure.ancillary_arrays,
@@ -126,9 +141,13 @@ def test_authenticated_roman_download(tmp_path, record_property):
     assert not downloaded_path.exists(), "Temporary archive parent was not cleaned up"
 
     # Reports contain no token, raw product metadata, or restricted science data.
-    result = {"downloaded_bytes": actual, "sha256": digest,
-              "coverage": "calibrated-image-and-cutout" if calibrated else "associated-product-download",
-              "generated_target_query": "passed", "temporary_cleanup": "passed"}
+    result = {
+        "downloaded_bytes": actual,
+        "sha256": digest,
+        "coverage": "calibrated-image-and-cutout" if calibrated else "associated-product-download",
+        "generated_target_query": "passed",
+        "temporary_cleanup": "passed",
+    }
     report = os.environ.get("GLADIUS_MAST_REPORT")
     if report:
         Path(report).write_text(json.dumps(result, indent=2) + "\n")
@@ -138,8 +157,10 @@ def test_authenticated_roman_download(tmp_path, record_property):
 
 
 def test_small_product_selection_and_image_preference():
-    products = Table(rows=[("preview.jpg", 100), ("parent_cal.asdf", 1000),
-                           ("huge_cal.asdf", MAX_BYTES + 1)], names=["filename", "size"])
+    products = Table(
+        rows=[("preview.jpg", 100), ("parent_cal.asdf", 1000), ("huge_cal.asdf", MAX_BYTES + 1)],
+        names=["filename", "size"],
+    )
     assert choose_product(products)["filename"] == "parent_cal.asdf"
     assert choose_product(products[:1])["filename"] == "preview.jpg"
     with pytest.raises(ValueError, match="No eligible"):
@@ -173,9 +194,17 @@ def test_live_harness_with_synthetic_archive(demo, tmp_path, monkeypatch):
             if self.calls == 2:
                 assert kwargs["coordinates"] == "270.0 -29.0"
                 assert kwargs["radius"] == "6.0 arcmin"
-            return Table(rows=[("demo", 270., -29., "WFI01", "F146", "2026-01-01")],
-                         names=["fileSetName", "ra", "dec", "detector", "optical_element",
-                                "exposure_start_time"])
+            return Table(
+                rows=[("demo", 270.0, -29.0, "WFI01", "F146", "2026-01-01")],
+                names=[
+                    "fileSetName",
+                    "ra",
+                    "dec",
+                    "detector",
+                    "optical_element",
+                    "exposure_start_time",
+                ],
+            )
 
         def get_unique_product_list(self, observations):
             return Table(rows=[(source.name, source.stat().st_size)], names=["filename", "size"])

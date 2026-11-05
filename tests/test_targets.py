@@ -74,7 +74,11 @@ def test_galactic_ecliptic_and_pixel_coordinates():
     assert ecliptic.metadata["input_equinox"] == "J2000"
     pixel = target_from_coordinates(target_id="px", frame="pixel", longitude=-2, latitude=12)
     assert pixel.x == -2 and pixel.ra is None
-    for frame, lon, lat in [("galactic", 361, 0), ("ecliptic", 1, 91),
-                            ("unknown", 1, 2), ("sky", float("nan"), 0)]:
+    for frame, lon, lat in [
+        ("galactic", 361, 0),
+        ("ecliptic", 1, 91),
+        ("unknown", 1, 2),
+        ("sky", float("nan"), 0),
+    ]:
         with pytest.raises(ValueError):
             target_from_coordinates(target_id="bad", frame=frame, longitude=lon, latitude=lat)

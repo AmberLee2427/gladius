@@ -101,18 +101,27 @@ def test_automatic_mast_queries_and_overrides():
     from gladius.inputs import mast_queries
 
     config = RunConfig(
-        targets=[{"id": "a", "ra": 359.99, "dec": -29},
-                 {"id": "b", "ra": 359.99, "dec": -29},
-                 {"id": "c", "ra": 0.01, "dec": -29}],
+        targets=[
+            {"id": "a", "ra": 359.99, "dec": -29},
+            {"id": "b", "ra": 359.99, "dec": -29},
+            {"id": "c", "ra": 0.01, "dec": -29},
+        ],
         inputs={"mode": "mast"},
-        selection={"start": "2026-01-01", "end": "2026-02-01",
-                   "detectors": [1], "filters": ["f146"]},
+        selection={
+            "start": "2026-01-01",
+            "end": "2026-02-01",
+            "detectors": [1],
+            "filters": ["f146"],
+        },
     )
     queries = mast_queries(config)
     assert len(queries) == 2
     assert queries[0] == {
-        "productLevel": "2", "coordinates": "359.99 -29.0", "radius": "6.0 arcmin",
-        "detector": ["WFI01", "SCA01"], "optical_element": ["F146"],
+        "productLevel": "2",
+        "coordinates": "359.99 -29.0",
+        "radius": "6.0 arcmin",
+        "detector": ["WFI01", "SCA01"],
+        "optical_element": ["F146"],
         "exposure_start_time": "2026-01-01T00:00:00.000..2026-02-01T00:00:00.000",
     }
     override = config.model_dump()
@@ -135,8 +144,10 @@ def test_overlapping_mast_queries_deduplicate_before_download(monkeypatch):
 
         def query_criteria(self, **criteria):
             self.queries.append(criteria)
-            return Table(rows=[("same", "WFI01", "F146", "2026-01-01")],
-                         names=["fileSetName", "detector", "optical_element", "exposure_start_time"])
+            return Table(
+                rows=[("same", "WFI01", "F146", "2026-01-01")],
+                names=["fileSetName", "detector", "optical_element", "exposure_start_time"],
+            )
 
         def get_unique_product_list(self, observations):
             assert len(observations) == 1
@@ -150,9 +161,10 @@ def test_overlapping_mast_queries_deduplicate_before_download(monkeypatch):
     module.MastMissions = lambda **kwargs: instance
     monkeypatch.setitem(sys.modules, "astroquery.mast", module)
     monkeypatch.delenv("MAST_API_TOKEN", raising=False)
-    config = RunConfig(targets=[{"id": "a", "ra": 270, "dec": -29},
-                                {"id": "b", "ra": 270.001, "dec": -29}],
-                       inputs={"mode": "mast"})
+    config = RunConfig(
+        targets=[{"id": "a", "ra": 270, "dec": -29}, {"id": "b", "ra": 270.001, "dec": -29}],
+        inputs={"mode": "mast"},
+    )
     _, products = discover(config)
     assert len(instance.queries) == 2 and len(products) == 1
 

@@ -9,8 +9,7 @@ def test_explicit_file_precedence_and_literal_values(tmp_path, monkeypatch):
     monkeypatch.delenv("GLADIUS_TEST_TOKEN", raising=False)
     monkeypatch.setenv("GLADIUS_TEST_EXISTING", "shell")
     (tmp_path / ".env").write_text(
-        'GLADIUS_TEST_TOKEN="literal-${GLADIUS_TEST_EXISTING}"\n'
-        'GLADIUS_TEST_EXISTING=file\n'
+        'GLADIUS_TEST_TOKEN="literal-${GLADIUS_TEST_EXISTING}"\nGLADIUS_TEST_EXISTING=file\n'
     )
     assert load_environment(tmp_path)
     assert os.environ["GLADIUS_TEST_TOKEN"] == "literal-${GLADIUS_TEST_EXISTING}"
@@ -29,11 +28,13 @@ def test_cli_uses_yaml_directory_not_launch_directory(tmp_path, monkeypatch):
     (tmp_path / ".env").write_text("GLADIUS_TEST_CLI=from-launch\n")
     (config_dir / "run.yaml").write_text("targets: [{id: test, x: 0, y: 0}]\n")
     monkeypatch.chdir(tmp_path)
+
     def fake_run(config):
         assert os.environ["GLADIUS_TEST_CLI"] == "from-config"
         manifest = tmp_path / "manifest.json"
         manifest.write_text('{"status": "complete"}')
         return manifest
+
     monkeypatch.setattr("gladius.cli.run", fake_run)
     assert main(["run", "config/run.yaml"]) == 0
 

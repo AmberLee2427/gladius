@@ -113,7 +113,7 @@ def test_bundled_branding_and_license_resources(gui):
     assert b"Gladius \xc2\xb7 Roman image cutouts" in page
     assert b'rel="icon"' in page
     assert b'class="header-actions"' in page
-    assert b'>Local</div>' not in page
+    assert b">Local</div>" not in page
     status, theme_script = request(gui, "/assets/theme.js", token=False)
     assert status == 200 and b"gladius-theme" in theme_script
     status, theme_css = request(gui, "/assets/theme.css", token=False)

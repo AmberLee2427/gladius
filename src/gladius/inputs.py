@@ -48,10 +48,14 @@ def mast_queries(config: RunConfig) -> list[dict]:
     criteria = {"productLevel": "2", **config.inputs.mast_criteria}
     selection = config.selection
     if selection.detectors:
-        criteria.setdefault("detector", [
-            f"{prefix}{number:02d}"
-            for number in selection.detectors for prefix in ("WFI", "SCA")
-        ])
+        criteria.setdefault(
+            "detector",
+            [
+                f"{prefix}{number:02d}"
+                for number in selection.detectors
+                for prefix in ("WFI", "SCA")
+            ],
+        )
     if selection.filters:
         criteria.setdefault("optical_element", selection.filters)
     if selection.start and selection.end:
@@ -70,8 +74,11 @@ def mast_queries(config: RunConfig) -> list[dict]:
     if not positions:
         return [criteria]
     return [
-        {**criteria, "coordinates": f"{ra} {dec}",
-         "radius": f"{config.inputs.mast_radius_arcmin} arcmin"}
+        {
+            **criteria,
+            "coordinates": f"{ra} {dec}",
+            "radius": f"{config.inputs.mast_radius_arcmin} arcmin",
+        }
         for ra, dec in positions
     ]
 
@@ -97,7 +104,9 @@ def discover(config: RunConfig):
     if os.environ.get("MAST_API_TOKEN"):
         missions.login(token=os.environ["MAST_API_TOKEN"])
     if missions.dataset_kwds.get("roman") != "fileSetName":
-        raise ImportError("Roman MAST support requires astroquery>=0.4.11; upgrade the [mast] extra")
+        raise ImportError(
+            "Roman MAST support requires astroquery>=0.4.11; upgrade the [mast] extra"
+        )
     from astropy.table import unique, vstack
 
     tables = []
@@ -122,7 +131,9 @@ def discover(config: RunConfig):
             tables.append(observations)
             combined = unique(vstack(tables), keys="fileSetName", keep="first")
             if len(combined) >= config.inputs.query_limit:
-                raise ValueError("MAST query may be truncated; narrow criteria or increase query_limit")
+                raise ValueError(
+                    "MAST query may be truncated; narrow criteria or increase query_limit"
+                )
             tables = [combined]
     if not tables:
         raise ValueError("No MAST observations matched the target searches and criteria")
@@ -147,7 +158,9 @@ def discover(config: RunConfig):
     if not len(products):
         raise ValueError("MAST returned no products with the requested product_suffix")
     if config.inputs.product_filename:
-        products = products[[str(row["filename"]) == config.inputs.product_filename for row in products]]
+        products = products[
+            [str(row["filename"]) == config.inputs.product_filename for row in products]
+        ]
         if not len(products):
             raise ValueError("MAST returned no product matching inputs.product_filename")
     names = [str(row["filename"]) for row in products]
@@ -209,7 +222,9 @@ def mast_test_configuration(base: Path) -> dict:
         for index, row in enumerate(observations):
             try:
                 ra, dec = float(row["ra"]), float(row["dec"])
-                if not (math.isfinite(ra) and math.isfinite(dec) and 0 <= ra < 360 and -90 <= dec <= 90):
+                if not (
+                    math.isfinite(ra) and math.isfinite(dec) and 0 <= ra < 360 and -90 <= dec <= 90
+                ):
                     continue
             except (ValueError, TypeError):
                 continue
@@ -231,22 +246,37 @@ def mast_test_configuration(base: Path) -> dict:
     except Exception as exc:
         status = getattr(getattr(exc, "response", None), "status_code", None)
         if status in (401, 403):
-            raise ValueError("MAST denied the test query. Set MAST_API_TOKEN in the launching "
-                             "shell/server and verify Roman access; a GitHub secret is only "
-                             "available inside GitHub Actions.") from exc
+            raise ValueError(
+                "MAST denied the test query. Set MAST_API_TOKEN in the launching "
+                "shell/server and verify Roman access; a GitHub secret is only "
+                "available inside GitHub Actions."
+            ) from exc
         raise ValueError(f"MAST test discovery failed: {type(exc).__name__}: {exc}") from exc
     if not candidates:
-        raise ValueError("No accessible calibrated image with a known size and sky position "
-                         "was found in the five-dataset MAST sample. No test YAML was loaded.")
+        raise ValueError(
+            "No accessible calibrated image with a known size and sky position "
+            "was found in the five-dataset MAST sample. No test YAML was loaded."
+        )
     size, filename, dataset, ra, dec = min(candidates)
-    config = RunConfig.model_validate({
-        "targets": [{"id": "mast-test", "ra": ra, "dec": dec}],
-        "inputs": {"mode": "mast", "mast_criteria": {"fileSetName": dataset},
-                   "product_filename": filename, "query_limit": 100},
-        "extraction": {"size": 64, "no_overlap": "error"},
-        "storage": {"output_directory": "gladius-mast-test", "formats": ["asdf"]},
-        "quality": {"autocorrelation_limit": None}, "stacks": {"enabled": False},
-    }).resolved(base)
-    return {"yaml": yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False),
-            "configuration": config.model_dump(mode="json"), "download_bytes": size,
-            "filename": filename, "dataset": dataset}
+    config = RunConfig.model_validate(
+        {
+            "targets": [{"id": "mast-test", "ra": ra, "dec": dec}],
+            "inputs": {
+                "mode": "mast",
+                "mast_criteria": {"fileSetName": dataset},
+                "product_filename": filename,
+                "query_limit": 100,
+            },
+            "extraction": {"size": 64, "no_overlap": "error"},
+            "storage": {"output_directory": "gladius-mast-test", "formats": ["asdf"]},
+            "quality": {"autocorrelation_limit": None},
+            "stacks": {"enabled": False},
+        }
+    ).resolved(base)
+    return {
+        "yaml": yaml.safe_dump(config.model_dump(mode="json"), sort_keys=False),
+        "configuration": config.model_dump(mode="json"),
+        "download_bytes": size,
+        "filename": filename,
+        "dataset": dataset,
+    }
