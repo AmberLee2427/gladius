@@ -89,7 +89,7 @@
           "type": "string"
         },
         "no_overlap": {
-          "default": "pad",
+          "default": "skip",
           "enum": [
             "pad",
             "skip",

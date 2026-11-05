@@ -296,7 +296,7 @@ and positions on the sky. Choose how Gladius uses it:
 cutout. At a detector edge, `edge: pad` keeps that requested size and fills the
 part outside the image; `edge: strict` rejects any cutout requiring such filling.
 If the square misses the image entirely, `no_overlap` chooses whether to save an
-entirely padded cutout (`pad`), skip it (`skip`), or report an error (`error`).
+entirely padded cutout (`pad`), skip it (`skip`, the default), or report an error (`error`).
 `strict` still rejects entirely padded requests. Failure to convert sky
 coordinates to pixels is an error, rather than an off-image skip.
 
