@@ -41,7 +41,7 @@ def test_all_metadata_and_arrays_survive_in_both_formats(exposure, tmp_path):
     with fits.open(tmp_path / "cutout.fits", checksum=True) as hdul:
         assert hdul["DQ"].header["BUNIT"] == "1"
         assert hdul["SCI"].header["EXPTIME"] == 55.0
-        assert hdul["SCI"].header["DATE-AVG"] == "2026-01-01T00:00:30.000"
+        assert hdul["SCI"].header["DATE-AVG"] == "2026-01-01T00:00:30.000000"
         assert hdul["SCI"].header["X0"] == -3
         assert "ASDFMETA" in hdul
         assert all(h.verify_checksum() == 1 for h in hdul)
@@ -79,7 +79,7 @@ def test_fits_parent_duplicate_headers_and_extra_arrays(exposure, tmp_path):
         ]
     ).writeto(path)
     parent = read_exposure(path)
-    assert parent.summary["start_utc"] == "2026-01-01T00:00:00.000"
+    assert parent.summary["start_utc"] == "2026-01-01T00:00:00.000000"
     histories = [
         c[1] for c in parent.parent_metadata["fits_headers"][1]["cards"] if c[0] == "HISTORY"
     ]

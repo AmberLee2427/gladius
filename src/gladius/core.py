@@ -15,6 +15,8 @@ from .config import Extraction, Target
 
 DO_NOT_USE = 1
 SATURATED = 2
+FLOOR_TOLERANCE = 1e-6
+CORRECTION_MAX_OFFSET_ARCSEC = 60.0
 
 
 class OffDetectorError(ValueError):
@@ -41,7 +43,10 @@ def geometry(x: float, y: float, shape: tuple[int, int], size: int) -> dict[str,
     if len(shape) != 2 or min(shape) < 1:
         raise ValueError("Parent data must have two nonempty dimensions")
     ny, nx = map(int, shape)
-    x0, y0 = int(np.floor(x)) - (size - 1) // 2, int(np.floor(y)) - (size - 1) // 2
+    # Sky round trips leave ~1e-9 pixel noise; without a tolerance an integer pixel
+    # centre can floor to the neighbouring pixel.
+    x0 = int(np.floor(x + FLOOR_TOLERANCE)) - (size - 1) // 2
+    y0 = int(np.floor(y + FLOOR_TOLERANCE)) - (size - 1) // 2
     sx0, sx1 = min(nx, max(0, x0)), min(nx, max(0, x0 + size))
     sy0, sy1 = min(ny, max(0, y0)), min(ny, max(0, y0 + size))
     overlap = sx1 > sx0 and sy1 > sy0
@@ -148,11 +153,38 @@ def require_icrs_degrees(wcs):
         raise ValueError(f"{problem}; Gladius needs ICRS RA/Dec in degrees")
 
 
-def validate_wcs(wcs, shape, tolerance=0.001):
-    """Check finite coordinates and numerical inversion, not absolute sky accuracy."""
+def check_correction_matches_parent(correction_wcs, correction_shape, parent_wcs, parent_shape):
+    """Reject a corrected WCS that evidently belongs to a different exposure."""
+    if tuple(correction_shape) not in ((-1, -1), tuple(parent_shape)):
+        raise ValueError(
+            f"Corrected WCS product has image shape {tuple(correction_shape)}, "
+            f"but the parent is {tuple(parent_shape)}"
+        )
+    require_icrs_degrees(correction_wcs)
+    ny, nx = parent_shape
+    centre = (nx / 2, ny / 2)
+    original = SkyCoord(*pixel_to_world(parent_wcs, *centre), unit="deg")
+    corrected = SkyCoord(*pixel_to_world(correction_wcs, *centre), unit="deg")
+    offset = float(original.separation(corrected).arcsec)
+    if not np.isfinite(offset) or offset > CORRECTION_MAX_OFFSET_ARCSEC:
+        raise ValueError(
+            f"Corrected WCS moves the image centre by {offset:.1f} arcsec "
+            f"(limit {CORRECTION_MAX_OFFSET_ARCSEC:g}); it does not look like this parent's correction"
+        )
+
+
+def validate_wcs(wcs, shape, tolerance=0.001, points=()):
+    """Check finite coordinates and numerical inversion, not absolute sky accuracy.
+
+    ``points`` are extra (x, y) pixel positions, such as predicted targets, that must
+    also invert to within ``tolerance``.
+    """
     require_icrs_degrees(wcs)
     ny, nx = shape
     xx, yy = np.meshgrid(np.linspace(0, nx - 1, 5), np.linspace(0, ny - 1, 5))
+    if len(points):
+        extra = np.asarray(points, dtype=float).reshape(-1, 2)
+        xx, yy = np.append(xx.ravel(), extra[:, 0]), np.append(yy.ravel(), extra[:, 1])
     sky = np.asarray(pixel_to_world(wcs, xx, yy))
     back = np.asarray(world_to_pixel(wcs, *sky))
     if not np.isfinite(sky).all() or not np.isfinite(back).all():

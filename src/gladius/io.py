@@ -97,7 +97,9 @@ def _time(value):
     if value is None:
         return None
     t = value if isinstance(value, Time) else Time(value, scale="utc")
-    return t.utc
+    t = t.utc
+    t.precision = 6
+    return t
 
 
 def _summary(meta):
@@ -244,7 +246,7 @@ def read_correction(path: Path):
             ancillary = {}
             shape = np.asarray(node["data"]).shape if "data" in node else (-1, -1)
             meta = _partition(af.tree, shape, ancillary)
-            return deepcopy(wcs), meta
+            return deepcopy(wcs), meta, shape
 
 
 def _tree(cutout):

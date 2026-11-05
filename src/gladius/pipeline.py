@@ -20,7 +20,7 @@ from filelock import FileLock
 from . import __version__
 from .cache import copy_files, fingerprint, implementation, load_record, publish, valid_files
 from .config import RunConfig
-from .core import OffDetectorError, make_cutout, validate_wcs
+from .core import OffDetectorError, check_correction_matches_parent, make_cutout, validate_wcs
 from .inputs import discover, selected, staged
 from .io import atomic_json, read_correction, read_cutout, read_exposure, sha256, write_cutout
 from .quality import assess
@@ -279,6 +279,7 @@ def _assess_astrometry(canonical, native, config, cache, versions, fresh):
             parent,
             cutout.mapping["parent_shape_yx"],
             config.astrometry.roundtrip_tolerance_pixels,
+            points=[cutout.provenance["predicted_parent_xy"]],
         )
         validate_wcs(
             cutout.wcs, cutout.arrays["data"].shape, config.astrometry.roundtrip_tolerance_pixels
@@ -688,8 +689,12 @@ def _process_parent(
         if summary:
             record.update(summary=summary, summary_reader=reader_identity)
     with _lazy_parent(record, missions, work, retained) as load:
+        verified = []
 
         def obtain():
+            # Verify and hash the parent once; later targets reuse the result.
+            if verified:
+                return verified[0]
             path, exposure = load()
             digest = _stable_hash(path)
             if _file_identity(path) != load.before_read:
@@ -710,7 +715,8 @@ def _process_parent(
             summaries.mkdir(exist_ok=True)
             summary_id = fingerprint({"digest": digest, "reader": reader_identity})
             _write_cache_json(summaries / f"{summary_id}.json", exposure.summary)
-            return path, exposure
+            verified.append((path, exposure))
+            return verified[0]
 
         if "digest" not in record or "summary" not in record:
             obtain()
@@ -744,9 +750,12 @@ def _process_parent(
                                 stem=path.stem, filename=path.name
                             )
                         )
-                        wcs, metadata = read_correction(correction_path)
+                        wcs, metadata, shape = read_correction(correction_path)
                         if _stable_hash(correction_path) != correction_digest:
                             raise ValueError("Correction changed while reading")
+                        check_correction_matches_parent(
+                            wcs, shape, exposure.wcs, exposure.arrays["data"].shape
+                        )
                         correction = {
                             "path": str(correction_path),
                             "sha256": correction_digest,

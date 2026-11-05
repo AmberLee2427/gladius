@@ -95,3 +95,31 @@ def test_target_outside_detector_is_rejected_even_if_square_overlaps(exposure, x
         make_cutout(
             exposure.arrays, exposure.wcs, Target(id="e", x=x, y=y), extraction=Extraction(size=40)
         )
+
+
+def test_pixel_centre_survives_sky_round_trip(exposure):
+    from gladius.core import geometry, world_to_pixel
+
+    ra, dec = pixel_to_world(exposure.wcs, 20.0, 20.0)
+    x, y = world_to_pixel(exposure.wcs, ra, dec)
+    assert geometry(float(x), float(y), (100, 100), 5)["x0"] == 18
+    assert geometry(19.9999999990, 20.0, (100, 100), 5)["x0"] == 18
+
+
+def test_correction_for_another_exposure_is_rejected(exposure):
+    from astropy.modeling.models import Shift
+
+    from gladius.core import check_correction_matches_parent
+
+    shape = exposure.arrays["data"].shape
+    check_correction_matches_parent(exposure.wcs, shape, exposure.wcs, shape)
+    with pytest.raises(ValueError, match="shape"):
+        check_correction_matches_parent(exposure.wcs, (7, 7), exposure.wcs, shape)
+    shifted = deepcopy(exposure.wcs)
+    shifted.insert_transform(
+        shifted.input_frame,
+        Shift(5000) & Shift(0),
+        after=True,
+    )
+    with pytest.raises(ValueError, match="centre"):
+        check_correction_matches_parent(shifted, shape, exposure.wcs, shape)
