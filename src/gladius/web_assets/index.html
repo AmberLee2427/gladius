@@ -732,6 +732,7 @@
         revision = 0,
         timer;
       const titles = {
+        run: "Run workspace",
         inputs: "Input images",
         selection: "Dates, detectors & filters",
         extraction: "Cutout geometry",
@@ -742,6 +743,7 @@
         execution: "Execution",
       };
       const labels = {
+        name: "Run name",
         mode: "Source",
         directory: "Image directory",
         pattern: "Filename pattern",
@@ -778,7 +780,7 @@
         output_directory: "Output directory",
         retain_full_images: "Retain full images",
         formats: "Formats",
-        resume: "Reuse completed cutouts",
+        resume: "Reuse verified products",
         continue_on_error: "Continue on error",
         lock_timeout_seconds: "Lock timeout (seconds)",
       };
@@ -1066,9 +1068,10 @@
           product_filename:
             "Optional: download only this exact product. Load test pins one calibrated image here.",
           lock_timeout_seconds:
-            "Seconds to wait if another process holds this same run’s output lock. 0 fails immediately. This prevents two processes writing the same run; it is not a MAST network timeout.",
+            "Seconds to wait if another process is writing within this output directory. 0 fails immediately. The lock protects shared caches and revision numbers; it is not a MAST network timeout.",
+          name: "A portable workspace name (letters, digits, underscores and hyphens). New settings create numbered revisions within this name; verified products can be reused across names. Use the CLI --fresh option to bypass reuse.",
           resume:
-            "For identical settings, code and dependency versions, reuse cutouts whose recorded identity and file checksums match. An interrupted run makes missing/failed/corrupt outputs again. With no previous run, starts normally. Parent discovery and reading still occur.",
+            "Reuse verified cutouts, quality assessments and display products when their own inputs match. Changed settings create a numbered revision. Local inputs are rediscovered; unchanged MAST searches reuse their saved input list. Disable to start fresh and bypass all caches. The CLI --refresh-inputs re-queries MAST while keeping reusable products.",
           continue_on_error:
             "Record per-image download/read/WCS failures and per-target conversion/extraction/write failures, then try later inputs. The run still finishes Failed if errors were recorded. Invalid configuration, initial MAST discovery, run-lock and stack-phase errors stop the run. Quality flags are recorded and may exclude stacks; they do not trigger this switch.",
           retain_full_images:
@@ -1131,7 +1134,7 @@
         const descriptions = {
           use: "Use the supplied parent WCS without the numerical consistency screen. Coordinate inversion or output validation can still fail. No absolute sky accuracy is established.",
           validate:
-            "Check the supplied WCS on a 5 × 5 grid for finite coordinates, positive scale and inverse round trips within the tolerance. An inconsistent parent image fails before its targets are made; Continue on error can try later images. A consistently wrong sky solution can still pass.",
+            "Check the supplied WCS on a 5 × 5 grid for finite coordinates, positive scale and inverse round trips within the tolerance. An inconsistent coordinate model fails before its cutouts are accepted; Continue on error can try later images. A consistently wrong sky solution can still pass.",
           corrected:
             "Read each parent’s existing corrected ASDF WCS from the correction directory, then apply the same numerical checks. Missing, unreadable or inconsistent corrections fail that image; Continue on error can try later images. Gladius does not run a Gaia fit, and retains the original WCS separately.",
         };

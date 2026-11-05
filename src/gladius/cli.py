@@ -49,6 +49,15 @@ def main(argv=None):
     schema.add_argument("path", type=Path)
     execute = commands.add_parser("run", help="extract configured targets from selected exposures")
     execute.add_argument("config", type=Path)
+    execute.add_argument("--name", help="override run.name (default: default)")
+    execute.add_argument(
+        "--fresh", action="store_true", help="start a new revision without reusing cached work"
+    )
+    execute.add_argument(
+        "--refresh-inputs",
+        action="store_true",
+        help="re-query MAST membership; reuse known archive products",
+    )
     execute.add_argument("--targets", type=Path, help="replace YAML targets with a target CSV")
     execute.add_argument("--env-file", type=Path, help="load credentials from this dotenv file")
     gui = commands.add_parser("gui", help="serve the local configuration builder and run monitor")
@@ -171,7 +180,17 @@ def main(argv=None):
             else:
                 path = args.config
                 load_environment(path.expanduser().resolve().parent, env_file=args.env_file)
-            manifest = run(load_config(path, targets_path=getattr(args, "targets", None)))
+            config = load_config(path, targets_path=getattr(args, "targets", None))
+            if getattr(args, "name", None):
+                data = config.model_dump(mode="json")
+                data["run"]["name"] = args.name
+                config = RunConfig.model_validate(data)
+            controls = {}
+            if getattr(args, "fresh", False):
+                controls["fresh"] = True
+            if getattr(args, "refresh_inputs", False):
+                controls["refresh_inputs"] = True
+            manifest = run(config, **controls)
             print(f"Manifest: {manifest}")
             return 0 if json.loads(manifest.read_text())["status"] == "complete" else 1
     except (Exception, KeyboardInterrupt) as exc:

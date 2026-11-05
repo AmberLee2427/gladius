@@ -31,6 +31,7 @@ archive is queried. Existing shell variables take precedence.
 
    # A RunConfig object containing validated settings for the whole run.
    config = RunConfig(
+       run={"name": "bulge-field-test"},
        targets=targets,
        inputs={"mode": "mast"},  # Query the archive using the targets' RA/Dec.
        # Include exposure starts in January; exclude February 1 onwards.
@@ -74,8 +75,8 @@ What the objects contain
    * - ``manifest_path``
      - ``pathlib.Path``
      - Location of the JSON run record, typically
-       ``cutouts/runs/<run-id>/manifest.json``. The run ID identifies the
-       configuration, code and dependency versions used.
+       ``cutouts/runs/<run-name>/<revision>/manifest.json``. Each named workspace
+       has numbered revisions; unchanged stages can be reused across revisions.
    * - ``manifest``
      - ``dict``
      - Run status, configuration, per-input/target entries, output file paths and
@@ -86,6 +87,26 @@ When ``execution.continue_on_error`` is enabled, ``run`` can finish processing
 later images and return a manifest whose status is ``failed``. Inspect the
 manifest before treating a returned path as a successful run. Fatal errors still
 raise an exception; their details are recorded in the run directory when possible.
+
+Refresh inputs or change downstream settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``run(config)`` reuses verified native cutouts, assessments and display products
+when the inputs to those stages match. MAST input lists are pinned until discovery
+settings change or an explicit refresh is requested:
+
+.. code-block:: python
+
+   # Re-query membership; trust known MAST product identities and reuse cutouts.
+   manifest_path = run(config, refresh_inputs=True)
+
+   # Force all stages, including MAST downloads, into a fresh revision.
+   manifest_path = run(config, fresh=True)
+
+Changing a quality threshold or enabling a composite creates a new revision
+without extracting unchanged native cutouts. The revision manifest holds current
+quality decisions; reused image files retain their creation provenance.
+See :doc:`configuration` for the dependency table and named-run behavior.
 
 Run a configuration saved by the GUI
 ------------------------------------
@@ -164,3 +185,31 @@ pipeline, including reading inputs and saving products.
 .. autofunction:: gladius.target_from_coordinates
 
 .. autofunction:: gladius.load_environment
+
+Review saved images without archive access
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These helpers read a revision's current quality decisions. They include flagged
+native cutouts rather than hiding them from inspection. Parent previews need a
+retained parent or the unchanged original local file. They do not fetch data or
+perform an independent astrometric match.
+
+.. code-block:: python
+
+   from IPython.display import display
+   from gladius.inspection import audit_rows, contact_sheets, parent_preview
+
+   # Every attempted pair, including skips and failures.
+   rows = audit_rows(manifest_path)
+
+   # Every completed cutout, including images flagged by the screen.
+   for page in contact_sheets(manifest_path):
+       display(page)
+
+.. autofunction:: gladius.inspection.audit_rows
+
+.. autofunction:: gladius.inspection.contact_sheets
+
+.. autofunction:: gladius.inspection.parent_preview
+
+.. autofunction:: gladius.inspection.image_preview

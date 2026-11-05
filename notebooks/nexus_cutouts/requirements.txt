@@ -1,3 +1,4 @@
+# Install the development checkout for named revisions and gladius.inspection (newer than 0.1.0a3).
 # Python 3.12+ dependency baseline.
 roman-gladius[roman,mast,notebook]>=0.1.0a3,<0.2
 numpy>=2.5.4

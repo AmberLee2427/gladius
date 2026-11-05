@@ -348,52 +348,124 @@ The memory check is an estimate, not a hard limit on process memory. Disabling i
 does not create more RAM; the operating system may terminate a process that
 exhausts available memory.
 
-## Storage, restarts and failures
+## Named runs, revisions and reuse
 
-Outputs go under `storage.output_directory/runs/<run-id>`. Identical settings,
-software and dependency versions select the same run directory. With
-`execution.resume: true`, Gladius reuses cutouts only after checking that their
-input identity and saved file checksums still match. It regenerates missing or
-corrupt outputs. With no previous run, it starts normally.
+Give a project a name in the YAML (the GUI has a **Run name** field):
 
-Changed input images or WCS corrections create new cutout versions. Old versions
-remain on disk; Gladius does not automatically remove them or enforce a disk
-quota. If an input disappears from the next run's selection, its old cutouts
-are removed from the current file list and display-output inputs, but the old
-files can remain. Use the [two run manifests](products.md#finding-output-paths)
-to find current outputs.
+```yaml
+run:
+  name: bulge-field-test
+```
 
-`storage.retain_full_images: true` saves full copies of selected input images
-under `storage.output_directory/parents/`. With `false`, existing local originals
-remain untouched, while temporary archive downloads are removed after processing
-each exposure, including failures. Archive runs download each parent even when
-resuming, because Gladius checks its contents before deciding that a cutout can
-be reused.
+Outputs go under `storage.output_directory/runs/bulge-field-test/r0001/`.
+The default name is `default`. Names accept letters, digits, underscores and
+hyphens. A new name starts a separate result at `r0001`; it can still reuse
+verified work cached beneath the same output directory.
 
-A run lock prevents two processes from writing the same run simultaneously.
-`execution.lock_timeout_seconds` is how long to wait for that lock: `0` fails
-immediately if another process holds it. It is not a MAST network timeout.
+The same name and unchanged inputs/settings resume an incomplete revision or
+return the latest complete revision. Changed settings, local input contents,
+WCS corrections, or relevant processing code/dependencies create `r0002`, then
+`r0003`, and so on. Earlier completed revisions keep their files and membership.
+If a completed revision has damaged output files, Gladius creates a replacement
+revision rather than overwriting that history. Returning to an earlier configuration
+creates another revision that can reuse its cached products.
+
+**Changing one setting does not repeat the entire pipeline.**
+
+| What you change | Work Gladius repeats | Work it can reuse |
+| --- | --- | --- |
+| Dates, detector/filter selection or MAST search criteria | Discover the input set again and apply the new selection. | Native cutouts for products already processed; quality/display products whose own inputs still match. |
+| Add a target | Search new sky positions when needed; extract the new target from selected parents. | Existing targets' cutouts and previews. |
+| Target coordinates/metadata, cutout size or edge policy | Extract affected cutouts with the new settings. | Unaffected targets and other verified products. |
+| Selected WCS or correction file | Rebuild native variants whose coordinate model changed. | Unaffected native variants. |
+| Numerical WCS validation policy or tolerance | Check the saved parent/cutout coordinate models again. | Native pixels and unchanged display products. |
+| Autocorrelation threshold, tile side or lag radius | Reassess saved native pixels. | Native cutouts; display products if accepted input membership stays the same. |
+| Whether flagged images enter stacks | Recalculate display membership. | Native cutouts and quality measurements. |
+| Enable RGB, median stacks or GIFs | Build the requested products per target/filter group. | Native cutouts, assessments and existing independent display products. |
+| GIF speed or RGB filter assignments | Rebuild the affected GIFs or composites. | Median stacks and native cutouts. |
+| Add FITS output or change its approximation tolerance | Serialize saved native cutouts as FITS. | Native extraction and unchanged display products. |
+| Turn on full-image retention | Obtain and save any missing parent files. | Existing cutouts; retention does not itself require extracting them again. |
+| Exposure/memory limits | Check the new limits before producing or reusing the requested display group. | Native products. No inputs are silently dropped to meet a limit. |
+
+A changed date range can therefore create a new revision with the same native
+cutouts. If the range removes exposures, the new revision omits them from its
+file list and display inputs; the earlier revision remains intact.
+
+### When does MAST get queried or downloaded?
+
+With unchanged discovery settings, a MAST run reuses its saved input list.
+Quality or display changes do not trigger another archive query or download
+when the native cutouts are already available. To look for newly available
+observations without changing the selection, explicitly refresh that list:
+
+```sh
+gladius run config.yaml --refresh-inputs
+```
+
+Changing dates, search positions, or other discovery settings also refreshes the
+query. **Gladius trusts MAST product identities:** known archive products reuse
+the originally downloaded content identity. A refreshed search does not download
+known products merely to check whether MAST changed their bytes. Newly encountered
+products need downloading when their pixels are required. Parents may also be
+needed for new cutout geometry, new targets, or full-image retention.
+
+Local inputs are rediscovered and hashed on every call. This detects changed
+local files without relying on filenames or modification times alone. Local
+originals are never deleted. Temporary MAST downloads are removed after each
+parent has been processed, including when processing fails.
+
+### Start completely fresh
+
+```sh
+gladius run config.yaml --name bulge-field-test --fresh
+```
+
+`--fresh` starts a new revision and bypasses discovery, cutout, assessment and
+display reuse. For MAST, it queries and downloads again. `execution.resume: false`
+in the YAML has the same effect, including in the GUI. Leave resume enabled for
+normal iterative work. A different name alone gives a separate result, not a
+forced recomputation.
+
+Python callers can use `run(config, refresh_inputs=True)` or
+`run(config, fresh=True)`. The return value is still the revision's manifest path.
+
+### What is recorded, and what is kept?
+
+Each revision saves its resolved configuration, input identities, errors, current
+quality assessments, file paths/checksums and stage reuse counts in `manifest.json`.
+Its `stack-manifest.json` lists display membership and exclusions. **Use the
+revision manifest for its current quality decision.** A reused ASDF/FITS file
+keeps its original creation provenance, including the configuration that first
+created it; Gladius does not rewrite that file just because a threshold changed.
+
+Verified intermediate products live in `storage.output_directory/.cache/`.
+Revision products are independent copies, so cache repair cannot change the
+bytes of earlier revisions. Keep the cache to benefit from reuse; it can grow,
+and Gladius currently has no automatic eviction or disk quota. Original parents
+are retained under `parents/` only when requested. Removing the shared cache
+loses the optimization; it does not delete revision copies.
+
+Pre-existing alpha-3 hash-named runs remain readable and untouched. They are not
+automatically imported into the new cache. New manifests use schema version 2;
+the native cutout schema and FITS/ASDF image contents retain their existing format.
+
+### Failures and concurrent runs
+
+An output-directory lock protects shared caches and revision allocation across
+all names. `execution.lock_timeout_seconds` is how long to wait: `0` fails
+immediately if another process holds it. This is not a MAST network timeout.
 
 By default, a processing error is recorded and stops the run.
 `execution.continue_on_error: true` tries later inputs or targets after individual
-read, coordinate-conversion, extraction or write failures. The final run status
+read, coordinate-conversion, extraction or write failures. The final status
 still reports failure, and the CLI returns a nonzero exit code. Invalid settings,
-initial archive discovery, run-lock failures and display-output failures stop
-the run regardless of this setting. Processing is sequential.
+archive discovery, output-lock failures and display failures stop the run.
+Processing remains sequential, one parent image at a time.
 
-<details>
-<summary>Technical details: file identity and safe output recording</summary>
-
-Input and correction contents are identified by SHA-256 fingerprints. Full
-retained parents are stored in folders named by those fingerprints, so identical
-filenames with different contents remain distinguishable. Cutouts are built in
-a temporary directory, reopened and checked before their checksums are recorded.
-The manifest is written to a temporary file and then replaces the previous
-manifest in one filesystem operation, avoiding a partly written JSON record.
-A crash can leave files not referenced by the manifest; their presence alone
-does not establish that they are complete or belong to the current run.
-
-</details>
+Cutouts are reopened and checked before publication. File checksums are verified
+before cache reuse; incomplete/corrupt cached products are rebuilt. Manifest JSON
+is replaced atomically. An interrupted attempt can leave unreferenced files;
+their presence alone does not establish that they are complete or selected.
 
 ## Target CSV override
 
@@ -549,7 +621,7 @@ external correction tool’s default output location; Gladius only reads existin
 corrections and does not run that tool or create the correction folder.
 
 The WCS policy help changes with the selection. Numerical validation fails a
-parent before extracting its targets if the supplied transform is inconsistent.
+parent from the revision’s completed outputs if its supplied transform is inconsistent.
 With continue-on-error enabled later images can be tried. Validation cannot
 establish absolute sky accuracy. Corrected mode reads and validates the separate
 correction and preserves the original transform.
@@ -565,7 +637,7 @@ not a promise of square angular pixels.
 Resume reuses checksum-verified outputs for identical configuration, code and
 dependency versions; without a previous run it starts normally. Parent discovery
 and reading still occur. Lock timeout is how long to wait for another process
-writing the same run directory; 0 fails immediately, and is unrelated to network
+writing within the same output directory; 0 fails immediately, and is unrelated to network
 timeouts. Continue-on-error handles failures inside individual image/target work
 (download, read, WCS, coordinate inversion, extraction, product validation/write).
 It records errors and keeps the final run failed. Configuration, initial archive

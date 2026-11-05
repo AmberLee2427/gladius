@@ -247,9 +247,9 @@ will not all be present.
 | `source` | Source identifier used by the run, such as a local path or archive product URI. |
 | `exposure` | Exposure summary from the input; fields listed above. |
 | `astrometry_mode` | Selected WCS policy: `use`, `validate` or `corrected`. |
-| `astrometry_validation` | Numerical coordinate-check results; fields listed below. |
+| `astrometry_validation` | Creation-time numerical-check record, or a marker directing you to the revision manifest for the current check. Fields listed below. |
 | `correction` | `None`, or the separate corrected model's `path`, file fingerprint `sha256`, retained `parent_metadata`, and `applied_parent_wcs` before adjusting it to the cutout. |
-| `configuration` | Fully resolved run settings. See [Configuration and execution](configuration.md). |
+| `configuration` | Fully resolved settings when this native cutout was created. Reused files keep these values; current revision settings are in its manifest. |
 | `dependencies` | Versions of `numpy`, `astropy`, `asdf`, `gwcs`, `roman_datamodels`, `rad`, `asdf-astropy`, `scipy`, `pillow` and `astroquery`; unavailable optional packages have `None`. |
 | `implementation_sha256` | Fingerprint of the package's Python implementation files, used in run identity. |
 | `centering` | Text recording the pixel-selection formula explained in [Scientific conventions](science.md#which-pixels-are-included). |
@@ -260,7 +260,8 @@ will not all be present.
 | `position_is_catalogue_prediction` | Always `True` in `make_cutout`: the position is supplied or coordinate-derived, not a source centre fitted from the pixels. The field is also used for direct pixel targets. |
 | `resampled` | `False` for individual cutouts. |
 | `rotated` | `False` for individual cutouts. |
-| `quality` | Optional elongation screen's record; fields below. |
+| `quality` | Optional creation-time screen record in older files or caller-supplied products. New staged runs record current quality in the revision manifest, without rewriting native images. |
+| `provenance_scope` | Explains that this file is an immutable creation record; use the revision manifest for current settings, quality and numerical WCS validation. |
 
 | `astrometry_validation` field | Meaning |
 | --- | --- |

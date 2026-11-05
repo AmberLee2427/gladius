@@ -23,7 +23,7 @@ for contributions.
 Each source notebook lives in its own folder under `notebooks/`, with a sibling
 `requirements.txt`. Keep outputs cleared and credentials/data out of Git. Bundled
 tutorial copies must match those sources. The Nexus notebook requires an explicit
-credential-file path; automation can select it with `GLADIUS_TUTORIAL_ENV_FILE`.
+credential-file path set in its configuration cell.
 Its optional live GUI stays disabled for unattended execution.
 
 These conventions follow the [STScI notebook contribution guide](https://github.com/spacetelescope/notebooks/blob/main/CONTRIBUTING.md)

@@ -28,7 +28,6 @@ def test_notebook_requires_explicit_credentials_before_archive_access(
         if cell["cell_type"] == "code":
             assert not cell["outputs"] and cell["execution_count"] is None
             ast.parse("".join(cell["source"]))
-    monkeypatch.delenv("GLADIUS_TUTORIAL_ENV_FILE", raising=False)
     namespace = {}
     exec(cells["gladius-02"], namespace)
     with pytest.raises(ValueError, match="Set ENV_FILE"):
@@ -65,13 +64,11 @@ def test_distribution_checker_rejects_executed_notebook(tmp_path):
     assert "Notebook must have cleared outputs" in result.stderr
 
 
-def test_nexus_automation_selects_file_without_starting_gui(tmp_path, monkeypatch):
+def test_nexus_configuration_starts_without_credentials_or_gui():
     cells, notebook = notebook_cells()
-    chosen = tmp_path / "credentials.env"
-    monkeypatch.setenv("GLADIUS_TUTORIAL_ENV_FILE", str(chosen))
     namespace = {}
     exec(cells["gladius-02"], namespace)
-    assert namespace["ENV_FILE"] == chosen
+    assert namespace["ENV_FILE"] is None
     assert namespace["RUN_GUI"] is False
     for cell in notebook["cells"]:
         code = "".join(cell["source"])
@@ -80,3 +77,18 @@ def test_nexus_automation_selects_file_without_starting_gui(tmp_path, monkeypatc
     assert "gui_server" not in namespace
     requirements = ROOT / "notebooks/nexus_cutouts/requirements.txt"
     assert requirements.is_file()
+
+
+def test_nexus_query_is_explicit_and_bounded_before_network_access():
+    cells, _ = notebook_cells()
+    namespace = {}
+    exec(cells["gladius-02"], namespace)
+    with pytest.raises(ValueError, match="No MAST query was sent"):
+        exec(cells["nexus-query-plan"], namespace)
+    namespace["DATASET_ID"] = "*"
+    with pytest.raises(ValueError, match="exact dataset ID"):
+        exec(cells["nexus-query-plan"], namespace)
+    namespace["DATASET_ID"] = "known-dataset_01"
+    exec(cells["nexus-query-plan"], namespace)
+    assert namespace["metadata_request"] == {"fileSetName": "known-dataset_01", "productLevel": "2"}
+    assert "mast_test_configuration" not in "\n".join(cells.values())

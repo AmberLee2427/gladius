@@ -9,33 +9,34 @@ record of what succeeded, failed or was skipped. The location is set by
 With the default output directory, the files are arranged like this:
 
 ```text
-cutouts/                              # storage.output_directory
+cutouts/                                  # storage.output_directory
 ├── runs/
-│   └── <run-id>/
-│       ├── resolved-config.yaml       # Settings, including defaults and paths
-│       ├── manifest.json              # Run status and output file list
-│       ├── cutouts/
-│       │   └── <target-id>/
-│       │       └── <cutout-id>/
-│       │           ├── cutout.asdf     # If ASDF output is selected
-│       │           └── cutout.fits     # If FITS output is selected
-│       ├── stacks/                    # If stacks, GIFs or RGB are enabled
-│       │   └── <target-id>/
-│       │       ├── colour-composite.png # If RGB composites are enabled
-│       │       └── <filter>/
-│       │           ├── preview-stack.fits
-│       │           └── preview-animation.gif # If GIFs are enabled
-│       └── stack-manifest.json        # Display output inputs and exclusions, if enabled
-└── parents/                           # If retain_full_images is enabled
-    └── <parent-file-hash>/
-        └── <original-filename>        # Full input image
+│   └── bulge-field-test/                  # run.name (default: default)
+│       ├── r0001/                        # First revision
+│       │   ├── resolved-config.yaml
+│       │   ├── manifest.json             # Status, current quality and file list
+│       │   ├── cutouts/<target-id>/<cutout-id>/
+│       │   │   ├── cutout.asdf            # If selected
+│       │   │   └── cutout.fits            # If selected
+│       │   ├── stacks/<target-id>/
+│       │   │   ├── colour-composite.png   # If RGB is enabled
+│       │   │   └── <filter>/
+│       │   │       ├── preview-stack.fits
+│       │   │       └── preview-animation.gif
+│       │   └── stack-manifest.json       # Display inputs and exclusions
+│       └── r0002/                        # Changed settings or inputs
+├── .cache/                               # Verified reusable stage products
+└── parents/                              # Only when full retention is enabled
+    └── <parent-file-hash>/<original-filename>
 ```
 
 Names in angle brackets are placeholders:
 
-- **`run-id`** is a generated identifier for the configuration, Gladius code and
-  dependency versions. Reusing the same settings and software selects the same
-  run directory.
+- **Run name** is the workspace name you choose in `run.name`.
+- **Revision** (`r0001`, `r0002`, …) records one configuration and input set.
+  Unchanged work resumes or returns the latest complete revision. Changed work
+  creates a revision while reusing stages whose inputs still match. See
+  [named runs and reuse](configuration.md#named-runs-revisions-and-reuse).
 - **`target-id`** is the target name from your configuration or CSV.
 - **`cutout-id`** identifies the particular input image, target and processing
   settings, including any selected WCS correction. Each input image can produce
@@ -47,7 +48,7 @@ Names in angle brackets are placeholders:
 
 The tree shows one cutout and one optional stack; runs can contain many of each.
 Only the formats you select are written. Stacks, GIFs and colour composites can be enabled independently. Each is absent when disabled or
-when no eligible inputs are available. Hidden `.run.lock` and `.work` entries
+when no eligible inputs are available. Hidden `.pipeline.lock` and `.cache` entries
 support locking and temporary processing; they are not science outputs.
 
 ## Which file should I open?
@@ -56,7 +57,7 @@ support locking and temporary processing; they are not science outputs.
 | --- | --- | --- |
 | `cutout.asdf` | Science pixels, uncertainties, quality flags, additional cropped arrays, coordinate model and metadata. | Read one cutout with its complete saved coordinate model and metadata. |
 | `cutout.fits` | The same cutout in FITS image extensions, with complete metadata and the coordinate model embedded in an extra extension. | Open SCI/ERR/DQ in FITS software, or use the Gladius reader to recover all saved information. |
-| `manifest.json` | Overall status, entries for each input/target, native cutout paths and file fingerprints, skips and errors. | Check whether the run succeeded and find its current outputs. |
+| `manifest.json` | Revision status, configuration, input identities, current quality, native file checksums, reuse counts, skips and errors. | Check whether the run succeeded and find its current outputs. |
 | `resolved-config.yaml` | The run's settings, with defaults filled in and paths resolved. | Inspect or repeat the configuration used for this run. |
 | `preview-stack.fits` | A median display image made from aligned cutouts, plus a count of contributing values at each pixel. | Visual inspection. **Use individual cutouts for scientific measurements.** |
 | `colour-composite.png` | Three independently normalized filter medians assigned to red, green and blue on one shared sky grid. | Inspect a false-colour view. Colours are not calibrated source colour ratios. |
@@ -81,7 +82,7 @@ import json
 from pathlib import Path
 
 # Replace this with your run directory printed by Gladius.
-run_directory = Path("cutouts/runs/<run-id>")
+run_directory = Path("cutouts/runs/<run-name>/<revision>")
 display_manifest = run_directory / "stack-manifest.json"
 if display_manifest.exists():
     outputs = json.loads(display_manifest.read_text())
@@ -266,7 +267,7 @@ The same reader accepts either output format:
 from gladius.io import read_cutout
 
 # Replace this example path with a cutout path from your run's manifest.
-cutout = read_cutout("cutouts/runs/<run-id>/cutouts/<target-id>/<cutout-id>/cutout.asdf")
+cutout = read_cutout("cutouts/runs/<run-name>/<revision>/cutouts/<target-id>/<cutout-id>/cutout.asdf")
 
 # Two-dimensional arrays of science values, uncertainties and quality flags.
 science = cutout.arrays["data"]
@@ -280,7 +281,9 @@ mapping = cutout.mapping
 
 `cutout` is a `Cutout` object. Its `wcs` converts cutout pixels to sky coordinates;
 `parent_wcs` retains the original image's coordinate model. `provenance` records
-the input file, target, configuration and processing choices. Additional cropped
+the input file, target and original creation configuration and processing choices.
+The revision manifest records its current settings and quality assessment; a
+reused cutout keeps its creation provenance. Additional cropped
 arrays, such as variance images, are in `ancillary_arrays`, keyed by their input
 paths. The [header and metadata reference](headers.md) defines the saved fields.
 

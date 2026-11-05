@@ -266,3 +266,16 @@ directory. `gladius --nexus-tutorial` copies the real-MAST tutorial and opens or
 links it in the running Nexus JupyterLab server. Both demonstrate the GUI inside
 an iframe. Add `--no-open` to copy only. Install the `notebook` extra for local
 JupyterLab; the launcher registers that environment as the notebook kernel. These commands and iframe support are available from `0.1.0a3`.
+
+## Named runs and reusable work (development version)
+
+Set `run.name: bulge-field-test` in YAML, or use
+`gladius run config.yaml --name bulge-field-test`. Revisions are saved under
+`cutouts/runs/bulge-field-test/r0001/`, `r0002/`, and so on. Changing a quality
+threshold or adding a composite reuses native cutouts. Changed dates refresh
+MAST discovery while known archive products retain their identity.
+
+`--refresh-inputs` re-queries MAST membership; `--fresh` bypasses all reuse.
+The GUI also exposes the run name. See the [reuse rules](docs/configuration.md#named-runs-revisions-and-reuse)
+for each setting and the distinction between creation provenance and current
+revision quality decisions. This behavior is newer than PyPI 0.1.0a3.

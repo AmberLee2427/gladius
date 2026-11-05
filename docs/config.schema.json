@@ -214,6 +214,19 @@
       "title": "Quality",
       "type": "object"
     },
+    "Run": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "default": "default",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "title": "Run",
+      "type": "object"
+    },
     "Selection": {
       "additionalProperties": false,
       "properties": {
@@ -433,6 +446,9 @@
       "default": 1,
       "title": "Schema Version",
       "type": "integer"
+    },
+    "run": {
+      "$ref": "#/$defs/Run"
     },
     "targets": {
       "items": {

@@ -1,3 +1,7 @@
+# Named workspace; changed settings or inputs create a numbered revision.
+run:
+  name: default
+
 # Paths are relative to this YAML file. Dates select exposure starts in UTC [start, end).
 schema_version: 1
 # Or override these targets with --targets targets.csv on run/validate.

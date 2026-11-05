@@ -177,10 +177,30 @@ class Execution(Options):
     lock_timeout_seconds: Annotated[float, Field(ge=0, allow_inf_nan=False)] = 0
 
 
+class Run(Options):
+    name: str = Field(default="default", pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
+
+    @field_validator("name")
+    @classmethod
+    def portable_name(cls, value):
+        reserved = {
+            "CON",
+            "PRN",
+            "AUX",
+            "NUL",
+            *(f"COM{i}" for i in range(1, 10)),
+            *(f"LPT{i}" for i in range(1, 10)),
+        }
+        if value.upper() in reserved:
+            raise ValueError("run.name must not be an operating-system reserved name")
+        return value
+
+
 class RunConfig(Options):
     """All settings recorded with a run, including resolved defaults."""
 
     schema_version: Literal[1] = 1
+    run: Run = Field(default_factory=Run)
     targets: list[Target] = Field(min_length=1)
     inputs: Inputs = Field(default_factory=Inputs)
     selection: Selection = Field(default_factory=Selection)

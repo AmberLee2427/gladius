@@ -53,7 +53,7 @@ def test_cli_csv_replaces_targets_before_yaml_validation(demo, tmp_path):
     csv.write_text("id,ra,dec,catalogue\nmy-event,270,-29,original\n")
     assert main(["validate", str(demo), "--targets", str(csv)]) == 0
     assert main(["run", str(demo), "--targets", str(csv)]) == 0
-    manifest = next((demo.parent / "output/runs").glob("*/manifest.json"))
+    manifest = next((demo.parent / "output/runs").glob("*/*/manifest.json"))
     records = json.loads(manifest.read_text())
     assert len(records["entries"]) == 2
     product = manifest.parent / next(iter(next(iter(records["entries"].values()))["files"]))

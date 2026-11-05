@@ -1,3 +1,22 @@
+Unreleased
+==========
+
+* Add named run workspaces and numbered revisions, with shared verified native,
+  serialization, quality and per-target display caches. Changed dates refresh
+  discovery while unchanged products reuse cutouts. Quality and display edits
+  no longer force extraction or download of already cached pixels.
+* Trust stable MAST product identities across refreshed searches. Add explicit
+  ``--refresh-inputs``, ``--fresh`` and ``--name`` controls; local files remain
+  content-checked. Completed revisions preserve historical membership and bytes.
+* Record current quality/configuration in revision manifests while reused native
+  files retain their creation provenance. Document output layout and reuse rules.
+* Rewrite local/Nexus tutorials around bounded input selection, complete YAML,
+  parent/finding-chart context, all-image review and iterative screening. Add
+  read-only audit/contact-sheet/parent-preview helpers using current revision
+  quality decisions. The local practice field has a known elongated star, edge
+  padding, multiple filters and real display-product examples.
+* Simplify the Nexus tutorial credential path to an editable ``ENV_FILE`` example.
+
 0.1.0a3 (2026-11-01)
 ===================
 
