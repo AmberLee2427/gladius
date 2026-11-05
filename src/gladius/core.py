@@ -122,8 +122,35 @@ def translate_wcs(wcs, mapping):
     return result
 
 
+def require_icrs_degrees(wcs):
+    """Reject celestial WCSs whose output is not ICRS (lon, lat) in degrees."""
+    problem = None
+    if isinstance(wcs, WCS):
+        celestial = wcs.celestial
+        ctypes = [str(c) for c in celestial.wcs.ctype]
+        radesys = (celestial.wcs.radesys or "").strip().upper()
+        if not (ctypes[0][:4] == "RA--" and ctypes[1][:4] == "DEC-"):
+            problem = f"FITS WCS axes {ctypes} are not ordered equatorial (RA, Dec)"
+        elif radesys not in ("", "ICRS"):
+            problem = f"FITS WCS reference frame {radesys} is not ICRS"
+        elif radesys == "" and np.isfinite(celestial.wcs.equinox) and celestial.wcs.equinox != 2000:
+            problem = f"FITS WCS equinox {celestial.wcs.equinox:g} is not ICRS"
+    elif getattr(wcs, "output_frame", None) is not None:
+        frame = wcs.output_frame
+        reference = getattr(frame, "reference_frame", None)
+        if reference is None or reference.name != "icrs":
+            problem = "WCS output frame is not a celestial ICRS frame"
+        elif tuple(getattr(frame, "axes_order", ())) != (0, 1):
+            problem = "WCS output frame axes are not ordered (RA, Dec)"
+        elif any(getattr(u, "name", str(u)) != "deg" for u in frame.unit):
+            problem = "WCS output frame is not in degrees"
+    if problem:
+        raise ValueError(f"{problem}; Gladius needs ICRS RA/Dec in degrees")
+
+
 def validate_wcs(wcs, shape, tolerance=0.001):
     """Check finite coordinates and numerical inversion, not absolute sky accuracy."""
+    require_icrs_degrees(wcs)
     ny, nx = shape
     xx, yy = np.meshgrid(np.linspace(0, nx - 1, 5), np.linspace(0, ny - 1, 5))
     sky = np.asarray(pixel_to_world(wcs, xx, yy))

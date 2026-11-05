@@ -178,3 +178,18 @@ def test_make_cutout_converts_sky_targets_and_keeps_ancillary_planes():
     assert cutout.ancillary_arrays["area"].dtype == np.float32
     assert cutout.ancillary_arrays["group/PixelDQ"].dtype == np.uint32
     assert cutout.provenance["resampled"] is False and cutout.provenance["rotated"] is False
+
+
+def test_validate_wcs_rejects_non_icrs_fits_wcs():
+    from gladius.core import require_icrs_degrees
+
+    wcs = WCS(naxis=2)
+    wcs.wcs.ctype = ["GLON-TAN", "GLAT-TAN"]
+    with pytest.raises(ValueError, match="RA, Dec"):
+        require_icrs_degrees(wcs)
+    wcs.wcs.ctype = ["RA---TAN", "DEC--TAN"]
+    wcs.wcs.radesys = "FK5"
+    with pytest.raises(ValueError, match="not ICRS"):
+        require_icrs_degrees(wcs)
+    wcs.wcs.radesys = "ICRS"
+    require_icrs_degrees(wcs)

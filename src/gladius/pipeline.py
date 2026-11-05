@@ -511,6 +511,9 @@ def _run_locked(config, settings, progress, fresh, refresh_inputs):
                 if not source_record["local"]:
                     source_record.setdefault("archive_identity", _archive_identity(source, config))
                 prior = old_remote.get(source_record.get("archive_identity"))
+                # A changed archive checksum means different bytes behind the same identity.
+                if prior and _validator(prior["source"]) != _validator(source):
+                    prior = None
                 if prior and not fresh and not pinned:
                     source_record.update(
                         digest=prior["digest"],

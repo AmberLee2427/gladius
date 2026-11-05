@@ -168,6 +168,12 @@ def read_exposure(path: str | Path) -> Exposure:
 
 def _read_fits(path):
     with fits.open(path, memmap=False) as hdul:
+        for label in ("SCI", "ERR", "DQ"):
+            if sum(1 for hdu in hdul if hdu.name == label) > 1:
+                raise ValueError(
+                    f"FITS parent has several {label} extensions; Gladius reads exactly "
+                    "one SCI/ERR/DQ image set"
+                )
         arrays = {
             name: np.array(hdul[label].data, copy=True)
             for name, label in (("data", "SCI"), ("err", "ERR"), ("dq", "DQ"))

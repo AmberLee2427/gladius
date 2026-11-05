@@ -149,8 +149,7 @@ into the package.
 
 New package code is BSD-3-Clause. Template attribution is retained separately.
 See [contributing](CONTRIBUTING.md), [conduct](CODE_OF_CONDUCT.md),
-[AI disclosure](AI_POLICY.md), and [citation](CITATION.cff). The project has not yet
-been published to PyPI or assigned a DOI.
+[AI disclosure](AI_POLICY.md), and [citation](CITATION.cff). The project has no DOI yet.
 
 ## Local web GUI and target CSVs
 
@@ -271,7 +270,7 @@ See [release instructions](TESTING.md#publish-a-release-to-pypi) before pushing 
 directory. `gladius --nexus-tutorial` copies the real-MAST tutorial and opens or
 links it in the running Nexus JupyterLab server. Both demonstrate the GUI inside
 an iframe. Add `--no-open` to copy only. The default install includes local
-JupyterLab; the launcher registers that environment as the notebook kernel. These commands and iframe support are available from `0.1.0a3`.
+JupyterLab; the launcher registers that environment as the notebook kernel. These commands and iframe support are in the development version and arrive with the next release (`0.1.0a4`); PyPI `0.1.0a3` predates them.
 
 ## Named runs and reusable work (development version)
 
