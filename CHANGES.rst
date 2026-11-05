@@ -1,6 +1,9 @@
 Unreleased
 ==========
 
+0.1.0a4 (2026-11-05)
+====================
+
 * Add named run workspaces and numbered revisions, with shared verified native,
   serialization, quality and per-target display caches. Changed dates refresh
   discovery while unchanged products reuse cutouts. Quality and display edits

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "roman-gladius"
-version = "0.1.0a3"
+version = "0.1.0a4"
 description = "Native Roman detector cutouts with parent metadata and explicit astrometry provenance"
 readme = "README.md"
 requires-python = ">=3.11"

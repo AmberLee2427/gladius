@@ -1,6 +1,6 @@
 """Native Gladius, explicit coordinate mapping, and durable provenance."""
 
-__version__ = "0.1.0a3"
+__version__ = "0.1.0a4"
 
 from .config import RunConfig, Target, load_config, parse_config
 from .core import Cutout, make_cutout
