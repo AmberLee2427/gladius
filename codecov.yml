@@ -1,0 +1,24 @@
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  precision: 1
+  round: down
+  range: "70...95"
+  status:
+    project:
+      default:
+        target: auto        # must not drop below the base commit
+        threshold: 1%
+    patch:
+      default:
+        target: 80%         # new/changed lines should be well tested
+
+comment:
+  layout: "condensed_header, diff, files"
+  require_changes: true
+
+ignore:
+  - "tests/"
+  - "tools/"
+  - "docs/"

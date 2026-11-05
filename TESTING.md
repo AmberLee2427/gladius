@@ -42,9 +42,23 @@ is not available; use an account-scoped token for that upload. Once `roman-gladi
 exists, replace the repository secret with a token scoped to that project.
 Do not put either token in a commit or pass it in the tag command.
 
-Before tagging, update **both** `pyproject.toml`'s `version` and
-`src/gladius/__init__.py`'s `__version__`, update the changelog, and commit those
-changes together with the release workflow. The workflow rejects tags that do
+### Automated version bump (recommended)
+
+Run **Actions → Bump version → Run workflow** on `main` and choose `pre`
+(`0.1.0a3` → `0.1.0a4`), `release` (drop the `a`/`b`/`rc` marker), `patch`, `minor`,
+`major`, or an explicit version. It runs `tools/bump_version.py`, which updates
+`pyproject.toml`, `gladius.__version__`, `CITATION.cff` and turns the `Unreleased`
+heading in `CHANGES.rst` into the dated release heading, then commits, tags `vX.Y.Z`,
+pushes and starts the **Publish to PyPI** workflow for that tag. (Tags pushed by
+`GITHUB_TOKEN` do not trigger other workflows, hence the explicit dispatch.) If `main`
+is branch-protected, allow GitHub Actions to push or bump locally instead.
+
+Locally: `python tools/bump_version.py pre` (add `--dry-run` to only print the result).
+
+### Manual tagging
+
+Before tagging by hand, update the version everywhere (`python tools/bump_version.py ...`
+does this), update the changelog, and commit. The workflow rejects tags that do
 not match the package version exactly. For the current `0.1.0a3` version:
 
 ```sh
@@ -58,3 +72,14 @@ to release; the example above publishes an alpha release. The distribution name
 is `roman-gladius`, while the Python import and CLI are `gladius`.
 The workflow does not create a GitHub Release or publish to TestPyPI. PyPI release
 files cannot be overwritten; corrections require a new version and tag.
+
+## Coverage and lint
+
+CI runs `ruff check` and `ruff format --check` (config in `.ruff.toml`; the release
+workflow runs them before building). Format locally with
+`python -m ruff format src tests docs/conf.py tools`.
+
+Every `tests.yml` job uploads `coverage.xml` to [Codecov](https://app.codecov.io/gh/AmberLee2427/gladius)
+using the repository secret **`CODECOV_TOKEN`**. Thresholds live in `codecov.yml`
+(no project-wide drop beyond 1%, 80% on new lines). Locally:
+`python -m pytest --cov=gladius --cov-report=term-missing`.

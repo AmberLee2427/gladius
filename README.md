@@ -1,5 +1,9 @@
 # Gladius
 
+[![Tests](https://github.com/AmberLee2427/gladius/actions/workflows/tests.yml/badge.svg)](https://github.com/AmberLee2427/gladius/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/AmberLee2427/gladius/graph/badge.svg)](https://codecov.io/gh/AmberLee2427/gladius)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 Native image cutouts for the Roman Space Telescope.
 
 Python import and command: `gladius`. Distribution name: `roman-gladius`

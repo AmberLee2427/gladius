@@ -1,0 +1,55 @@
+name: Bump version
+
+# Manual: Actions -> "Bump version" -> Run workflow.
+# Updates pyproject.toml, gladius.__version__, CITATION.cff and CHANGES.rst, commits to
+# main, tags vX.Y.Z and starts the "Publish to PyPI" workflow for that tag.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "pre (0.1.0a3 -> 0.1.0a4), release (drop a/b/rc), patch, minor, major, or an explicit version"
+        required: true
+        default: pre
+
+permissions:
+  contents: write   # push the bump commit and tag
+  actions: write    # dispatch the release workflow
+
+concurrency:
+  group: bump-version
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python -m pip install packaging
+      - name: Bump version files
+        id: bump
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          version="$(python tools/bump_version.py "$BUMP")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Commit, tag and push
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Release $VERSION"
+          git tag -a "v$VERSION" -m "Gladius $VERSION"
+          git push origin main "v$VERSION"
+      - name: Start the PyPI release for the new tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: gh workflow run release.yml --ref "v$VERSION"
