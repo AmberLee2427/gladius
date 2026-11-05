@@ -1,0 +1,18 @@
+# Lite install: everything Gladius needs to run, without JupyterLab and the
+# tutorial/notebook stack. Use with:
+#   python -m pip install --no-deps roman-gladius
+#   python -m pip install -r lite-requirements.txt
+# Keep in sync with [project] dependencies in pyproject.toml (tests check this).
+numpy>=1.24
+astropy>=6
+asdf>=4.1
+asdf-astropy>=0.6
+gwcs>=0.21
+scipy>=1.10
+pydantic>=2.7,<3
+PyYAML>=6
+filelock>=3.12
+python-dotenv>=1.0
+Pillow>=10
+roman_datamodels>=0.25
+astroquery>=0.4.11

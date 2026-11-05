@@ -8,7 +8,7 @@ Configure and run in Python
 ---------------------------
 
 This example searches MAST for the targets in a CSV, selects exposures by date,
-and makes cutouts. Install the ``roman`` and ``mast`` extras first. For restricted
+and makes cutouts. Install Gladius first. For restricted
 archive access, save your token with ``gladius token`` in the workspace directory.
 The ``load_environment`` call below loads that directory's ``.env`` before the
 archive is queried. Existing shell variables take precedence.

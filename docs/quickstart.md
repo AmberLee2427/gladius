@@ -10,12 +10,12 @@ mkdir gladius-work
 cd gladius-work
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install 'roman-gladius[roman,mast]==0.1.0a3'
+python -m pip install 'roman-gladius==0.1.0a3'
 ```
 
-On Windows, activate with `.venv\Scripts\activate` instead. `roman` adds the
-converters needed for Roman-tagged ASDF images; `mast` adds archive queries and
-downloads. Neither is required for the synthetic demo. Python 3.11+ is required.
+On Windows, activate with `.venv\Scripts\activate` instead. The default install includes the Roman
+ASDF converters, MAST archive access and JupyterLab for the tutorials. Python
+3.11+ is required.
 
 <details>
 <summary>Install a development checkout instead</summary>
@@ -27,7 +27,7 @@ git clone https://github.com/AmberLee2427/gladius.git gladius
 cd gladius
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[roman,mast]'
+python -m pip install -e '.'
 ```
 
 This installs your checkout, which may contain changes newer than the PyPI release.
@@ -36,11 +36,11 @@ This installs your checkout, which may contain changes newer than the PyPI relea
 
 ## Open an interactive tutorial notebook
 
-Install the notebook extra and copy/open the local tutorial in your current
+Copy/open the local tutorial in your current
 directory:
 
 ```sh
-python -m pip install 'roman-gladius[roman,mast,notebook]==0.1.0a3'
+python -m pip install 'roman-gladius==0.1.0a3'
 gladius --tutorial
 ```
 
@@ -52,8 +52,7 @@ gladius --nexus-tutorial
 
 Both commands write an editable notebook into the current directory. When
 opening it, Gladius registers the current Python environment as a user Jupyter
-kernel named **Gladius tutorial** and selects it in the copied notebook. Install
-the `notebook` extra in that environment first. Existing
+kernel named **Gladius tutorial** and selects it in the copied notebook. Existing
 files are never overwritten: a second copy gets a numbered filename. The local
 command starts JupyterLab; the Nexus command locates the running server's file
 root, prints its notebook link, and requests that it open in the browser. If the
@@ -137,7 +136,7 @@ prints the manifest location. These are generated test images, not Roman observa
 
 ## Try one real image from MAST
 
-With the `roman` and `mast` extras installed, first obtain a token:
+First obtain a token:
 
 1. Open the [MAST token page](https://auth.mast.stsci.edu/tokens).
 2. Sign in with your STScI account and create an API token there.

@@ -221,7 +221,7 @@ Only matched parents are read. Generated output under that directory is excluded
 from input discovery. This mode does not contact MAST. FITS parents must provide
 SCI, ERR and integer DQ plus a 2D celestial SCI WCS. ASDF parents must provide
 `roman.data`, `roman.err`, `roman.dq`, `roman.meta.wcs` (or equivalent root keys).
-Roman schema converters are installed by the `roman` extra. Missing converters
+Roman schema converters are installed with Gladius (`roman_datamodels`). Missing converters
 produce explicit errors rather than stripping typed metadata silently.
 
 `inputs.mode: mast` uses Astroquery's Roman MastMissions API (`astroquery>=0.4.11`).
@@ -246,7 +246,7 @@ configured local selections are still enforced. `product_suffix: _cal` chooses
 the calibrated files from the resulting product lists.
 
 Queries reaching `query_limit` (per cone or combined unique observations) are
-rejected as potentially incomplete. Install the `mast` extra. Restricted data
+rejected as potentially incomplete. MAST access uses `astroquery`, installed with Gladius. Restricted data
 require an authorized account and `MAST_API_TOKEN` in the launching shell/server
 environment, never in YAML. Local environment loading is described under
 [authentication](#local-mast-authentication); the package does not search
@@ -531,7 +531,7 @@ store. The job has a ten-minute timeout.
 For a local opt-in run on Linux/macOS, with `MAST_API_TOKEN` already set:
 
 ```sh
-python -m pip install '.[test,roman,mast]'
+python -m pip install '.[test]'
 GLADIUS_LIVE_MAST=1 python -m pytest tests/integration -m live_mast -v
 ```
 

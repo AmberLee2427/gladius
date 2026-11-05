@@ -205,7 +205,7 @@ between filters to demonstrate display colours; these are not Roman observations
 Run these commands from the root of a Gladius source checkout:
 
 ```sh
-python -m pip install -e '.[notebook]'
+python -m pip install -e '.'
 python tools/build_doc_examples.py --output /tmp/gladius-doc-previews
 ```
 

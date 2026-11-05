@@ -12,7 +12,7 @@ targets:
     metadata: {}                # optional catalogue fields saved with this target
     # Alternatively supply x/y (zero-based parent SCI coordinates), without ra/dec.
 inputs:
-  mode: directory               # directory | mast (install the [mast] extra)
+  mode: directory               # directory | mast
   directory: images
   pattern: '*_cal.asdf'          # FITS SCI/ERR/DQ parents are supported too
   recursive: false

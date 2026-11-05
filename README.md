@@ -24,9 +24,11 @@ mkdir gladius-work
 cd gladius-work
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install 'roman-gladius[roman,mast]==0.1.0a3'
+python -m pip install 'roman-gladius==0.1.0a3'
 gladius gui --workspace .
 ```
+
+Prefer a smaller environment? Install with `--no-deps`; `lite-requirements.txt` lists the packages Gladius needs without the notebook stack.
 
 On Windows, activate with `.venv\Scripts\activate` instead. Open the printed
 GUI URL to add targets, choose images and processing, and download a YAML file or
@@ -54,7 +56,7 @@ This creates two synthetic ASDF exposures, a YAML file, native ASDF/FITS cutouts
 a display stack, an exposure GIF, a resolved configuration and a run manifest. Choose a new demo
 folder; existing demo inputs are not overwritten.
 
-Or, with the `roman` and `mast` extras installed, try a real archive image.
+Or try a real archive image.
 First sign in at the [MAST token page](https://auth.mast.stsci.edu/tokens), create
 an API token, and copy it for the hidden prompt below. The token identifies your
 account; restricted observations still require permission for that account:
@@ -132,7 +134,7 @@ occurs.
 ## Development and provenance
 
 ```sh
-python -m pip install -e '.[dev,roman,mast]'
+python -m pip install -e '.[dev]'
 python -m pytest
 python -m ruff check src tests docs/conf.py
 python -m sphinx -W -b html docs docs/_build/html
@@ -154,7 +156,7 @@ been published to PyPI or assigned a DOI.
 
 The separate [Nexus notebook](notebooks/README.md) queries real MAST data and
 requires an explicit path to your credential file. It is not part of the docs
-site. Install its plotting/kernel dependencies with `pip install -e '.[roman,mast,notebook]'`.
+site. Install its plotting/kernel dependencies with `pip install -e .`.
 
 For restricted MAST access, run `gladius token` in your workspace to save the
 token through a hidden prompt. Alternatively copy `.env.example` to `.env`
@@ -268,7 +270,7 @@ See [release instructions](TESTING.md#publish-a-release-to-pypi) before pushing 
 `gladius --tutorial` copies and opens a local synthetic tutorial in the current
 directory. `gladius --nexus-tutorial` copies the real-MAST tutorial and opens or
 links it in the running Nexus JupyterLab server. Both demonstrate the GUI inside
-an iframe. Add `--no-open` to copy only. Install the `notebook` extra for local
+an iframe. Add `--no-open` to copy only. The default install includes local
 JupyterLab; the launcher registers that environment as the notebook kernel. These commands and iframe support are available from `0.1.0a3`.
 
 ## Named runs and reusable work (development version)
