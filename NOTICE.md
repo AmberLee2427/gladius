@@ -15,12 +15,9 @@ The native geometry convention was adapted from the commissioning extraction
 helper supplied with this project. The new autocorrelation implementation is
 independent and does not import roman_ice_sim or assert identical metrics.
 
-local-snapshot/, nexus-snapshot/, nexus-source-snapshot.zip and .agents/ are
-historical/reference or working material and are excluded from built packages.
-This package license does not relicense those collections. In particular,
-nexus-snapshot/external_reference/gaia_wcs_correction.py is not distributed or
-imported by the package; its separate ownership/licensing remains unresolved.
-No external Gaia solving code was incorporated.
+Gladius can apply a corrected WCS file (for example `*_gaiawcs.asdf`) supplied by
+the user. It does not include, import or redistribute any WCS-solving code; no
+external Gaia solving code was incorporated.
 
 The Gladius logo drafts in assets/brand were generated from the user-supplied
 concept. The bundled RGES-PIT logo was supplied through the team's local website
