@@ -14,6 +14,7 @@
 - [ ] Confirm the Codecov upload works and set a coverage target.
 - [ ] Confirm the version bump and release automation works end to end (dry run).
 - [ ] Check licence, citation metadata and README before first release.
+- [ ] Test the 60" corrected-WCS shift limit (`CORRECTION_MAX_OFFSET_ARCSEC`) on real commissioning data, where the delivered WCS is off by up to a few arcminutes.
 - [ ] Make a conda package, once we know we are allowed to distribute (after commissioning data is released).
 
 ## From the critical review (medium/low)
