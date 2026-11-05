@@ -18,4 +18,3 @@
 
 ## From the critical review (medium/low)
 - Release `0.1.0a4` with the Bump workflow so PyPI matches the docs and notebooks (a3 lacks named runs, `gladius.inspection`, refresh/fresh controls).
-- Clean internal paths and the unresolved `gaia_wcs_correction.py` licence note from `NOTICE.md`.
