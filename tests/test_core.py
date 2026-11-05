@@ -16,7 +16,10 @@ def test_native_values_padding_and_exact_wcs(exposure, size, x, y):
     exposure.arrays["dq"][0, 0] = 2 | 1024
     original = deepcopy(exposure.arrays)
     c = make_cutout(
-        exposure.arrays, exposure.wcs, Target(id="e", x=x, y=y), extraction=Extraction(size=size)
+        exposure.arrays,
+        exposure.wcs,
+        Target(id="e", x=x, y=y),
+        extraction=Extraction(size=size, no_overlap="pad"),
     )
     m = c.mapping
     assert m["x0"] == int(np.floor(x)) - (size - 1) // 2

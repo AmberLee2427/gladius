@@ -29,7 +29,7 @@ selection:
 extraction:
   size: 150                     # square, native pixels; odd and even sizes supported
   edge: pad                     # pad | strict
-  no_overlap: pad               # pad | skip | error
+  no_overlap: skip              # skip | pad | error
 astrometry:
   mode: validate                # use | validate | corrected
   corrected_directory: gaia_wcs  # external solver default; existing files only
