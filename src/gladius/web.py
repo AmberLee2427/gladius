@@ -16,8 +16,9 @@ from uuid import uuid4
 import yaml
 
 from .config import RunConfig, Target, load_config, parse_config
+from .inspection import audit_rows
 from .io import atomic_json
-from .pipeline import run
+from .pipeline import _latest, run
 from .targets import parse_targets_csv, target_from_coordinates
 
 MAX_REQUEST_BYTES = 16 * 1024 * 1024
@@ -54,6 +55,22 @@ class BusyError(ValueError):
     """The GUI already owns an active pipeline run."""
 
 
+class _Cancelled(BaseException):
+    """Raised from the progress callback; BaseException so the pipeline's per-target
+    error handling cannot swallow it, while its manifest bookkeeping still runs."""
+
+
+def _finite(value):
+    """JSON-safe copy: NaN and infinities become null."""
+    if isinstance(value, float):
+        return value if value == value and abs(value) != float("inf") else None
+    if isinstance(value, dict):
+        return {k: _finite(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_finite(v) for v in value]
+    return value
+
+
 class Jobs:
     """One active run with bounded progress history and durable submitted YAML."""
 
@@ -62,6 +79,26 @@ class Jobs:
         self.runner = runner
         self.lock = threading.RLock()
         self.jobs = {}
+        self.cancelled = set()
+
+    def cancel(self, identifier):
+        with self.lock:
+            job = self.jobs.get(identifier)
+            if job is None:
+                raise KeyError("Unknown run")
+            if job["state"] not in ("queued", "running"):
+                raise ValueError("This run is not active")
+            self.cancelled.add(identifier)
+            job["cancel_requested"] = True
+            job["logs"] = (job["logs"] + ["Cancel requested; stopping at the next step…"])[-500:]
+            self._save(identifier)
+            return self.snapshot(identifier)
+
+    def results(self, identifier):
+        manifest = self.snapshot(identifier)["manifest"]
+        if not manifest:
+            raise KeyError("No manifest available for this run")
+        return _finite(audit_rows(manifest))
 
     def snapshot(self, identifier):
         with self.lock:
@@ -92,6 +129,7 @@ class Jobs:
                 "manifest": None,
                 "summary": None,
                 "error": None,
+                "cancel_requested": False,
             }
             self._save(identifier)
             # Closing a browser does not end a run. On server exit, Python waits
@@ -102,6 +140,8 @@ class Jobs:
     def _execute(self, identifier, config):
         def progress(message):
             with self.lock:
+                if identifier in self.cancelled:
+                    raise _Cancelled
                 job = self.jobs[identifier]
                 job["logs"] = (job["logs"] + [str(message)])[-500:]
                 self._save(identifier)
@@ -123,9 +163,27 @@ class Jobs:
                 job["state"] = "complete" if manifest["status"] == "complete" else "failed"
                 if job["state"] == "failed":
                     job["error"] = "The pipeline recorded failures. Inspect the manifest."
-        except Exception as exc:
+        except (Exception, _Cancelled) as exc:
+            cancelled = isinstance(exc, _Cancelled)
             with self.lock:
-                self.jobs[identifier].update(state="failed", error=f"{type(exc).__name__}: {exc}")
+                self.jobs[identifier].update(
+                    state="cancelled" if cancelled else "failed",
+                    error="Run cancelled; completed cutouts are kept."
+                    if cancelled
+                    else f"{type(exc).__name__}: {exc}",
+                )
+                # A failed or cancelled run still wrote a manifest; report where it is.
+                try:
+                    folder = (
+                        config.resolved(Path.cwd()).storage.output_directory
+                        / "runs"
+                        / config.run.name
+                    )
+                    latest = _latest(folder)
+                    if latest:
+                        self.jobs[identifier]["manifest"] = str(latest[0])
+                except Exception:
+                    pass
         finally:
             with self.lock:
                 self.jobs[identifier]["finished_utc"] = datetime.now(UTC).isoformat()
@@ -333,6 +391,8 @@ class Handler(BaseHTTPRequestHandler):
                         "application/octet-stream",
                         "manifest.json",
                     )
+                elif len(parts) == 2 and parts[1] == "results":
+                    self._reply(200, {"rows": self.server.jobs.results(parts[0])})
                 elif len(parts) == 1:
                     self._reply(200, job)
                 else:
@@ -364,6 +424,9 @@ class Handler(BaseHTTPRequestHandler):
                     latitude=payload["latitude"],
                 )
                 self._reply(200, {"target": target.model_dump(mode="json")})
+            elif path.startswith("/api/jobs/") and path.endswith("/cancel"):
+                identifier = path.removeprefix("/api/jobs/").removesuffix("/cancel")
+                self._reply(200, self.server.jobs.cancel(identifier))
             elif path == "/api/test-config":
                 from .inputs import mast_test_configuration
 

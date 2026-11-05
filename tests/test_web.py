@@ -76,6 +76,9 @@ def test_real_pipeline_run_from_gui(gui, demo):
     assert result["summary"]["complete"] == 2
     status, manifest = request(gui, "/api/jobs/" + job["id"] + "/manifest")
     assert status == 200 and json.loads(manifest)["status"] == "complete"
+    status, results = request(gui, "/api/jobs/" + job["id"] + "/results")
+    assert status == 200 and len(results["rows"]) == 2
+    assert {row["status"] for row in results["rows"]} == {"complete"}
     assert (gui.workspace / ".gladius-gui" / job["id"] / "config.yaml").is_file()
     _, defaults = request(gui, "/api/defaults")
     assert defaults["last_job"]["id"] == job["id"]
@@ -105,6 +108,48 @@ def test_active_run_conflict_and_failed_run_state(gui, demo):
             break
         time.sleep(0.01)
     assert result["state"] == "failed" and "intentional test failure" in result["error"]
+
+
+def test_active_run_can_be_cancelled(gui, demo):
+    entered = threading.Event()
+
+    def worker(config, progress):
+        entered.set()
+        for _ in range(500):
+            progress("working")
+            time.sleep(0.01)
+        raise AssertionError("cancel was not honoured")
+
+    gui.jobs.runner = worker
+    payload = {"yaml": yaml.safe_dump(load_config(demo).model_dump(mode="json"))}
+    _, job = request(gui, "/api/run", payload)
+    assert entered.wait(timeout=3)
+    assert request(gui, "/api/jobs/unknown/cancel", {})[0] == 400
+    status, snapshot = request(gui, "/api/jobs/" + job["id"] + "/cancel", {})
+    assert status == 200 and snapshot["cancel_requested"]
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        _, result = request(gui, "/api/jobs/" + job["id"])
+        if result["state"] == "cancelled":
+            break
+        time.sleep(0.01)
+    assert result["state"] == "cancelled"
+    assert request(gui, "/api/jobs/" + job["id"] + "/cancel", {})[0] == 400
+
+
+def test_failed_pipeline_run_reports_its_manifest(gui, demo):
+    config = load_config(demo)
+    data = config.model_dump(mode="json")
+    data["inputs"]["directory"] = str(demo.parent / "no-such-images")
+    _, job = request(gui, "/api/run", {"yaml": yaml.safe_dump(data)})
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        _, result = request(gui, "/api/jobs/" + job["id"])
+        if result["state"] in ("complete", "failed"):
+            break
+        time.sleep(0.05)
+    assert result["state"] == "failed"
+    assert result["manifest"] and result["manifest"].endswith("manifest.json")
 
 
 def test_bundled_branding_and_license_resources(gui):

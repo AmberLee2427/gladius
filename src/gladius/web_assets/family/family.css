@@ -62,7 +62,7 @@ body.family-gui>header .pill{color:#f7f0fc!important;border-color:#725681!import
 body.family-gui .caption,body.family-gui small,body.family-gui .footer-license{font-size:14px!important;line-height:1.6!important}
 body.family-gui p,body.family-gui label,body.family-gui summary,body.family-gui button,body.family-gui input,body.family-gui select,body.family-gui textarea{font-size:14px!important}
 body.family-gui pre,body.family-gui #yamlPreview{font-size:14px!important;line-height:1.65!important}
-body.family-gui .primary{background:#a84aeb!important;color:#fff!important;border-color:#a84aeb!important}
+body.family-gui .primary{background:#9b3fdc!important;color:#fff!important;border-color:#9b3fdc!important}
 body.family-gui h2{font-size:26px!important}
 .family-mldb .preview-note,.family-mldb .nav-caption{font-size:14px!important;line-height:1.5!important}
 .start-card:hover,.family-nav-card:hover{border-color:var(--link)!important}
@@ -141,8 +141,8 @@ body.family-mldb{font-size:14px!important}
 :root[data-family-theme="dark"]{--syntax-gold:#c8a447;--syntax-denim:#9aafd5}
 .md-typeset .nancy-hero .nancy-button,.md-typeset .nb-hero .md-button{background:transparent!important;color:var(--family-cream)!important;border-color:#b9afbf!important}
 .md-typeset .nancy-hero .nancy-button:hover,.md-typeset .nb-hero .md-button:hover{background:#ffffff0d!important;color:var(--family-cream)!important;border-color:var(--family-cream)!important}
-body.family-gui button.primary{background:#a84aeb!important;color:#fff!important;border-color:#a84aeb!important}
-body.family-gui button.primary:hover{background:#9440d1!important;border-color:#9440d1!important}
+body.family-gui button.primary{background:#9b3fdc!important;color:#fff!important;border-color:#9b3fdc!important}
+body.family-gui button.primary:hover{background:#8a35c6!important;border-color:#8a35c6!important}
 .highlight .m,.highlight .mi,.highlight .mf,.highlight .mh,.highlight .mo,.highlight .il{color:var(--syntax-gold)!important}
 .highlight .nn,.highlight .nc,.highlight .nf,.highlight .nb,.highlight .bp{color:var(--syntax-denim)!important}
 .md-typeset .nb-origin{background:linear-gradient(110deg,#21102c,#361d49)!important;border-color:#665072!important;color:var(--family-cream)!important;padding:28px!important}
@@ -180,8 +180,8 @@ body.family-gui #configError{background:#f5edd8!important;border:1px solid #c8b4
 .wy-nav-side .wy-side-scroll{width:100%!important;box-sizing:border-box}
 .wy-nav-side .wy-menu-vertical ul{max-width:100%;box-sizing:border-box}
 
-.rst-footer-buttons .btn.btn-neutral{background:#a84aeb!important;color:#fff!important;border:1px solid #a84aeb!important;box-shadow:none!important}
-.rst-footer-buttons .btn.btn-neutral:hover{background:#9440d1!important;border-color:#9440d1!important;color:#fff!important}
+.rst-footer-buttons .btn.btn-neutral{background:#9b3fdc!important;color:#fff!important;border:1px solid #9b3fdc!important;box-shadow:none!important}
+.rst-footer-buttons .btn.btn-neutral:hover{background:#8a35c6!important;border-color:#8a35c6!important;color:#fff!important}
 .wy-side-nav-search img.logo{filter:none!important;mix-blend-mode:normal!important;opacity:1!important}
 
 /* The run builder keeps its theme control in the header, clear of the footer. */

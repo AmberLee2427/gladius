@@ -18,9 +18,4 @@
 
 ## From the critical review (medium/low)
 - Release `0.1.0a4` with the Bump workflow so PyPI matches the docs and notebooks (a3 lacks named runs, `gladius.inspection`, refresh/fresh controls).
-- Stabilise pixel-boundary floor in `geometry()` (round-trip gives 19.9999999990).
-- Check target inversion in `validate_wcs`; bind corrected-WCS files to their parent.
-- Keep sub-millisecond precision in time summaries.
-- Hash each parent once per run, not per `obtain()` call.
-- GUI: cancel, output inspection, failure manifest path; live log replaced every 800 ms; primary button contrast 4.34:1; focus lost on target removal.
 - Clean internal paths and the unresolved `gaia_wcs_correction.py` licence note from `NOTICE.md`.

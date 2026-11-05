@@ -645,19 +645,23 @@
               <h2>Make</h2>
               <span id="runState" class="state" role="status">Idle</span>
             </div>
-            <button id="run" class="primary" disabled>Make cutouts</button>
+            <div>
+              <button id="cancel" class="hidden">Cancel</button>
+              <button id="run" class="primary" disabled>Make cutouts</button>
+            </div>
           </div>
           <p class="caption">
             Runs on this machine. Closing the tab does not stop a run; keep the
             server terminal open.
           </p>
-          <pre id="logs" class="logs" aria-live="polite"></pre>
+          <pre id="logs" class="logs" tabindex="0" aria-label="Run log"></pre>
           <p id="runSummary" class="caption"></p>
           <p id="manifestPath" class="caption"></p>
           <button id="downloadManifest" class="hidden">
             Download manifest
           </button>
           <div id="runError" class="error hidden" role="alert"></div>
+          <div id="results" class="table-wrap hidden"></div>
         </section>
       </aside>
     </main>
@@ -1185,6 +1189,13 @@
             config.targets.splice(index, 1);
             renderTargets();
             changed();
+            // The removed button is gone; keep keyboard focus inside the list.
+            const remaining = holder.querySelectorAll("button[aria-label^='Remove']");
+            if (remaining.length) remaining[Math.min(index, remaining.length - 1)].focus();
+            else {
+              holder.tabIndex = -1;
+              holder.focus();
+            }
           };
           action.append(button);
           row.append(action);
@@ -1232,6 +1243,36 @@
           errorAt("configError", e.message);
         }
       }
+      async function showResults(id) {
+        const holder = $("results");
+        try {
+          const { rows } = await api("/api/jobs/" + id + "/results");
+          holder.replaceChildren();
+          if (!rows.length) return holder.classList.add("hidden");
+          const table = document.createElement("table");
+          table.createCaption().textContent = "Outputs by target and parent image";
+          const header = table.insertRow();
+          for (const title of ["Target", "Parent", "Status", "Padded", "Note"]) {
+            const th = document.createElement("th");
+            th.scope = "col";
+            th.textContent = title;
+            header.append(th);
+          }
+          for (const row of rows) {
+            const tr = table.insertRow();
+            const padded =
+              row.padding_fraction == null
+                ? "—"
+                : `${(100 * row.padding_fraction).toFixed(1)}%`;
+            for (const text of [row.target, row.parent, row.status, padded, row.reason || ""])
+              tr.insertCell().textContent = text;
+          }
+          holder.append(table);
+          holder.classList.remove("hidden");
+        } catch (e) {
+          holder.classList.add("hidden");
+        }
+      }
       async function poll() {
         if (!jobId) return;
         try {
@@ -1241,20 +1282,35 @@
               ? "Complete"
               : job.state === "failed"
                 ? "Failed"
-                : job.state === "queued"
-                  ? "Queued"
-                  : "Running…";
-          $("logs").textContent = job.logs.join("\n") || "Starting pipeline…";
-          $("logs").scrollTop = $("logs").scrollHeight;
+                : job.state === "cancelled"
+                  ? "Cancelled"
+                  : job.cancel_requested
+                    ? "Cancelling…"
+                    : job.state === "queued"
+                      ? "Queued"
+                      : "Running…";
+          // Rewriting identical text every poll resets scrolling and selection.
+          const logText = job.logs.join("\n") || "Starting pipeline…";
+          if ($("logs").textContent !== logText) {
+            const atEnd =
+              $("logs").scrollTop + $("logs").clientHeight >=
+              $("logs").scrollHeight - 4;
+            $("logs").textContent = logText;
+            if (atEnd) $("logs").scrollTop = $("logs").scrollHeight;
+          }
+          const active = ["queued", "running"].includes(job.state);
+          $("cancel").classList.toggle("hidden", !active);
+          $("cancel").disabled = job.cancel_requested;
           if (job.summary)
             $("runSummary").textContent =
               `${job.summary.complete} complete · ${job.summary.skipped} skipped · ${job.summary.failed} failed cutouts`;
           $("manifestPath").textContent = job.manifest || "";
           $("downloadManifest").classList.toggle("hidden", !job.manifest);
           errorAt("runError", job.error);
-          if (["complete", "failed"].includes(job.state)) {
+          if (["complete", "failed", "cancelled"].includes(job.state)) {
             running = false;
             $("run").disabled = !validYaml;
+            if (job.manifest) showResults(job.id);
             return;
           }
           setTimeout(poll, 800);
@@ -1377,6 +1433,7 @@
         $("manifestPath").textContent = "";
         $("runSummary").textContent = "";
         $("downloadManifest").classList.add("hidden");
+        $("results").classList.add("hidden");
         errorAt("runError", "");
         try {
           const job = await api("/api/run", {
@@ -1390,6 +1447,14 @@
           $("run").disabled = !validYaml;
           errorAt("runError", e.message);
           $("runState").textContent = "Could not start";
+        }
+      };
+      $("cancel").onclick = async () => {
+        $("cancel").disabled = true;
+        try {
+          await api("/api/jobs/" + jobId + "/cancel", {});
+        } catch (e) {
+          errorAt("runError", e.message);
         }
       };
       $("downloadManifest").onclick = async () => {
