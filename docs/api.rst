@@ -37,7 +37,7 @@ archive is queried. Existing shell variables take precedence.
        # Include exposure starts in January; exclude February 1 onwards.
        selection={"start": "2026-01-01", "end": "2026-02-01"},
        # Make 150 x 150 pixel cutouts; skip requests wholly outside an image.
-       extraction={"size": 150, "no_overlap": "skip"},
+       extraction={"size": 150},
        storage={"output_directory": "cutouts"},  # Save beneath workspace/cutouts.
    ).resolved(workspace)  # Fill in defaults and resolve relative paths here.
 

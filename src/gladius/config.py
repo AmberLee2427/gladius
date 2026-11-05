@@ -104,7 +104,6 @@ class Selection(Options):
 class Extraction(Options):
     size: PositiveInt = 150
     edge: Literal["pad", "strict"] = "pad"
-    no_overlap: Literal["pad", "skip", "error"] = "skip"
 
 
 class Astrometry(Options):

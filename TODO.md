@@ -22,6 +22,5 @@
 - Check target inversion in `validate_wcs`; bind corrected-WCS files to their parent.
 - Keep sub-millisecond precision in time summaries.
 - Hash each parent once per run, not per `obtain()` call.
-- Decide whether `no_overlap` should default to `skip` (currently `pad`: off-image targets give an all-NaN "complete" cutout).
 - GUI: cancel, output inspection, failure manifest path; live log replaced every 800 ms; primary button contrast 4.34:1; focus lost on target removal.
 - Clean internal paths and the unresolved `gaia_wcs_correction.py` licence note from `NOTICE.md`.

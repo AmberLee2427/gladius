@@ -28,7 +28,7 @@ called **padding**. Science and uncertainty padding contain `NaN` (a marker for
 an unavailable numeric value); quality padding has `DO_NOT_USE` set (value 1).
 Existing detector flags, including `SATURATED` (value 2), remain unchanged.
 You can instead reject edge-crossing requests with `extraction.edge: strict`.
-Entirely off-image requests follow `extraction.no_overlap`.
+A target whose position is not on the detector image is skipped and recorded as `target_off_detector`; it is never padded into a cutout.
 
 Other arrays that share the science image's height and width are cropped in the
 same place. Their floating-point padding is `NaN`; integer padding is zero,

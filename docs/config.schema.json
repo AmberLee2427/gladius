@@ -87,16 +87,6 @@
           ],
           "title": "Edge",
           "type": "string"
-        },
-        "no_overlap": {
-          "default": "skip",
-          "enum": [
-            "pad",
-            "skip",
-            "error"
-          ],
-          "title": "No Overlap",
-          "type": "string"
         }
       },
       "title": "Extraction",

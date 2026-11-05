@@ -20,7 +20,7 @@ from filelock import FileLock
 from . import __version__
 from .cache import copy_files, fingerprint, implementation, load_record, publish, valid_files
 from .config import RunConfig
-from .core import NoOverlapError, make_cutout, validate_wcs
+from .core import OffDetectorError, make_cutout, validate_wcs
 from .inputs import discover, selected, staged
 from .io import atomic_json, read_correction, read_cutout, read_exposure, sha256, write_cutout
 from .quality import assess
@@ -847,12 +847,10 @@ def _process_parent(
                     "cache_files": outputs,
                     "provenance_scope": "files preserve creation provenance; this manifest records current quality and configuration",
                 }
-            except NoOverlapError:
-                if config.extraction.no_overlap != "skip":
-                    raise
+            except OffDetectorError:
                 manifest["entries"][key] = {
                     "status": "skipped",
-                    "reason": "no_overlap",
+                    "reason": "target_off_detector",
                     "identity": identity,
                     "target_id": target.id,
                     "source": label,

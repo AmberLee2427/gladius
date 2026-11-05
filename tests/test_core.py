@@ -5,12 +5,12 @@ import pytest
 from astropy.wcs import WCS, Sip
 
 from gladius.config import Extraction, Target
-from gladius.core import NoOverlapError, make_cutout, pixel_to_world, validate_wcs
+from gladius.core import OffDetectorError, make_cutout, pixel_to_world, validate_wcs
 
 
 @pytest.mark.parametrize(
     "size,x,y",
-    [(10, 1.2, 1.7), (9, 35.2, 30.7), (10, 35.2, 30.7), (11, 94.2, 94.9), (10, -900.0, -900.0)],
+    [(10, 1.2, 1.7), (9, 35.2, 30.7), (10, 35.2, 30.7), (11, 94.2, 94.9)],
 )
 def test_native_values_padding_and_exact_wcs(exposure, size, x, y):
     exposure.arrays["dq"][0, 0] = 2 | 1024
@@ -19,7 +19,7 @@ def test_native_values_padding_and_exact_wcs(exposure, size, x, y):
         exposure.arrays,
         exposure.wcs,
         Target(id="e", x=x, y=y),
-        extraction=Extraction(size=size, no_overlap="pad"),
+        extraction=Extraction(size=size),
     )
     m = c.mapping
     assert m["x0"] == int(np.floor(x)) - (size - 1) // 2
@@ -47,12 +47,12 @@ def test_native_values_padding_and_exact_wcs(exposure, size, x, y):
 
 
 def test_off_detector_and_strict_policies(exposure):
-    with pytest.raises(NoOverlapError):
+    with pytest.raises(OffDetectorError):
         make_cutout(
             exposure.arrays,
             exposure.wcs,
             Target(id="e", x=-900, y=-900),
-            extraction=Extraction(size=10, no_overlap="skip"),
+            extraction=Extraction(size=10),
         )
     with pytest.raises(ValueError, match="boundary"):
         make_cutout(
@@ -85,3 +85,13 @@ def test_fits_sip_translation(exposure):
         atol=1e-12,
     )
     assert not validate_wcs(c.wcs, (10, 10))["absolute_astrometry_validated"]
+
+
+@pytest.mark.parametrize("x,y", [(-0.6, 50), (50, -0.6), (99.6, 50), (50, 99.6), (-3, 50)])
+def test_target_outside_detector_is_rejected_even_if_square_overlaps(exposure, x, y):
+    ny, nx = exposure.arrays["data"].shape
+    x, y = (nx + (x - 99.5) if x > 99 else x), (ny + (y - 99.5) if y > 99 else y)
+    with pytest.raises(OffDetectorError):
+        make_cutout(
+            exposure.arrays, exposure.wcs, Target(id="e", x=x, y=y), extraction=Extraction(size=40)
+        )

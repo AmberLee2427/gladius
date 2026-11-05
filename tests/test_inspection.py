@@ -36,9 +36,8 @@ def test_review_includes_all_flagged_images_and_correct_parent(demo):
 def test_review_reports_skipped_pairs_instead_of_silently_dropping_them(demo):
     data = load_config(demo).model_dump(mode="json")
     data["targets"].append({"id": "off-detector", "x": 10000, "y": 10000})
-    data["extraction"]["no_overlap"] = "skip"
     manifest_path = run(RunConfig.model_validate(data), progress=lambda _: None)
     rows = audit_rows(manifest_path)
     assert len(rows) == 4
     assert sum(row["status"] == "skipped" for row in rows) == 2
-    assert all(row["reason"] == "no_overlap" for row in rows if row["status"] == "skipped")
+    assert all(row["reason"] == "target_off_detector" for row in rows if row["status"] == "skipped")

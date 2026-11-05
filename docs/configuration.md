@@ -235,7 +235,7 @@ The cone returns candidate images, not guaranteed overlap. Six arcminutes is a
 conservative default for ordinary small cutouts from a WFI detector; increase it
 for large cutouts or uncertain astrometry. It cannot recover images whose archive
 positions are wrong by more than the chosen radius. The supported radius is
-0 < radius <= 30 arcminutes. No-overlap handling follows `extraction.no_overlap`.
+0 < radius <= 30 arcminutes.
 Overlapping searches are deduplicated before any parent is downloaded.
 
 Use `mast_criteria` for optional overrides, e.g. `{program: 1043}` (an example ID,
@@ -295,10 +295,10 @@ and positions on the sky. Choose how Gladius uses it:
 `extraction.size` sets the square's side in pixels: `150` produces a 150 × 150
 cutout. At a detector edge, `edge: pad` keeps that requested size and fills the
 part outside the image; `edge: strict` rejects any cutout requiring such filling.
-If the square misses the image entirely, `no_overlap` chooses whether to save an
-entirely padded cutout (`pad`), skip it (`skip`, the default), or report an error (`error`).
-`strict` still rejects entirely padded requests. Failure to convert sky
-coordinates to pixels is an error, rather than an off-image skip.
+The target position itself must be on the detector image. A target outside it is
+skipped (recorded as `target_off_detector`) rather than padded, which is the normal
+outcome for MAST candidates that were found nearby but do not cover the target.
+Failure to convert sky coordinates to pixels is an error, rather than an off-image skip.
 
 See [Scientific conventions](science.md) for worked examples of pixel selection,
 padding values and coordinate conversion.

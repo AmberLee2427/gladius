@@ -267,7 +267,7 @@ def mast_test_configuration(base: Path) -> dict:
                 "product_filename": filename,
                 "query_limit": 100,
             },
-            "extraction": {"size": 64, "no_overlap": "error"},
+            "extraction": {"size": 64},
             "storage": {"output_directory": "gladius-mast-test", "formats": ["asdf"]},
             "quality": {"autocorrelation_limit": None},
             "stacks": {"enabled": False},

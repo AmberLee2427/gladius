@@ -17,8 +17,8 @@ DO_NOT_USE = 1
 SATURATED = 2
 
 
-class NoOverlapError(ValueError):
-    """Requested cutout has no valid parent pixels."""
+class OffDetectorError(ValueError):
+    """The target position is not on the parent detector image."""
 
 
 @dataclass
@@ -209,10 +209,11 @@ def make_cutout(
         x, y = map(float, world_to_pixel(wcs, target.ra, target.dec))
     else:
         x, y = target.x, target.y
+    ny, nx = arrays["data"].shape
+    if not (-0.5 <= x < nx - 0.5 and -0.5 <= y < ny - 0.5):
+        raise OffDetectorError(f"Target at pixel ({x:.2f}, {y:.2f}) is not on the detector image")
     mapping = geometry(x, y, arrays["data"].shape, extraction.size)
     padding = mapping["padding_pixels"]
-    if padding == extraction.size**2 and extraction.no_overlap != "pad":
-        raise NoOverlapError("Target cutout does not overlap detector")
     if padding and extraction.edge == "strict":
         raise ValueError("Cutout crosses detector boundary with edge=strict")
     output = {name: extract_plane(a, mapping, dq=name == "dq") for name, a in arrays.items()}

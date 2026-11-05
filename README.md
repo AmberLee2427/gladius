@@ -236,7 +236,7 @@ manifest_path = run(config, progress=print)
 config = RunConfig(
     targets=read_targets_csv(workspace / "targets.csv"),
     inputs={"mode": "mast"},
-    extraction={"size": 150, "no_overlap": "skip"},
+    extraction={"size": 150},
 ).resolved(workspace)
 # manifest_path = run(config)
 ```

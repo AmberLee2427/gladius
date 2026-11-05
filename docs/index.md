@@ -22,7 +22,7 @@ from gladius import RunConfig, read_targets_csv, run
 config = RunConfig(
     targets=read_targets_csv("targets.csv"),
     inputs={"mode": "directory", "directory": "images"},
-    extraction={"size": 150, "no_overlap": "skip"},
+    extraction={"size": 150},
     storage={"output_directory": "cutouts"},
 ).resolved(Path.cwd())
 
