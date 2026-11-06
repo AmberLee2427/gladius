@@ -160,6 +160,9 @@ class Jobs:
                     state: sum(e.get("status") == state for e in entries)
                     for state in ("complete", "skipped", "failed")
                 }
+                job["summary"]["failed"] += sum(
+                    1 for s in manifest.get("sources", []) if s.get("error")
+                )
                 job["state"] = "complete" if manifest["status"] == "complete" else "failed"
                 if job["state"] == "failed":
                     job["error"] = "The pipeline recorded failures. Inspect the manifest."

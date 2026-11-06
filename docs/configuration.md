@@ -135,8 +135,7 @@ Your MAST token file remains separate from your Nexus login.
 
 ### Embed the GUI in a notebook
 
-Tutorial support is newer than the first PyPI `0.1.0a2` release. The local
-`gladius --tutorial` and hosted `gladius --nexus-tutorial` notebooks contain
+The local `gladius --tutorial` and hosted `gladius --nexus-tutorial` notebooks contain
 complete start, iframe and stop cells. They remain separate from this RTD site.
 
 Within a Nexus notebook, start the server from the kernel and embed its proxy URL:

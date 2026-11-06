@@ -123,3 +123,13 @@ def test_correction_for_another_exposure_is_rejected(exposure):
     )
     with pytest.raises(ValueError, match="centre"):
         check_correction_matches_parent(shifted, shape, exposure.wcs, shape)
+
+
+def test_non_finite_target_position_is_an_error_not_a_skip(exposure):
+    with pytest.raises(ValueError, match="finite"):
+        make_cutout(
+            exposure.arrays,
+            exposure.wcs,
+            Target(id="e", x=float("nan"), y=5.0),
+            extraction=Extraction(size=10),
+        )

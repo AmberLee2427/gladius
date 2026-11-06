@@ -63,7 +63,7 @@ def geometry(x: float, y: float, shape: tuple[int, int], size: int) -> dict[str,
         parent_virtual_bounds_xyxy=[x0, y0, x0 + size, y0 + size],
         parent_valid_bounds_xyxy=[sx0, sy0, sx1, sy1],
         cutout_valid_bounds_xyxy=[dx0, dy0, dx1, dy1],
-        prediction_on_detector=bool(0 <= x < nx and 0 <= y < ny),
+        prediction_on_detector=bool(-0.5 <= x < nx - 0.5 and -0.5 <= y < ny - 0.5),
         padding_pixels=size * size - (sx1 - sx0) * (sy1 - sy0) if overlap else size * size,
         x_parent_equals="x_cutout + x0",
         y_parent_equals="y_cutout + y0",
@@ -242,6 +242,11 @@ def make_cutout(
     else:
         x, y = target.x, target.y
     ny, nx = arrays["data"].shape
+    if not np.isfinite([x, y]).all():
+        raise ValueError(
+            f"Target {target.id!r} did not map to a finite pixel position; the parent WCS "
+            "returned NaN or inf for it"
+        )
     if not (-0.5 <= x < nx - 0.5 and -0.5 <= y < ny - 0.5):
         raise OffDetectorError(f"Target at pixel ({x:.2f}, {y:.2f}) is not on the detector image")
     mapping = geometry(x, y, arrays["data"].shape, extraction.size)

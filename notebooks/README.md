@@ -9,12 +9,10 @@
   download, retain the parent for context, compare a finding chart, and review
   all results. Real data only; the notebook has no synthetic fallback.
 
-These revised tutorials require the development checkout containing named run
-revisions and `gladius.inspection`; those additions are newer than PyPI 0.1.0a3.
-From an authorized checkout, install into your own Python environment:
+Install into your own Python environment, from PyPI or from a checkout:
 
 ```sh
-python -m pip install -e '.[roman,mast,notebook]'
+python -m pip install 'roman-gladius[notebook]'      # or: pip install -e '.[notebook]'
 python -m ipykernel install --user --name gladius --display-name 'Python (Gladius)'
 ```
 

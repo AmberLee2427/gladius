@@ -18,4 +18,3 @@
 - [ ] Make a conda package, once we know we are allowed to distribute (after commissioning data is released).
 
 ## From the critical review (medium/low)
-- Release `0.1.0a4` with the Bump workflow so PyPI matches the docs and notebooks (a3 lacks named runs, `gladius.inspection`, refresh/fresh controls).

@@ -86,6 +86,25 @@ def audit_rows(manifest_path):
                 start_utc=cutout.provenance.get("exposure", {}).get("start_utc"),
             )
         rows.append(row)
+    for source in manifest.get("sources", []):
+        if source.get("error"):
+            rows.append(
+                {
+                    "entry": "",
+                    "target": "",
+                    "parent": Path(str(source.get("source", "unknown"))).name,
+                    "status": "failed",
+                    "filter": "",
+                    "accepted": None,
+                    "display_eligible": None,
+                    "axis_ratio": None,
+                    "reason": source["error"],
+                    "padding_fraction": None,
+                    "do_not_use_fraction": None,
+                    "saturated_fraction": None,
+                    "start_utc": None,
+                }
+            )
     return rows
 
 

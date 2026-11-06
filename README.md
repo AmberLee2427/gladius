@@ -6,6 +6,11 @@
 
 Native image cutouts for the Roman Space Telescope.
 
+Gladius is for **Roman Wide Field Instrument Level 2 calibrated images**
+(`*_cal.asdf`), and only those. It is not a general cutout tool: for other
+telescopes, FITS images, mosaics or arbitrary files, use
+[astrocut](https://astrocut.readthedocs.io).
+
 Python import and command: `gladius`. Distribution name: `roman-gladius`
 (`roman_gladius` is the equivalent PyPI spelling).
 
@@ -24,7 +29,7 @@ mkdir gladius-work
 cd gladius-work
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install 'roman-gladius==0.1.0a3'
+python -m pip install roman-gladius
 gladius gui --workspace .
 ```
 
@@ -270,9 +275,9 @@ See [release instructions](TESTING.md#publish-a-release-to-pypi) before pushing 
 directory. `gladius --nexus-tutorial` copies the real-MAST tutorial and opens or
 links it in the running Nexus JupyterLab server. Both demonstrate the GUI inside
 an iframe. Add `--no-open` to copy only. The default install includes local
-JupyterLab; the launcher registers that environment as the notebook kernel. These commands and iframe support are in the development version and arrive with the next release (`0.1.0a4`); PyPI `0.1.0a3` predates them.
+JupyterLab; the launcher registers that environment as the notebook kernel.
 
-## Named runs and reusable work (development version)
+## Named runs and reusable work
 
 Set `run.name: bulge-field-test` in YAML, or use
 `gladius run config.yaml --name bulge-field-test`. Revisions are saved under
@@ -283,4 +288,4 @@ MAST discovery while known archive products retain their identity.
 `--refresh-inputs` re-queries MAST membership; `--fresh` bypasses all reuse.
 The GUI also exposes the run name. See the [reuse rules](docs/configuration.md#named-runs-revisions-and-reuse)
 for each setting and the distinction between creation provenance and current
-revision quality decisions. This behavior is newer than PyPI 0.1.0a3.
+revision quality decisions.

@@ -1,4 +1,4 @@
-"""Dependency-aware, exposure-first execution with immutable named revisions."""
+"""Dependency-aware, exposure-first execution with named revisions."""
 
 from __future__ import annotations
 
@@ -245,7 +245,7 @@ def _native(
             "implementation_sha256": fingerprint(implementation("core.py", "io.py")),
             "centering": "floor(position)-(size-1)//2",
             "ancillary_padding": "floating:NaN; integer:0; dq/pixeldq:DO_NOT_USE",
-            "provenance_scope": "immutable creation record; current quality and settings are in the revision manifest",
+            "provenance_scope": "creation record; current quality and settings are in the revision manifest",
         },
     )
     return publish(
@@ -572,7 +572,7 @@ def _run_locked(config, settings, progress, fresh, refresh_inputs):
             ],
             "dependencies": versions,
             "quality": implementation("quality.py"),
-            "pipeline": implementation("pipeline.py", "cache.py"),
+            "pipeline": implementation("pipeline.py", "cache.py", "core.py", "io.py"),
             "display": implementation("stacks.py"),
             "display_dependencies": {
                 k: versions[k] for k in ("numpy", "scipy", "astropy", "pillow")

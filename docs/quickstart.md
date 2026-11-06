@@ -10,7 +10,7 @@ mkdir gladius-work
 cd gladius-work
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install 'roman-gladius==0.1.0a3'
+python -m pip install roman-gladius
 ```
 
 On Windows, activate with `.venv\Scripts\activate` instead. The default install includes the Roman
@@ -40,7 +40,7 @@ Copy/open the local tutorial in your current
 directory:
 
 ```sh
-python -m pip install 'roman-gladius==0.1.0a3'
+python -m pip install roman-gladius
 gladius --tutorial
 ```
 
@@ -65,8 +65,6 @@ real MAST data and requires an explicit credential-file path before querying the
 archive. Both demonstrate an embedded GUI, including how to stop it. Copying or
 opening a notebook does not execute its cells, query MAST or download images.
 Tutorials remain separate notebooks; they are not executed or embedded in RTD.
-
-**Availability:** tutorial commands and iframe support require `0.1.0a3` or later.
 
 ## Start with the GUI
 

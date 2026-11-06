@@ -132,22 +132,36 @@ def _summary(meta):
     }
 
 
+NOT_ROMAN_MESSAGE = (
+    "Gladius cuts out calibrated Roman WFI Level 2 images (*_cal.asdf). {detail} "
+    "For other images use astrocut (https://astrocut.readthedocs.io)."
+)
+
+
 def read_exposure(path: str | Path) -> Exposure:
-    """Load one 2D calibrated ASDF or SCI/ERR/DQ FITS parent.
+    """Load one Roman Level 2 calibrated ASDF image (or Gladius's SCI/ERR/DQ FITS layout).
 
     Roman ASDF extensions must be installed when required by input tags. Unknown
     ASDF converters raise rather than silently losing typed metadata.
     """
     path = Path(path)
-    if path.suffix.lower() in (".fits", ".fit", ".fts"):
+    suffix = path.suffix.lower()
+    if suffix in (".fits", ".fit", ".fts"):
         return _read_fits(path)
+    if suffix != ".asdf":
+        raise ValueError(NOT_ROMAN_MESSAGE.format(detail=f"{path.name} is not an ASDF file."))
     with warnings.catch_warnings():
         warnings.simplefilter("error", AsdfConversionWarning)
         with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=True) as af:
+            if af.tree.get("schema") == SCHEMA:
+                raise ValueError(
+                    f"{path.name} is a Gladius cutout, not a parent image. "
+                    "Use the original Roman Level 2 image as the parent."
+                )
             node = af.tree.get("roman", af.tree)
             if any(name not in node for name in ("data", "err", "dq")):
                 raise ValueError(
-                    "Parent ASDF requires data, err, dq; install [roman] for Roman tags"
+                    NOT_ROMAN_MESSAGE.format(detail=f"{path.name} has no data, err and dq arrays.")
                 )
             arrays = {name: np.asarray(node[name]).copy() for name in ("data", "err", "dq")}
             if arrays["data"].ndim != 2:
@@ -170,6 +184,13 @@ def read_exposure(path: str | Path) -> Exposure:
 
 def _read_fits(path):
     with fits.open(path, memmap=False) as hdul:
+        missing = [label for label in ("SCI", "ERR", "DQ") if label not in hdul]
+        if missing:
+            raise ValueError(
+                NOT_ROMAN_MESSAGE.format(
+                    detail=f"{path.name} has no {'/'.join(missing)} extension."
+                )
+            )
         for label in ("SCI", "ERR", "DQ"):
             if sum(1 for hdu in hdul if hdu.name == label) > 1:
                 raise ValueError(
@@ -223,6 +244,8 @@ def _read_fits(path):
         for label, keys in (("start_time", ("DATE-BEG", "DATE-OBS")), ("end_time", ("DATE-END",))):
             value = next((header[k] for k in keys if k in header), None)
             if value is not None:
+                if label == "start_time" and "T" not in str(value) and "TIME-OBS" in header:
+                    value = f"{value}T{header['TIME-OBS']}"
                 meta["exposure"][label] = Time(value, scale=timesys)
         return Exposure(
             arrays,

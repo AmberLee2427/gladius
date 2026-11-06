@@ -1,2 +1,1 @@
-# Install the development checkout for named revisions and gladius.inspection (newer than 0.1.0a3).
-roman-gladius[notebook]>=0.1.0a3,<0.2
+roman-gladius[notebook]

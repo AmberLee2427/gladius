@@ -29,7 +29,8 @@ config = RunConfig(
 manifest_path = run(config)
 ```
 
-Use calibrated 2D detector images. ASDF retains the exact GWCS; FITS includes
+Use Roman Level 2 calibrated images (`*_cal.asdf`); Gladius does not cut out other
+products. ASDF retains the exact GWCS; FITS output includes
 SCI/ERR/DQ and the stored exact metadata alongside its FITS WCS representation.
 See [Outputs](products.md) for what each file contains.
 

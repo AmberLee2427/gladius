@@ -45,7 +45,7 @@ Do not put either token in a commit or pass it in the tag command.
 ### Automated version bump (recommended)
 
 Run **Actions → Bump version → Run workflow** on `main` and choose `pre`
-(`0.1.0a3` → `0.1.0a4`), `release` (drop the `a`/`b`/`rc` marker), `patch`, `minor`,
+(`0.1.0a4` → `0.1.0a5`), `release` (drop the `a`/`b`/`rc` marker), `patch`, `minor`,
 `major`, or an explicit version. It runs `tools/bump_version.py`, which updates
 `pyproject.toml`, `gladius.__version__`, `CITATION.cff` and turns the `Unreleased`
 heading in `CHANGES.rst` into the dated release heading, then commits, tags `vX.Y.Z`,
@@ -59,12 +59,12 @@ Locally: `python tools/bump_version.py pre` (add `--dry-run` to only print the r
 
 Before tagging by hand, update the version everywhere (`python tools/bump_version.py ...`
 does this), update the changelog, and commit. The workflow rejects tags that do
-not match the package version exactly. For the current `0.1.0a3` version:
+not match the package version exactly. Run the bump script first, then tag the version it printed:
 
 ```sh
 git push origin main
-git tag -a v0.1.0a3 -m "Gladius 0.1.0a3"
-git push origin v0.1.0a3
+git tag -a vX.Y.Z -m "Gladius X.Y.Z"
+git push origin vX.Y.Z
 ```
 
 **The final command starts publication.** Use the version you actually intend

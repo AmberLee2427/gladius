@@ -261,7 +261,7 @@ will not all be present.
 | `resampled` | `False` for individual cutouts. |
 | `rotated` | `False` for individual cutouts. |
 | `quality` | Optional creation-time screen record in older files or caller-supplied products. New staged runs record current quality in the revision manifest, without rewriting native images. |
-| `provenance_scope` | Explains that this file is an immutable creation record; use the revision manifest for current settings, quality and numerical WCS validation. |
+| `provenance_scope` | Explains that this file is a creation record; use the revision manifest for current settings, quality and numerical WCS validation. |
 
 | `astrometry_validation` field | Meaning |
 | --- | --- |
