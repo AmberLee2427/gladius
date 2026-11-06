@@ -125,11 +125,15 @@ def test_correction_for_another_exposure_is_rejected(exposure):
         check_correction_matches_parent(shifted, shape, exposure.wcs, shape)
 
 
-def test_non_finite_target_position_is_an_error_not_a_skip(exposure):
-    with pytest.raises(ValueError, match="finite"):
+def test_non_finite_target_position_is_off_detector(exposure):
+    class NanWcs:
+        def invert(self, ra, dec, with_bounding_box=False):
+            return float("nan"), float("nan")
+
+    with pytest.raises(OffDetectorError, match="not finite"):
         make_cutout(
             exposure.arrays,
-            exposure.wcs,
-            Target(id="e", x=float("nan"), y=5.0),
+            NanWcs(),
+            Target(id="e", ra=10.0, dec=10.0),
             extraction=Extraction(size=10),
         )

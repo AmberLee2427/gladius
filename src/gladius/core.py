@@ -242,13 +242,11 @@ def make_cutout(
     else:
         x, y = target.x, target.y
     ny, nx = arrays["data"].shape
-    if not np.isfinite([x, y]).all():
-        raise ValueError(
-            f"Target {target.id!r} did not map to a finite pixel position; the parent WCS "
-            "returned NaN or inf for it"
+    if not np.isfinite([x, y]).all() or not (-0.5 <= x < nx - 0.5 and -0.5 <= y < ny - 0.5):
+        detail = "is not finite (outside the WCS domain)" if not np.isfinite([x, y]).all() else ""
+        raise OffDetectorError(
+            f"Target at pixel ({x:.2f}, {y:.2f}) is not on the detector image {detail}".strip()
         )
-    if not (-0.5 <= x < nx - 0.5 and -0.5 <= y < ny - 0.5):
-        raise OffDetectorError(f"Target at pixel ({x:.2f}, {y:.2f}) is not on the detector image")
     mapping = geometry(x, y, arrays["data"].shape, extraction.size)
     padding = mapping["padding_pixels"]
     if padding and extraction.edge == "strict":
