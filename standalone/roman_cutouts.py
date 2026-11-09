@@ -115,7 +115,11 @@ def pixel_to_world(wcs, x, y):
 def world_to_pixel(wcs, ra, dec):
     if isinstance(wcs, WCS):
         return wcs.all_world2pix(ra, dec, 0)
-    return wcs.invert(ra, dec, with_bounding_box=False)
+    # Supplied polynomial inverses can be approximate. Solve against the forward
+    # transform so sky-selected targets meet the same precision as the WCS check.
+    return wcs.numerical_inverse(
+        ra, dec, with_bounding_box=False, tolerance=1e-6, maxiter=100, quiet=False
+    )
 
 
 def translate_wcs(wcs, mapping):

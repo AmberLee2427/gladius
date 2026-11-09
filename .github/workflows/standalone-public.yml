@@ -1,0 +1,54 @@
+name: Standalone public simulation and Gaia
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'standalone/**'
+      - 'tests/integration/**'
+      - '.github/workflows/standalone-public.yml'
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: standalone-public-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fidelity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install the standalone script dependencies and pytest
+        run: |
+          python - <<'PY'
+          import pathlib, subprocess, sys, tomllib
+          script = pathlib.Path('standalone/roman_cutouts.py').read_text()
+          metadata = script.split('# /// script\n', 1)[1].split('# ///', 1)[0]
+          dependencies = tomllib.loads('\n'.join(line.removeprefix('# ') for line in metadata.splitlines()))['dependencies']
+          subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pytest', *dependencies])
+          PY
+      - name: Check public simulation pixels, WCS, metadata, and Gaia reference star
+        env:
+          GLADIUS_PUBLIC_ROMAN: '1'
+          GLADIUS_PUBLIC_ROMAN_REPORT: public-fidelity.json
+        run: python -m pytest tests/integration/test_public_roman.py --confcutdir=tests/integration -q --tb=short --junitxml=public-fidelity.xml
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: public-simulation-fidelity
+          path: |
+            public-fidelity.json
+            public-fidelity.xml
+          if-no-files-found: warn
+          retention-days: 7

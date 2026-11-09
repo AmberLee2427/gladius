@@ -12,11 +12,6 @@ on:
   pull_request:
     paths: *paths
   workflow_dispatch:
-    inputs:
-      gaia_reference:
-        description: 'Also require an isolated Gaia star in the sampled archive image'
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -44,7 +39,6 @@ jobs:
         env:
           MAST_API_TOKEN: ${{ secrets.MAST_API_TOKEN }}
           GLADIUS_LIVE_MAST: '1'
-          GLADIUS_GAIA_REFERENCE: ${{ inputs.gaia_reference && '1' || '0' }}
           GLADIUS_MAST_REPORT: mast-live-report.json
         run: >-
           python -m pytest tests/integration/test_mast_live.py -m live_mast

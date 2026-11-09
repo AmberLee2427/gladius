@@ -158,11 +158,7 @@ def _authenticated_roman_download(tmp_path, record_property):
         np.testing.assert_array_equal(reopened.arrays["data"], cutout.arrays["data"])
         from standalone_fidelity import check_standalone_fidelity
 
-        fidelity = check_standalone_fidelity(path, tmp_path)
-        if os.environ.get("GLADIUS_GAIA_REFERENCE") == "1":
-            from gaia_reference import check_gaia_reference
-
-            fidelity.update(check_gaia_reference(path, tmp_path))
+        check_standalone_fidelity(path, tmp_path)
         downloaded_path = Path(path)
     assert not downloaded_path.exists(), "Temporary archive parent was not cleaned up"
 
@@ -177,8 +173,6 @@ def _authenticated_roman_download(tmp_path, record_property):
         "standalone_wcs": "passed",
         "standalone_metadata": "passed",
     }
-    if "gaia_reference" in fidelity:
-        result["gaia_reference"] = "passed"
     report = os.environ.get("GLADIUS_MAST_REPORT")
     if report:
         Path(report).write_text(json.dumps(result, indent=2) + "\n")
@@ -282,7 +276,7 @@ def test_gaia_reference_with_synthetic_catalog(demo, tmp_path, monkeypatch):
 
     module = ModuleType("astroquery.gaia")
     catalog = Table(
-        rows=[(1, 270.0, -29.0, 0.0, 0.0, 2016.0, 15.0)],
+        rows=[(1, 270.0, -29.0, 0.0, 0.0, 2016.0, 17.0)],
         names=["source_id", "ra", "dec", "pmra", "pmdec", "ref_epoch", "phot_g_mean_mag"],
     )
     module.Gaia = SimpleNamespace(

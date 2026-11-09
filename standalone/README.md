@@ -65,5 +65,21 @@ see `LICENSE.txt`. The script does not import or require Gladius.
 
 This script and its documentation were generated and revised with OpenAI Codex,
 following the maintainer's requirements, with code adapted from Gladius. Automated
-checks cover synthetic extraction and mocked archive access; they do not establish
-scientific validation on real Roman observations.
+checks cover synthetic extraction, mocked archive access, and the public
+simulation described below.
+
+## Checks on a public Roman simulation
+
+Tested against STScI's publicly released Roman I-Sim tutorial image for exact
+SCI/ERR/DQ pixel fidelity, WCS consistency with the parent, and metadata
+preservation. Checks reopen the written files and cover 50- and 51-pixel cutouts
+at the detector center and a padded corner. A separate sky-coordinate cutout
+checks an isolated Gaia DR3 star, propagated to the simulation epoch, against
+an image centroid (S/N > 20; positional tolerance 0.3 arcsec).
+
+This is a pre-launch simulation, not an on-sky Roman observation. The fixture is
+`r0003201001001001004_0001_wfi02_f106_cal.asdf` from the anonymous STScI Open Data
+Bucket, linked in the [STScI cutout tutorial](https://github.com/spacetelescope/roman_notebooks/blob/b46bc6c3d6ab8d4e63419bd51843ca8acfdaa1fb/notebooks/roman_cutouts/roman_cutouts.ipynb).
+The [simulation tutorial](https://github.com/spacetelescope/roman_notebooks/blob/b46bc6c3d6ab8d4e63419bd51843ca8acfdaa1fb/notebooks/romanisim/romanisim.ipynb)
+describes its Gaia input catalog and the exclusion of stars brighter than G=16.5.
+These tests need no MAST secret.

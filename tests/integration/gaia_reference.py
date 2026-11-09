@@ -65,7 +65,8 @@ def check_gaia_reference(parent, work):
         # for a detection. A missing/misplaced image star must fail this check.
         chosen = None
         for i in range(len(stars)):
-            if not (12 <= catalog["phot_g_mean_mag"][i] <= 18):
+            # The public STScI tutorial simulation excludes Gaia G <= 16.5.
+            if not (16.5 < catalog["phot_g_mean_mag"][i] <= 18):
                 continue
             if not (30 <= px[i] < nx - 30 and 30 <= py[i] < ny - 30):
                 continue
