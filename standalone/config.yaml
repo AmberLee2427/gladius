@@ -1,0 +1,27 @@
+# Run: uv run roman_cutouts.py config.yaml
+# YAML paths resolve relative to this file. CLI paths resolve from your shell.
+inputs:
+  mode: directory
+  directory: images
+  pattern: '*_cal.asdf'
+  recursive: false
+  # For downloads instead:
+  # mode: mast
+  # mast_criteria: {program: 1043}  # use an actual accessible program
+  # radius_arcmin: 6
+  # query_limit: 50000
+output: cutouts                   # must NOT already exist
+size: 150                        # square, native pixels
+edge: pad                        # pad (NaN / DQ DO_NOT_USE) or strict
+fits: false                      # optional SCI/ERR/DQ FITS alongside full ASDF
+selection:
+  filters: []                    # e.g. [F146]
+  detectors: []                  # e.g. [1, 2]; Roman detector numbers
+  start: null                    # UTC exposure start, inclusive
+  end: null                      # UTC exposure start, exclusive
+# Alternatively: targets_csv: targets.csv (id,ra,dec OR id,x,y)
+targets:
+  - id: example-event
+    ra: 270.0                    # ICRS degrees
+    dec: -29.0
+    # Or replace ra/dec with zero-based parent x/y.

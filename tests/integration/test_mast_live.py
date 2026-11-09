@@ -133,11 +133,15 @@ def test_authenticated_roman_download(tmp_path, record_property):
         write_cutout(cutout, output, formats=("asdf",))
         reopened = read_cutout(output / "cutout.asdf")
         np.testing.assert_array_equal(reopened.arrays["data"], cutout.arrays["data"])
+        from standalone_fidelity import check_standalone_fidelity
+
+        fidelity = check_standalone_fidelity(path, tmp_path)
         downloaded_path = Path(path)
     assert not downloaded_path.exists(), "Temporary archive parent was not cleaned up"
 
     # Reports contain no token, raw product metadata, or restricted science data.
     result = {
+        **fidelity,
         "downloaded_bytes": actual,
         "sha256": digest,
         "coverage": "calibrated-image-and-cutout",

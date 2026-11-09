@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths: &paths
       - 'src/**'
+      - 'standalone/**'
       - 'tests/integration/**'
       - 'pyproject.toml'
       - '.github/workflows/mast-live.yml'
@@ -56,6 +57,9 @@ jobs:
                   data = json.loads(report.read_text())
                   stream.write(f"Downloaded {data['downloaded_bytes']:,} bytes.\n\n")
                   stream.write(f"Coverage: **{data['coverage']}**.\n\n")
+                  stream.write(f"Standalone fidelity: {data['standalone_pixel_fidelity']}.\n\n")
+                  stream.write(f"Maximum WCS separation: {data['standalone_wcs_max_separation_arcsec']:.3g} arcsec.\n\n")
+                  stream.write(f"Metadata: {data['standalone_metadata']}.\n\n")
                   stream.write('Generated target query and temporary-file cleanup passed.\n')
               else:
                   stream.write('Live download did not complete. Check the test failure; '
