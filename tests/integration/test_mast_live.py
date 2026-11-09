@@ -2,6 +2,7 @@
 
 import json
 import os
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -53,11 +54,34 @@ def bounded_files():
     reason="Set GLADIUS_LIVE_MAST=1 to enable real authenticated downloads",
 )
 def test_authenticated_roman_download(tmp_path, record_property):
+    """Keep embargoed data and third-party diagnostics out of public CI output."""
+    # A process boundary also contains native-library output and uncaught tracebacks.
+    # Never attach the worker's stdout/stderr or temporary science files as artifacts.
+    worker = (
+        "import sys; from pathlib import Path; "
+        "sys.path.insert(0, sys.argv[1]); "
+        "from test_mast_live import _authenticated_roman_download; "
+        "_authenticated_roman_download(Path(sys.argv[2]), lambda *args: None)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", worker, str(Path(__file__).parent), str(tmp_path)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if result.returncode:
+        pytest.fail(
+            "Live fidelity check failed; diagnostics withheld to protect embargoed data",
+            pytrace=False,
+        )
+    record_property("live_fidelity", "passed")
+
+
+def _authenticated_roman_download(tmp_path, record_property):
     from astroquery.mast import MastMissions
 
     from gladius import RunConfig, Target, make_cutout
     from gladius.inputs import mast_queries, staged
-    from gladius.io import read_cutout, read_exposure, sha256, write_cutout
+    from gladius.io import read_cutout, read_exposure, write_cutout
 
     token = os.environ.get("MAST_API_TOKEN")
     assert token, "Live MAST tests require the MAST_API_TOKEN environment variable"
@@ -116,7 +140,6 @@ def test_authenticated_roman_download(tmp_path, record_property):
         with path.open("rb") as stream:
             prefix = stream.read(512).lstrip().lower()
         assert not prefix.startswith((b"<!doctype html", b"<html")), "Received an HTML error page"
-        digest = sha256(path)
         exposure = read_exposure(path)
         ny, nx = exposure.arrays["data"].shape
         cutout = make_cutout(
@@ -136,18 +159,26 @@ def test_authenticated_roman_download(tmp_path, record_property):
         from standalone_fidelity import check_standalone_fidelity
 
         fidelity = check_standalone_fidelity(path, tmp_path)
+        if os.environ.get("GLADIUS_GAIA_REFERENCE") == "1":
+            from gaia_reference import check_gaia_reference
+
+            fidelity.update(check_gaia_reference(path, tmp_path))
         downloaded_path = Path(path)
     assert not downloaded_path.exists(), "Temporary archive parent was not cleaned up"
 
     # Reports contain no token, raw product metadata, or restricted science data.
+    # Public reports deliberately contain only pass/fail, no filenames, catalog IDs,
+    # hashes, coordinates, measurements, or restricted parent metadata.
     result = {
-        **fidelity,
-        "downloaded_bytes": actual,
-        "sha256": digest,
         "coverage": "calibrated-image-and-cutout",
         "generated_target_query": "passed",
         "temporary_cleanup": "passed",
+        "standalone_pixel_fidelity": "passed",
+        "standalone_wcs": "passed",
+        "standalone_metadata": "passed",
     }
+    if "gaia_reference" in fidelity:
+        result["gaia_reference"] = "passed"
     report = os.environ.get("GLADIUS_MAST_REPORT")
     if report:
         Path(report).write_text(json.dumps(result, indent=2) + "\n")
@@ -219,8 +250,44 @@ def test_live_harness_with_synthetic_archive(demo, tmp_path, monkeypatch):
     monkeypatch.setitem(sys.modules, "astroquery.mast", module)
     monkeypatch.setenv("MAST_API_TOKEN", "synthetic-test-token")
     monkeypatch.setenv("GLADIUS_MAST_REPORT", str(report))
-    test_authenticated_roman_download(tmp_path, lambda *_: None)
+    _authenticated_roman_download(tmp_path, lambda *_: None)
     result = json.loads(report.read_text())
     assert result["coverage"] == "calibrated-image-and-cutout"
     assert result["temporary_cleanup"] == "passed"
     assert "synthetic-test-token" not in report.read_text()
+
+
+def test_embargo_boundary_discards_worker_output(tmp_path, monkeypatch):
+    """A failed worker cannot expose restricted diagnostics through pytest."""
+    from types import SimpleNamespace
+
+    calls = []
+
+    def failed_worker(*args, **kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(returncode=1)
+
+    monkeypatch.setattr(subprocess, "run", failed_worker)
+    with pytest.raises(pytest.fail.Exception, match="diagnostics withheld"):
+        test_authenticated_roman_download(tmp_path, lambda *_: None)
+    assert calls[0]["stdout"] == subprocess.DEVNULL
+    assert calls[0]["stderr"] == subprocess.DEVNULL
+
+
+def test_gaia_reference_with_synthetic_catalog(demo, tmp_path, monkeypatch):
+    """Exercise catalog selection, epoch propagation, CLI, and image centroid offline."""
+    from types import ModuleType, SimpleNamespace
+
+    from gaia_reference import check_gaia_reference
+
+    module = ModuleType("astroquery.gaia")
+    catalog = Table(
+        rows=[(1, 270.0, -29.0, 0.0, 0.0, 2016.0, 15.0)],
+        names=["source_id", "ra", "dec", "pmra", "pmdec", "ref_epoch", "phot_g_mean_mag"],
+    )
+    module.Gaia = SimpleNamespace(
+        launch_job_async=lambda *args, **kwargs: SimpleNamespace(get_results=lambda: catalog)
+    )
+    monkeypatch.setitem(sys.modules, "astroquery.gaia", module)
+    result = check_gaia_reference(demo.parent / "images" / "demo0_cal.asdf", tmp_path)
+    assert result["gaia_centroid_offset_arcsec"] < 0.03
