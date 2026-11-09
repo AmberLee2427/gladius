@@ -290,8 +290,7 @@ paths. The [header and metadata reference](headers.md) defines the saved fields.
 ## What is retained from the input?
 
 Gladius preserves the original metadata separately from the new cutout metadata.
-For FITS inputs this includes every original header; for ASDF inputs it retains
-the original tree values and their locations. Arrays matching the detector image
+Gladius retains the original ASDF tree values and their locations. Arrays matching the detector image
 are cropped along the same rows and columns as SCI, ERR and DQ. The metadata
 records their original paths, dimensions and storage types. Other metadata arrays
 are retained in full. Full detector pixels are saved separately only when you

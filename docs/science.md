@@ -166,8 +166,7 @@ which pixels came from the detector.
 
 Roman ASDF images store a **GWCS** (Generalized World Coordinate System),
 which represents the pixel-to-sky calculation as a sequence of models. Gladius
-also reads its own SCI/ERR/DQ FITS layout, whose WCS Astropy can represent, including supported
-polynomial distortion corrections.
+reads that model directly. FITS cutout output carries a TAN-SIP approximation of it.
 
 **Distortion corrections** account for departures from an idealised mapping
 between the detector and sky. One FITS convention, **SIP** (Simple Imaging
@@ -201,9 +200,7 @@ stars or a measurement of absolute astrometric accuracy.
 
 They come from the **input file's metadata**, not from the cutout dimensions or
 the time Gladius runs. For Roman ASDF files, Gladius reads the exposure start,
-end and duration from `roman.meta.exposure`. For FITS inputs, it reads start from
-`DATE-BEG` (falling back to `DATE-OBS`, joined with `TIME-OBS` when `DATE-OBS` has no time), end from `DATE-END`, and duration from
-`EXPTIME`. The [source-field table](headers.md#parent-fields-used-by-gladius)
+end and duration from `roman.meta.exposure`. The [source-field table](headers.md#parent-fields-used-by-gladius)
 lists the supported names and fallback rules.
 
 Gladius preserves the original metadata and writes a UTC timing summary for the

@@ -1,6 +1,5 @@
 """Opt-in authenticated Roman downloads; normal pytest runs remain offline."""
 
-import hashlib
 import json
 import os
 import sys
@@ -11,11 +10,11 @@ import numpy as np
 import pytest
 from astropy.table import Table
 
-MAX_BYTES = 20 * 1024 * 1024
+MAX_BYTES = 1024 * 1024 * 1024
 
 
-def choose_product(products, *, require_calibrated=False):
-    """Choose one known-size small product; prefer a calibrated detector image."""
+def choose_product(products):
+    """Choose the smallest known-size calibrated detector image within the byte cap."""
     candidates = []
     for row in products:
         try:
@@ -25,13 +24,13 @@ def choose_product(products, *, require_calibrated=False):
         if not np.isfinite(size) or size != int(size) or not 0 < size <= MAX_BYTES:
             continue
         filename = str(row["filename"])
-        calibrated = filename.lower().endswith(("_cal.asdf", "_cal.fits"))
-        if require_calibrated and not calibrated:
+        calibrated = filename.lower().endswith("_cal.asdf")
+        if not calibrated:
             continue
-        candidates.append((not calibrated, int(size), filename, row))
+        candidates.append((int(size), filename, row))
     if not candidates:
-        raise ValueError("No eligible Roman product <=20 MiB; no download was attempted")
-    return min(candidates, key=lambda item: item[:3])[3]
+        raise ValueError("No eligible calibrated Roman image <=1 GiB; no download was attempted")
+    return min(candidates, key=lambda item: item[:2])[2]
 
 
 @contextmanager
@@ -58,7 +57,7 @@ def test_authenticated_roman_download(tmp_path, record_property):
 
     from gladius import RunConfig, Target, make_cutout
     from gladius.inputs import mast_queries, staged
-    from gladius.io import read_exposure, write_cutout
+    from gladius.io import read_cutout, read_exposure, sha256, write_cutout
 
     token = os.environ.get("MAST_API_TOKEN")
     assert token, "Live MAST tests require the MAST_API_TOKEN environment variable"
@@ -106,11 +105,8 @@ def test_authenticated_roman_download(tmp_path, record_property):
     assert len(nearby), "Generated target query did not recover any candidate observations"
     products = missions.get_unique_product_list(observations)
     assert len(products), "Sample datasets have no associated products"
-    product = choose_product(
-        products, require_calibrated=os.environ.get("GLADIUS_MAST_REQUIRE_CALIBRATED") == "1"
-    )
+    product = choose_product(products)
     advertised = int(product["size"])
-    calibrated = str(product["filename"]).lower().endswith(("_cal.asdf", "_cal.fits"))
     # staged() is the production download/cleanup path, not a separate HTTP client.
     with bounded_files(), staged(product, missions, tmp_path) as path:
         assert path.is_file()
@@ -120,23 +116,23 @@ def test_authenticated_roman_download(tmp_path, record_property):
         with path.open("rb") as stream:
             prefix = stream.read(512).lstrip().lower()
         assert not prefix.startswith((b"<!doctype html", b"<html")), "Received an HTML error page"
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        if calibrated:
-            exposure = read_exposure(path)
-            ny, nx = exposure.arrays["data"].shape
-            cutout = make_cutout(
-                exposure.arrays,
-                exposure.wcs,
-                Target(id="archive-smoke", x=(nx - 1) / 2, y=(ny - 1) / 2),
-                parent_metadata=exposure.parent_metadata,
-                ancillary_arrays=exposure.ancillary_arrays,
-            )
-            assert cutout.arrays["data"].shape == (150, 150)
-            assert cutout.parent_metadata
-            output = tmp_path / "cutout"
-            output.mkdir()
-            write_cutout(cutout, output, formats=("asdf",))
-            assert (output / "cutout.asdf").is_file()
+        digest = sha256(path)
+        exposure = read_exposure(path)
+        ny, nx = exposure.arrays["data"].shape
+        cutout = make_cutout(
+            exposure.arrays,
+            exposure.wcs,
+            Target(id="archive-smoke", x=(nx - 1) / 2, y=(ny - 1) / 2),
+            parent_metadata=exposure.parent_metadata,
+            ancillary_arrays=exposure.ancillary_arrays,
+        )
+        assert cutout.arrays["data"].shape == (150, 150)
+        assert cutout.parent_metadata
+        output = tmp_path / "cutout"
+        output.mkdir()
+        write_cutout(cutout, output, formats=("asdf",))
+        reopened = read_cutout(output / "cutout.asdf")
+        np.testing.assert_array_equal(reopened.arrays["data"], cutout.arrays["data"])
         downloaded_path = Path(path)
     assert not downloaded_path.exists(), "Temporary archive parent was not cleaned up"
 
@@ -144,7 +140,7 @@ def test_authenticated_roman_download(tmp_path, record_property):
     result = {
         "downloaded_bytes": actual,
         "sha256": digest,
-        "coverage": "calibrated-image-and-cutout" if calibrated else "associated-product-download",
+        "coverage": "calibrated-image-and-cutout",
         "generated_target_query": "passed",
         "temporary_cleanup": "passed",
     }
@@ -156,15 +152,14 @@ def test_authenticated_roman_download(tmp_path, record_property):
     print(json.dumps(result, indent=2))
 
 
-def test_small_product_selection_and_image_preference():
+def test_only_calibrated_images_within_size_limit_are_selected():
     products = Table(
         rows=[("preview.jpg", 100), ("parent_cal.asdf", 1000), ("huge_cal.asdf", MAX_BYTES + 1)],
         names=["filename", "size"],
     )
     assert choose_product(products)["filename"] == "parent_cal.asdf"
-    assert choose_product(products[:1])["filename"] == "preview.jpg"
     with pytest.raises(ValueError, match="No eligible"):
-        choose_product(products[:1], require_calibrated=True)
+        choose_product(products[:1])
 
 
 @pytest.mark.parametrize("size", [0, -1, MAX_BYTES + 1, float("nan"), float("inf"), "unknown"])

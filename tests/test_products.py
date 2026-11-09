@@ -6,7 +6,7 @@ from astropy.io import fits
 
 from gladius.config import Extraction, Target
 from gladius.core import make_cutout, pixel_to_world
-from gladius.io import read_cutout, read_exposure, write_cutout
+from gladius.io import read_cutout, write_cutout
 
 
 def test_all_metadata_and_arrays_survive_in_both_formats(exposure, tmp_path):
@@ -59,33 +59,6 @@ def test_original_parent_metadata_is_not_modified(exposure, tmp_path):
     write_cutout(c, tmp_path)
     assert (
         exposure.parent_metadata["roman"]["meta"]["wcsinfo"] == before["roman"]["meta"]["wcsinfo"]
-    )
-
-
-def test_fits_parent_duplicate_headers_and_extra_arrays(exposure, tmp_path):
-    header = exposure.wcs.to_fits_sip()
-    header["FILTER"], header["DETECTOR"], header["BUNIT"] = "F146", "WFI01", "DN/s"
-    header["TIMESYS"], header["DATE-OBS"] = "TAI", "2026-01-01T00:00:37"
-    header.add_history("first")
-    header.add_history("second")
-    path = tmp_path / "parent.fits"
-    fits.HDUList(
-        [
-            fits.PrimaryHDU(),
-            fits.ImageHDU(exposure.arrays["data"], header=header, name="SCI"),
-            fits.ImageHDU(exposure.arrays["err"], name="ERR"),
-            fits.ImageHDU(exposure.arrays["dq"], name="DQ"),
-            fits.ImageHDU(np.arange(5), name="REFERENCE"),
-        ]
-    ).writeto(path)
-    parent = read_exposure(path)
-    assert parent.summary["start_utc"] == "2026-01-01T00:00:00.000000"
-    histories = [
-        c[1] for c in parent.parent_metadata["fits_headers"][1]["cards"] if c[0] == "HISTORY"
-    ]
-    assert histories == ["first", "second"]
-    np.testing.assert_array_equal(
-        parent.parent_metadata["non_spatial_arrays"]["fits/4/REFERENCE"], np.arange(5)
     )
 
 

@@ -15,11 +15,6 @@ created by Gladius.
 
 | Input | Saved location | Contents |
 | --- | --- | --- |
-| FITS | `parent_metadata.fits_headers` | One record for every input HDU, including PRIMARY. |
-| FITS header record: `index` | Each item in `fits_headers` | Original zero-based HDU number. |
-| FITS header record: `name` | Each item in `fits_headers` | Original HDU name, such as `SCI`. |
-| FITS header record: `cards` | Each item in `fits_headers` | Ordered `[keyword, value, comment]` records. Repeated keywords, including COMMENT/HISTORY, are retained. Undefined FITS values are represented by `None`. |
-| FITS | `parent_metadata.non_spatial_arrays` | Extra arrays that do not share the SCI image's final two dimensions, keyed by `fits/<HDU index>/<HDU name>`. Their full contents are retained. |
 | Roman ASDF | `parent_metadata.roman` | Original input tree under `roman`, including `meta`. Other top-level input keys are also retained under `parent_metadata`. |
 | Generic ASDF without a `roman` root | `parent_metadata` | Original input tree at its existing paths. |
 
@@ -50,22 +45,17 @@ These fields supply the cutout's exposure summary. For Roman ASDF inputs, the
 paths below are relative to `roman.meta`. With a generic ASDF root, they are
 relative to `meta`.
 
-For FITS, Gladius starts with PRIMARY header values and then applies SCI header
-values, so SCI wins for repeated keywords. ERR units are read from ERR's own
-header. The complete original headers remain saved regardless of which values
-supply the summary.
-
-| Meaning | ASDF source | FITS source | Cutout summary field and treatment |
-| --- | --- | --- | --- |
-| Detector | `instrument.detector`, falling back to `detector` | `DETECTOR` | `detector`; stored as text. |
-| Filter | `instrument.optical_element`, falling back to `filter` | `FILTER` | `filter`; converted to uppercase. |
-| SCI units | `bunit_data`, falling back to `bunit`; the SCI array's attached unit is used if these are absent | `BUNIT` | `data_units`; absent units remain unset. |
-| ERR units | `bunit_err`, otherwise the SCI metadata unit; the ERR array's attached unit is used if no metadata unit is available | ERR `BUNIT`, otherwise SCI units | `err_units`. |
-| Start time | `exposure.start_time`, falling back to `exposure.observation_start_utc` | `DATE-BEG`, falling back to `DATE-OBS` | `start_utc`; converted to UTC. |
-| End time | `exposure.end_time`, falling back to `exposure.observation_end_utc` | `DATE-END` | `end_utc`; converted to UTC. |
-| Reported exposure duration | `exposure.exposure_time`, falling back to `exposure.exposure_time_s` | `EXPTIME` | `exposure_time_s`; seconds. A supplied unit is converted to seconds. The duration must be finite and nonnegative. |
-| Input time scale | An Astropy `Time` object's own scale; plain values are interpreted as UTC | `TIMESYS`, defaulting to UTC | Output summary times use UTC. Original values stay in parent metadata. |
-| Pixel-to-sky coordinate model | `meta.wcs`, falling back to root `wcs` | SCI WCS header keywords and associated FITS WCS information | Input model saved as `parent_wcs`; selected model adjusted for the cutout is `wcs`. |
+| Meaning | ASDF source | Cutout summary field and treatment |
+| --- | --- | --- |
+| Detector | `instrument.detector`, falling back to `detector` | `detector`; stored as text. |
+| Filter | `instrument.optical_element`, falling back to `filter` | `filter`; converted to uppercase. |
+| SCI units | `bunit_data`, falling back to `bunit`; the SCI array's attached unit is used if these are absent | `data_units`; absent units remain unset. |
+| ERR units | `bunit_err`, otherwise the SCI metadata unit; the ERR array's attached unit is used if no metadata unit is available | `err_units`. |
+| Start time | `exposure.start_time`, falling back to `exposure.observation_start_utc` | `start_utc`; converted to UTC. |
+| End time | `exposure.end_time`, falling back to `exposure.observation_end_utc` | `end_utc`; converted to UTC. |
+| Reported exposure duration | `exposure.exposure_time`, falling back to `exposure.exposure_time_s` | `exposure_time_s`; seconds. A supplied unit is converted to seconds. The duration must be finite and nonnegative. |
+| Input time scale | An Astropy `Time` object's own scale; plain values are interpreted as UTC | Output summary times use UTC. Original values stay in parent metadata. |
+| Pixel-to-sky coordinate model | `meta.wcs`, falling back to root `wcs` | Input model saved as `parent_wcs`; selected model adjusted for the cutout is `wcs`. |
 
 A fallback is used when the preferred key is absent. Gladius does not infer end
 time or exposure duration from other fields. End before start is an error.

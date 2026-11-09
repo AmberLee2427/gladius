@@ -202,8 +202,7 @@ gladius run config.yaml --targets targets.csv
 ```
 
 Set `inputs.directory`, `inputs.pattern` and `storage.output_directory` for your
-files. The default pattern is `*_cal.asdf`; change it to match FITS inputs when
-needed. Paths in YAML resolve beside the YAML file. The CLI's `--targets` path
+files. The default pattern is `*_cal.asdf`. Paths in YAML resolve beside the YAML file. The CLI's `--targets` path
 resolves from the shell's current directory.
 
 An image is opened once and all requested targets are processed before moving to

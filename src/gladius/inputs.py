@@ -238,7 +238,7 @@ def mast_test_configuration(base: Path) -> dict:
                     if not math.isfinite(size) or size <= 0 or size != int(size):
                         continue
                     name = str(product["filename"])
-                    if not name.lower().endswith(("_cal.asdf", "_cal.fits")):
+                    if not name.lower().endswith("_cal.asdf"):
                         continue
                     candidates.append((int(size), name, str(row["fileSetName"]), ra, dec))
                 except (ValueError, TypeError, KeyError):

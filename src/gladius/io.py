@@ -139,15 +139,13 @@ NOT_ROMAN_MESSAGE = (
 
 
 def read_exposure(path: str | Path) -> Exposure:
-    """Load one Roman Level 2 calibrated ASDF image (or Gladius's SCI/ERR/DQ FITS layout).
+    """Load one Roman Level 2 calibrated ASDF image.
 
     Roman ASDF extensions must be installed when required by input tags. Unknown
     ASDF converters raise rather than silently losing typed metadata.
     """
     path = Path(path)
     suffix = path.suffix.lower()
-    if suffix in (".fits", ".fit", ".fts"):
-        return _read_fits(path)
     if suffix != ".asdf":
         raise ValueError(NOT_ROMAN_MESSAGE.format(detail=f"{path.name} is not an ASDF file."))
     with warnings.catch_warnings():
@@ -180,80 +178,6 @@ def read_exposure(path: str | Path) -> Exposure:
                 if summary[label] is None and hasattr(node[key], "unit"):
                     summary[label] = str(node[key].unit)
             return Exposure(arrays, wcs, parent_metadata, ancillary, summary)
-
-
-def _read_fits(path):
-    with fits.open(path, memmap=False) as hdul:
-        missing = [label for label in ("SCI", "ERR", "DQ") if label not in hdul]
-        if missing:
-            raise ValueError(
-                NOT_ROMAN_MESSAGE.format(
-                    detail=f"{path.name} has no {'/'.join(missing)} extension."
-                )
-            )
-        for label in ("SCI", "ERR", "DQ"):
-            if sum(1 for hdu in hdul if hdu.name == label) > 1:
-                raise ValueError(
-                    f"FITS parent has several {label} extensions; Gladius reads exactly "
-                    "one SCI/ERR/DQ image set"
-                )
-        arrays = {
-            name: np.array(hdul[label].data, copy=True)
-            for name, label in (("data", "SCI"), ("err", "ERR"), ("dq", "DQ"))
-        }
-        header = hdul["SCI"].header
-        wcs = WCS(header, fobj=hdul)
-        if not wcs.has_celestial or wcs.pixel_n_dim != 2:
-            raise ValueError("FITS parent needs a 2D celestial WCS on SCI")
-        wcs.array_shape = arrays["data"].shape
-        ancillary, headers, other = {}, [], {}
-        for index, hdu in enumerate(hdul):
-            headers.append(
-                {
-                    "index": index,
-                    "name": hdu.name,
-                    "cards": [
-                        [
-                            c.keyword,
-                            None if isinstance(c.value, fits.card.Undefined) else c.value,
-                            c.comment,
-                        ]
-                        for c in hdu.header.cards
-                    ],
-                }
-            )
-            if hdu.data is not None and hdu.name not in ("SCI", "ERR", "DQ"):
-                key = f"fits/{index}/{hdu.name}"
-                if hdu.data.ndim >= 2 and hdu.data.shape[-2:] == arrays["data"].shape:
-                    ancillary[key] = hdu.data.copy()
-                else:
-                    other[key] = hdu.data.copy()
-        # Observation metadata is often on PRIMARY while the WCS is on SCI.
-        header = hdul[0].header.copy()
-        header.extend(hdul["SCI"].header, update=True)
-        meta = {
-            "instrument": {
-                "detector": header.get("DETECTOR", ""),
-                "optical_element": header.get("FILTER", ""),
-            },
-            "bunit_data": header.get("BUNIT"),
-            "bunit_err": hdul["ERR"].header.get("BUNIT"),
-            "exposure": {"exposure_time": header.get("EXPTIME")},
-        }
-        timesys = header.get("TIMESYS", "UTC").lower()
-        for label, keys in (("start_time", ("DATE-BEG", "DATE-OBS")), ("end_time", ("DATE-END",))):
-            value = next((header[k] for k in keys if k in header), None)
-            if value is not None:
-                if label == "start_time" and "T" not in str(value) and "TIME-OBS" in header:
-                    value = f"{value}T{header['TIME-OBS']}"
-                meta["exposure"][label] = Time(value, scale=timesys)
-        return Exposure(
-            arrays,
-            wcs,
-            {"fits_headers": headers, "non_spatial_arrays": other},
-            ancillary,
-            _summary(meta),
-        )
 
 
 def read_correction(path: Path):

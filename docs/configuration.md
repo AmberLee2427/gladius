@@ -217,8 +217,7 @@ directory. Duplicate and unknown YAML keys are errors.
 
 `inputs.mode: directory` reads `directory` using `pattern`, optionally recursively.
 Only matched parents are read. Generated output under that directory is excluded
-from input discovery. This mode does not contact MAST. FITS parents must provide
-SCI, ERR and integer DQ plus a 2D celestial SCI WCS. ASDF parents must provide
+from input discovery. This mode does not contact MAST. Parents must be Roman Level 2 ASDF files; FITS parents are not read. ASDF parents must provide
 `roman.data`, `roman.err`, `roman.dq`, `roman.meta.wcs` (or equivalent root keys).
 Roman schema converters are installed with Gladius (`roman_datamodels`). Missing converters
 produce explicit errors rather than stripping typed metadata silently.
@@ -509,21 +508,17 @@ A missing or rejected token fails the live test; normal unit tests remain offlin
 The test samples five Level 2 datasets, checks a target query generated from a
 real archive position, and downloads exactly one associated product through the
 package's production staging function. It accepts only products with a known,
-positive advertised size of at most **20 MiB** and enforces that limit on file
+positive advertised size of at most **1 GiB** and enforces that limit on file
 writes in the Linux worker. It checks the downloaded length and temporary-file
-cleanup. No suitable small product is a failure, not a skipped or successful test.
+cleanup. No suitable calibrated product is a failure, not a skipped or successful test.
 
-A calibrated detector image is preferred when one fits the cap. In that case the
-test also reads its science planes/metadata, extracts a cutout, and writes/reopens
-an ASDF cutout. Otherwise it tests a smaller associated product, such as a preview
-or ancillary file. The job summary and report explicitly distinguish
-`calibrated-image-and-cutout` from `associated-product-download`; the latter does
-not establish that full Roman detector images can be processed. The manual
-**Require a calibrated image** option turns absence of a small calibrated image
-into a failure, without increasing the cap.
+The product must be a calibrated detector image within the cap; none is a failure.
+The test reads its science planes/metadata, extracts a cutout, and writes/reopens
+an ASDF cutout using the real Roman WCS. The job also runs on same-repository pull
+requests (fork PRs cannot read the token).
 
 Only test reports are uploaded as Actions artifacts, never the downloaded Roman
-data or cutouts. The workflow does not run on pull requests. Its token is supplied
+data or cutouts. Its token is supplied
 only to the live test step, and Astroquery is told not to save it to a credential
 store. The job has a ten-minute timeout.
 
@@ -604,7 +599,7 @@ full-parent download size; the parent may be much larger than the cutout. Click
 Make to download it. An inaccessible archive, timeout or empty sample produces an
 error, never fabricated example data. Local archive access uses the launching
 environment’s MAST_API_TOKEN; a repository secret is available only to Actions.
-This one-image GUI test is distinct from CI’s 20 MiB associated-product smoke test.
+This one-image GUI test is distinct from CI’s live MAST download test.
 `inputs.product_filename` optionally restricts products to one exact filename.
 
 Manual targets support ICRS, Galactic and barycentric true ecliptic coordinates

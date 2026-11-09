@@ -256,11 +256,10 @@ SCI/ERR/DQ arrays, a WCS and a `Target`; see the Python API documentation.
 ## Live archive tests in GitHub Actions
 
 Add `MAST_API_TOKEN` under **Settings → Secrets and variables → Actions**.
-The **Live Roman MAST download** workflow runs on default-branch code changes,
-or manually from Actions. It downloads one product capped at 20 MiB and reports
-whether it tested a calibrated image/cutout or a small associated product.
-The manual calibrated-image option requires full extraction coverage within the
-same cap. Downloaded science data are not uploaded as artifacts. Normal tests
+The **Live Roman MAST download** workflow runs on code changes in pull
+requests and on `main`, or manually from Actions. It downloads one calibrated
+image (capped at 1 GiB) and extracts a cutout using its real WCS.
+Downloaded science data are not uploaded as artifacts. Normal tests
 remain offline. See the configuration guide for the exact coverage and limits.
 
 ## Publishing releases
