@@ -83,3 +83,7 @@ Bucket, linked in the [STScI cutout tutorial](https://github.com/spacetelescope/
 The [simulation tutorial](https://github.com/spacetelescope/roman_notebooks/blob/b46bc6c3d6ab8d4e63419bd51843ca8acfdaa1fb/notebooks/romanisim/romanisim.ipynb)
 describes its Gaia input catalog and the exclusion of stars brighter than G=16.5.
 These tests need no MAST secret.
+
+The same fidelity and Gaia-reference checks also passed locally on an authenticated
+Roman commissioning-category (`COM`) imaging product. Commissioning checks are
+local only and publish no data, identifiers, positions, or measurements.

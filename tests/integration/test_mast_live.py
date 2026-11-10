@@ -268,7 +268,8 @@ def test_embargo_boundary_discards_worker_output(tmp_path, monkeypatch):
     assert calls[0]["stderr"] == subprocess.DEVNULL
 
 
-def test_gaia_reference_with_synthetic_catalog(demo, tmp_path, monkeypatch):
+@pytest.mark.parametrize("search_radius_deg", [None, 0.005])
+def test_gaia_reference_with_synthetic_catalog(demo, tmp_path, monkeypatch, search_radius_deg):
     """Exercise catalog selection, epoch propagation, CLI, and image centroid offline."""
     from types import ModuleType, SimpleNamespace
 
@@ -283,5 +284,9 @@ def test_gaia_reference_with_synthetic_catalog(demo, tmp_path, monkeypatch):
         launch_job_async=lambda *args, **kwargs: SimpleNamespace(get_results=lambda: catalog)
     )
     monkeypatch.setitem(sys.modules, "astroquery.gaia", module)
-    result = check_gaia_reference(demo.parent / "images" / "demo0_cal.asdf", tmp_path)
+    result = check_gaia_reference(
+        demo.parent / "images" / "demo0_cal.asdf",
+        tmp_path,
+        search_radius_deg=search_radius_deg,
+    )
     assert result["gaia_centroid_offset_arcsec"] < 0.03

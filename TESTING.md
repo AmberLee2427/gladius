@@ -83,3 +83,24 @@ Every `tests.yml` job uploads `coverage.xml` to [Codecov](https://app.codecov.io
 using the repository secret **`CODECOV_TOKEN`**. Thresholds live in `codecov.yml`
 (no project-wide drop beyond 1%, 80% on new lines). Locally:
 `python -m pytest --cov=gladius --cov-report=term-missing`.
+
+## Local commissioning checks
+
+With `MAST_API_TOKEN` already set in your local environment, run:
+
+```sh
+GLADIUS_LOCAL_COMMISSIONING=1 python -m pytest tests/integration/test_commissioning_local.py -q
+```
+
+This test explicitly selects Roman Level 2 imaging datasets with
+`program_category=COM`, samples up to five datasets, and downloads one eligible
+calibrated parent. It checks exact SCI/ERR/DQ values and padding, parent/cutout
+WCS agreement, metadata preservation, and an isolated epoch-propagated Gaia DR3
+reference star. The Gaia search uses a small central field to avoid truncation
+in dense regions. Accuracy and detection thresholds match the public simulation
+checks. This is sample-based validation, not a claim about all commissioning data.
+
+The test is disabled in GitHub Actions, including when explicitly enabled by an
+environment variable. Its worker discards stdout/stderr and exposes only pass/fail.
+No commissioning images, identifiers, coordinates, measurements, or diagnostic
+artifacts are published. Temporary downloaded parents and derived cutouts are removed after the check.

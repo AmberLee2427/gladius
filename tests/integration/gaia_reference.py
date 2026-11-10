@@ -17,7 +17,7 @@ from astropy.time import Time
 SCRIPT = Path(__file__).resolve().parents[2] / "standalone" / "roman_cutouts.py"
 
 
-def check_gaia_reference(parent, work):
+def check_gaia_reference(parent, work, *, search_radius_deg=None):
     """Check one predetermined isolated Gaia star, without fitting a new WCS."""
     from astroquery.gaia import Gaia
 
@@ -38,6 +38,12 @@ def check_gaia_reference(parent, work):
             unit="deg",
         )
         radius = float(np.max(center.separation(corners).deg)) + 0.01
+
+        # A small central region keeps dense commissioning fields below the query cap.
+        if search_radius_deg is not None:
+            if not np.isfinite(search_radius_deg) or search_radius_deg <= 0:
+                raise ValueError("search_radius_deg must be finite and positive")
+            radius = min(radius, search_radius_deg)
 
         # Query a bounded field, including fainter neighbors for the isolation check.
         # Fail on truncation rather than declaring a star isolated from an incomplete list.
@@ -65,6 +71,9 @@ def check_gaia_reference(parent, work):
         # for a detection. A missing/misplaced image star must fail this check.
         chosen = None
         for i in range(len(stars)):
+            # Keep the isolation aperture inside the queried sky region.
+            if center.separation(stars[i]).deg + 5 / 3600 >= radius:
+                continue
             # The public STScI tutorial simulation excludes Gaia G <= 16.5.
             if not (16.5 < catalog["phot_g_mean_mag"][i] <= 18):
                 continue
