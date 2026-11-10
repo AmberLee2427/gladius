@@ -115,11 +115,38 @@ def pixel_to_world(wcs, x, y):
 def world_to_pixel(wcs, ra, dec):
     if isinstance(wcs, WCS):
         return wcs.all_world2pix(ra, dec, 0)
-    # Supplied polynomial inverses can be approximate. Solve against the forward
-    # transform so sky-selected targets meet the same precision as the WCS check.
-    return wcs.numerical_inverse(
-        ra, dec, with_bounding_box=False, tolerance=1e-6, maxiter=100, quiet=False
+
+    # Start with the supplied inverse, then refine it against the forward model.
+    # Some parent inverses are approximate; GWCS's separate global numerical
+    # solver can also fail for transforms whose supplied inverse is well behaved.
+    x, y = (
+        np.asarray(value, dtype=float) for value in wcs.invert(ra, dec, with_bounding_box=False)
     )
+    ra, dec = np.broadcast_arrays(ra, dec)
+
+    def longitude_difference(left, right):
+        return (left - right + 180) % 360 - 180
+
+    # A local Newton step works in pixel units and handles RA wrapping at zero.
+    for _ in range(20):
+        lon, lat = wcs(x, y, with_bounding_box=False)
+        lon_x, lat_x = wcs(x + 0.5, y, with_bounding_box=False)
+        lon_y, lat_y = wcs(x, y + 0.5, with_bounding_box=False)
+        a = longitude_difference(lon_x, lon) / 0.5
+        b = longitude_difference(lon_y, lon) / 0.5
+        c, d = (lat_x - lat) / 0.5, (lat_y - lat) / 0.5
+        determinant = a * d - b * c
+        with np.errstate(divide="ignore", invalid="ignore"):
+            dr, dd = longitude_difference(ra, lon), dec - lat
+            dx = (d * dr - b * dd) / determinant
+            dy = (a * dd - c * dr) / determinant
+        valid = np.isfinite(x) & np.isfinite(y)
+        if np.any(valid & (~np.isfinite(dx) | ~np.isfinite(dy))):
+            raise ValueError("WCS inverse has a singular or invalid local transform")
+        x, y = x + dx, y + dy
+        if np.all(~valid | (np.hypot(dx, dy) < 1e-6)):
+            return x, y
+    raise ValueError("WCS inverse refinement did not converge to 1e-6 pixels")
 
 
 def translate_wcs(wcs, mapping):

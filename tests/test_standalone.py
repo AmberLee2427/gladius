@@ -132,3 +132,34 @@ def test_script_mast_download_and_cleanup(demo, tmp_path, monkeypatch):
     assert downloaded and all(not path.exists() for path in downloaded)
     manifest = (tmp_path / "downloaded-cutouts" / "manifest.json").read_text()
     assert "test-token" not in manifest
+
+
+@pytest.mark.parametrize("x,y", [(0.1, 0.3), (np.array([0.01, 0.1]), np.array([0.2, 0.3]))])
+def test_inverse_refines_supplied_solution_across_ra_wrap(x, y):
+    class ApproximateInverse:
+        def __call__(self, x, y, **kwargs):
+            return (359.95 + x) % 360, 2 * y
+
+        def invert(self, ra, dec, **kwargs):
+            return (ra - 359.95) % 360 + 0.02, dec / 2 - 0.01
+
+        def numerical_inverse(self, *args, **kwargs):
+            raise AssertionError("This global solver does not support the fixture transform")
+
+    wcs = ApproximateInverse()
+    sky = wcs(x, y)
+    actual = script.world_to_pixel(wcs, *sky)
+    np.testing.assert_allclose(actual[0], x, atol=1e-6, rtol=0)
+    np.testing.assert_allclose(actual[1], y, atol=1e-6, rtol=0)
+
+
+def test_inverse_rejects_singular_transform():
+    class SingularInverse:
+        def __call__(self, x, y, **kwargs):
+            return np.zeros_like(x), np.zeros_like(y)
+
+        def invert(self, ra, dec, **kwargs):
+            return 1.0, 1.0
+
+    with pytest.raises(ValueError, match="singular"):
+        script.world_to_pixel(SingularInverse(), 1.0, 2.0)
