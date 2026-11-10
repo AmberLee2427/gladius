@@ -108,3 +108,21 @@ def test_registered_kernel_matches_cli_interpreter(tmp_path, monkeypatch):
     assert calls[0][:4] == [module.sys.executable, "-m", "ipykernel", "install"]
     name = calls[0][calls[0].index("--name") + 1]
     assert json.loads(path.read_text())["metadata"]["kernelspec"]["name"] == name
+
+
+def test_tutorial_workflows_differ_only_in_gui_connection():
+    root = Path(__file__).resolve().parents[1] / "notebooks"
+    local = json.loads((root / "local_cutouts/local_cutouts.ipynb").read_text())
+    nexus = json.loads((root / "nexus_cutouts/nexus_cutouts.ipynb").read_text())
+    local_code = ["".join(c["source"]) for c in local["cells"] if c["cell_type"] == "code"]
+    nexus_code = ["".join(c["source"]) for c in nexus["cells"] if c["cell_type"] == "code"]
+    assert len(local_code) == len(nexus_code)
+    for left, right in zip(local_code, nexus_code, strict=True):
+        left = left.replace(
+            "\n# The scheme, hostname, and port in your JupyterLab address, without its path.\n"
+            'NOTEBOOK_ORIGIN = "http://localhost:8888"\n',
+            "",
+        )
+        left = left.replace("iframe_origin=NOTEBOOK_ORIGIN", 'nexus=True, iframe_origin="self"')
+        left = left.replace('gui_server.url + "/"', "gui_server.public_url")
+        assert left == right

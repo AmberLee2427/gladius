@@ -41,7 +41,7 @@ This installs your checkout, which may contain changes newer than the PyPI relea
 
 ## Interactive tutorial notebooks
 
-The tutorials let you explore Gladius in an editable notebook. The local tutorial uses synthetic images and needs no token. The following commands install Gladius, copy that tutorial into your current directory, and open it:
+The tutorials let you explore Gladius in an editable notebook. Both tutorials use MAST data and require an explicit credential-file path and an accessible dataset. The following commands install Gladius, copy the local tutorial into your current directory, and open it:
 
 ```sh
 python -m pip install roman-gladius
@@ -58,7 +58,7 @@ Both commands write an editable notebook into the current directory. When openin
 
 The local command starts JupyterLab. The Nexus command finds the file root of the running server, prints a link to the notebook, and requests that it open in the browser. If the remote terminal cannot open a tab automatically, you can open the printed link. If Gladius cannot determine the server root, you can open the copied file in JupyterLab's file browser. The `--no-open` option copies the notebook without opening anything.
 
-The local tutorial uses synthetic images and needs no token. The Nexus tutorial uses real MAST data and requires an explicit credential-file path before it queries the archive. Both demonstrate an embedded GUI and show how to stop it. Copying or opening a notebook does not execute its cells, query MAST, or download images. The tutorials remain separate notebooks. Read the Docs does not run them or display them within its pages.
+Both demonstrate an embedded GUI and show how to stop it. Copying or opening a notebook does not execute its cells, query MAST, or download images. The tutorials remain separate notebooks. Read the Docs does not run them or display them within its pages.
 
 ## Using the GUI locally
 

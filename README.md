@@ -53,8 +53,9 @@ packages in [lite-requirements.txt](lite-requirements.txt).
 The tutorials open a notebook with the Gladius interface inside it. On Roman
 Research Nexus, `gladius --nexus-tutorial` opens the notebook from a JupyterLab
 terminal. On your own machine, `gladius --tutorial` starts JupyterLab and opens
-the local notebook. The Nexus tutorial uses MAST data and requires credentials;
-the local tutorial uses synthetic images and needs no token.
+the local notebook. Both tutorials use the same MAST workflow and require a
+credential file and a dataset you can access. The offline `gladius demo` example
+below needs no credentials.
 
 The [quickstart](docs/quickstart.md) also covers installation from source,
 interactive notebooks, and running the interface on Roman Research Nexus.
@@ -182,7 +183,7 @@ manifest_path = run(config)
 ```
 
 The [Python API reference](docs/api.rst) describes the available functions.
-`gladius --tutorial` copies and opens the local synthetic notebook;
+`gladius --tutorial` copies and opens the local MAST notebook;
 `gladius --nexus-tutorial` opens or links the MAST notebook on Nexus.
 The [notebook guide](notebooks/README.md) explains their requirements.
 

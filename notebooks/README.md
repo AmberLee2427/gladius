@@ -1,13 +1,13 @@
 # Practical Gladius tutorials
 
-- [Local practice](local_cutouts/local_cutouts.ipynb): five noisy synthetic parent
-  images, two targets, a deliberately elongated star and edge padding. Build and
-  inspect the configuration, every cutout and quality decision, then re-screen
-  and add display products without recutting.
-- [Nexus and MAST](nexus_cutouts/nexus_cutouts.ipynb): choose one exact accessible
-  `fileSetName`, inspect the bounded queries and advertised image size before
-  download, retain the parent for context, compare a finding chart, and review
-  all results. Real data only; the notebook has no synthetic fallback.
+The [local notebook](local_cutouts/local_cutouts.ipynb) and
+[Nexus notebook](nexus_cutouts/nexus_cutouts.ipynb) teach the same MAST workflow.
+Both require an explicit credential-file path and one accessible Roman
+`fileSetName`. They inspect the query and advertised image size before downloading,
+retain the original image for context, and review cutouts and quality decisions.
+Only their embedded UI connection differs: localhost for a local notebook and the
+authenticated Jupyter proxy on Nexus. `gladius demo` provides a separate offline
+example with synthetic images.
 
 Install into your own Python environment, from PyPI or from a checkout:
 
