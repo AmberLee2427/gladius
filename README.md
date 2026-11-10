@@ -50,6 +50,12 @@ The default installation includes JupyterLab for the tutorials. A smaller
 installation without the notebook packages uses `--no-deps` together with all
 packages in [lite-requirements.txt](lite-requirements.txt).
 
+The tutorials open a notebook with the Gladius interface inside it. On Roman
+Research Nexus, `gladius --nexus-tutorial` opens the notebook from a JupyterLab
+terminal. On your own machine, `gladius --tutorial` starts JupyterLab and opens
+the local notebook. The Nexus tutorial uses MAST data and requires credentials;
+the local tutorial uses synthetic images and needs no token.
+
 The [quickstart](docs/quickstart.md) also covers installation from source,
 interactive notebooks, and running the interface on Roman Research Nexus.
 
