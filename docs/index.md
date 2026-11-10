@@ -41,6 +41,8 @@ See [Outputs](products.md) for what each file contains.
 | Interface | Start with | Useful for |
 | --- | --- | --- |
 | Python | [API reference](api.rst) | Inspecting results and metadata in the same session |
+| Jupyter Notebooks | `gladius --tutorial` | Opening the local tutorial with the Gladius UI and Python examples |
+| Roman Research Nexus | `gladius --nexus-tutorial` | Opening the tutorial and its Gladius UI on Nexus |
 | Local GUI | `gladius gui --workspace .` | Building YAML and importing target CSVs without writing Python |
 | CLI | `gladius run config.yaml --targets targets.csv` | Repeating saved settings or running a batch |
 

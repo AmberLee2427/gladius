@@ -215,7 +215,11 @@ publication. The release workflow requires the `PYPI_API_TOKEN` Actions secret.
 
 Gladius uses the BSD-3-Clause license. [NOTICE.md](NOTICE.md) describes attribution
 and license scope, and [TEMPLATE.json](TEMPLATE.json) records the STScI
-Cookiecutter scaffold. The external Gaia solver is not part of the package.
+Cookiecutter scaffold.
+
+Gladius normally uses the coordinate model from the original image. It can also
+read a corrected WCS from a compatible ASDF file (for example, an output from
+Maxime’s Gaia-solving script). Gladius does not generate that correction itself.
 
 The repository also contains [contribution guidance](CONTRIBUTING.md), a
 [code of conduct](CODE_OF_CONDUCT.md), an [AI disclosure](AI_POLICY.md), and
