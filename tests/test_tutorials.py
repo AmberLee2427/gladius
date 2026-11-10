@@ -183,5 +183,5 @@ def test_gui_opens_before_archive_setup_without_config(tmp_path, monkeypatch):
             if cell["id"] == "nexus-gui-start":
                 break
         assert "gui_server" in namespace
-        assert "ENV_FILE" not in namespace
+        assert namespace["ENV_FILE"] is None
         assert calls[-1]["initial_config"] is None
