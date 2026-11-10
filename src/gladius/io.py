@@ -10,10 +10,13 @@ from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import asdf
 import numpy as np
 from asdf.exceptions import AsdfConversionWarning
+from asdf.reference import Reference
+from asdf.tags.core.external_reference import ExternalArrayReference
 from asdf.tags.core.ndarray import NDArrayType
 from astropy.io import fits
 from astropy.time import Time
@@ -32,6 +35,79 @@ class Exposure:
     parent_metadata: dict
     ancillary_arrays: dict
     summary: dict
+
+
+def _reject_external_asdf_references(tree):
+    """Reject ASDF nodes that could load arrays or documents from another URI."""
+    pending = [tree]
+    visited = set()
+    while pending:
+        node = pending.pop()
+        if isinstance(node, NDArrayType) and isinstance(node._source, str):
+            raise ValueError("External ASDF array sources and references are not supported")
+        if isinstance(node, ExternalArrayReference):
+            raise ValueError("External ASDF array sources and references are not supported")
+        if isinstance(node, Reference):
+            raise ValueError("External ASDF array sources and references are not supported")
+        if isinstance(node, Mapping):
+            identity = id(node)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            if "$ref" in node:
+                reference = node["$ref"]
+                if not isinstance(reference, str):
+                    raise ValueError("Invalid ASDF reference")
+                parsed = urlsplit(reference)
+                if parsed.scheme or parsed.netloc or parsed.path or parsed.query:
+                    raise ValueError("External ASDF array sources and references are not supported")
+            pending.extend(node.values())
+        elif isinstance(node, (tuple, list)):
+            identity = id(node)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            pending.extend(node)
+
+
+def _materialize_asdf_arrays(tree):
+    """Load lazy internal arrays while their ASDF file is still open."""
+    pending = [tree]
+    visited = set()
+    while pending:
+        node = pending.pop()
+        if isinstance(node, NDArrayType):
+            np.asarray(node)
+        elif isinstance(node, Mapping):
+            identity = id(node)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            pending.extend(node.values())
+        elif isinstance(node, (tuple, list)):
+            identity = id(node)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            pending.extend(node)
+
+
+def _fits_restore_dtype(value, label):
+    """Accept only the bounded scalar dtypes that this package writes to FITS."""
+    if not isinstance(value, str) or len(value) > 32:
+        raise ValueError(f"Invalid FITS dtype metadata for {label}")
+    try:
+        dtype = np.dtype(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid FITS dtype metadata for {label}") from exc
+    if (
+        dtype.fields is not None
+        or dtype.subdtype is not None
+        or dtype.kind not in "biuf"
+        or dtype.itemsize > 8
+    ):
+        raise ValueError(f"Unsupported FITS dtype metadata for {label}: {value!r}")
+    return dtype
 
 
 def sha256(path: Path) -> str:
@@ -151,6 +227,7 @@ def read_exposure(path: str | Path) -> Exposure:
     with warnings.catch_warnings():
         warnings.simplefilter("error", AsdfConversionWarning)
         with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=True) as af:
+            _reject_external_asdf_references(af.tree)
             if af.tree.get("schema") == SCHEMA:
                 raise ValueError(
                     f"{path.name} is a Gladius cutout, not a parent image. "
@@ -184,7 +261,8 @@ def read_correction(path: Path):
     """Read a separately supplied corrected WCS and its non-spatial provenance."""
     with warnings.catch_warnings():
         warnings.simplefilter("error", AsdfConversionWarning)
-        with asdf.open(path, memmap=False, strict_extension_check=True) as af:
+        with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=True) as af:
+            _reject_external_asdf_references(af.tree)
             node = af.tree.get("roman", af.tree)
             wcs = node.get("wcs", node.get("meta", {}).get("wcs"))
             if wcs is None:
@@ -361,22 +439,44 @@ def read_cutout(path: str | Path) -> Cutout:
     """Read this package's ASDF or FITS derived-cutout format."""
     path = Path(path)
     if path.suffix == ".asdf":
-        with asdf.open(path, lazy_load=False, memmap=False) as af:
+        with asdf.open(path, lazy_load=True, memmap=False) as af:
+            _reject_external_asdf_references(af.tree)
+            _materialize_asdf_arrays(af.tree)
             tree = deepcopy(dict(af.tree))
         arrays = {key: tree[key] for key in ("data", "err", "dq")}
         ancillary = tree.get("ancillary_arrays", {})
     else:
         with fits.open(path, memmap=False, checksum=True) as hdul:
             raw = hdul["ASDFMETA"].data["ASDF_METADATA"][0].tobytes()
-            with asdf.open(BytesIO(raw), lazy_load=False, memmap=False) as af:
+            with asdf.open(BytesIO(raw), lazy_load=True, memmap=False) as af:
+                _reject_external_asdf_references(af.tree)
+                _materialize_asdf_arrays(af.tree)
                 tree = deepcopy(dict(af.tree))
+            plane_dtype_metadata = tree.get("plane_dtypes")
+            if not isinstance(plane_dtype_metadata, Mapping):
+                raise ValueError("Invalid FITS plane dtype metadata")
+            plane_dtypes = {
+                key: _fits_restore_dtype(value, f"plane {key}")
+                for key, value in plane_dtype_metadata.items()
+            }
+            ancillary_extensions = tree.get("ancillary_extensions", {})
+            if not isinstance(ancillary_extensions, Mapping):
+                raise ValueError("Invalid FITS ancillary dtype metadata")
+            ancillary_specs = {}
+            for key, value in ancillary_extensions.items():
+                if not isinstance(value, Mapping) or "extension" not in value:
+                    raise ValueError("Invalid FITS ancillary dtype metadata")
+                ancillary_specs[key] = (
+                    value["extension"],
+                    _fits_restore_dtype(value.get("dtype"), f"ancillary array {key}"),
+                )
             arrays = {
-                key: hdul[name].data.astype(tree["plane_dtypes"][key])
+                key: hdul[name].data.astype(plane_dtypes[key])
                 for key, name in (("data", "SCI"), ("err", "ERR"), ("dq", "DQ"))
             }
             ancillary = {
-                key: hdul[value["extension"]].data.astype(value["dtype"])
-                for key, value in tree.get("ancillary_extensions", {}).items()
+                key: hdul[extension].data.astype(dtype)
+                for key, (extension, dtype) in ancillary_specs.items()
             }
     if tree.get("schema") != SCHEMA:
         raise ValueError("Unrecognized derived cutout schema")

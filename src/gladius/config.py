@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
+from string import Formatter
 from typing import Annotated, Any, Literal
 
 import yaml
@@ -12,6 +14,46 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 PositiveInt = Annotated[int, Field(strict=True, gt=0)]
 FiniteFloat = Annotated[float, Field(allow_inf_nan=False)]
+MAX_MAST_CRITERIA_NODES = 10_000
+MAX_MAST_CRITERIA_DEPTH = 64
+
+
+def _check_mast_criteria_size(value):
+    """Bound the expanded tree before Pydantic or JSON serialization walks it."""
+    active = set()
+    count = 0
+
+    def visit(node, depth):
+        nonlocal count
+        count += 1
+        if count > MAX_MAST_CRITERIA_NODES:
+            raise ValueError(f"mast_criteria exceeds {MAX_MAST_CRITERIA_NODES} expanded values")
+        if depth > MAX_MAST_CRITERIA_DEPTH:
+            raise ValueError(f"mast_criteria exceeds {MAX_MAST_CRITERIA_DEPTH} nested levels")
+
+        if isinstance(node, Mapping):
+            identity = id(node)
+            if identity in active:
+                raise ValueError("mast_criteria cannot contain recursive values")
+            active.add(identity)
+            try:
+                for key, item in node.items():
+                    visit(key, depth + 1)
+                    visit(item, depth + 1)
+            finally:
+                active.remove(identity)
+        elif isinstance(node, (list, tuple)):
+            identity = id(node)
+            if identity in active:
+                raise ValueError("mast_criteria cannot contain recursive values")
+            active.add(identity)
+            try:
+                for item in node:
+                    visit(item, depth + 1)
+            finally:
+                active.remove(identity)
+
+    visit(value, 0)
 
 
 class Options(BaseModel):
@@ -53,6 +95,13 @@ class Inputs(Options):
     product_suffix: str = "_cal"
     product_filename: str | None = None
     query_limit: PositiveInt = 50000
+
+    @field_validator("mast_criteria", mode="before")
+    @classmethod
+    def bounded_mast_criteria(cls, value):
+        if isinstance(value, Mapping):
+            _check_mast_criteria_size(value)
+        return value
 
     @model_validator(mode="after")
     def source(self):
@@ -109,7 +158,7 @@ class Extraction(Options):
 class Astrometry(Options):
     mode: Literal["use", "validate", "corrected"] = "validate"
     corrected_directory: Path | None = Path("gaia_wcs")
-    corrected_pattern: str = "{stem}_gaiawcs.asdf"
+    corrected_pattern: str = Field(default="{stem}_gaiawcs.asdf", max_length=255)
     roundtrip_tolerance_pixels: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 0.001
     fits_tolerance_pixels: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 0.01
 
@@ -117,12 +166,17 @@ class Astrometry(Options):
     def correction(self):
         if self.mode == "corrected" and self.corrected_directory is None:
             raise ValueError("corrected mode requires corrected_directory")
-        # Do not permit a filename pattern to escape the correction directory.
+        # Only literal text and plain placeholders can appear in the filename.
         try:
+            for _, field, format_spec, conversion in Formatter().parse(self.corrected_pattern):
+                if field is not None and (
+                    field not in {"stem", "filename"} or format_spec or conversion
+                ):
+                    raise ValueError
             name = self.corrected_pattern.format(stem="example", filename="example.asdf")
         except (KeyError, ValueError) as exc:
             raise ValueError("corrected_pattern supports only {stem} and {filename}") from exc
-        if Path(name).name != name:
+        if len(name) > 255 or Path(name).name != name:
             raise ValueError("corrected_pattern must produce a basename")
         return self
 
@@ -221,6 +275,8 @@ class RunConfig(Options):
         return self
 
     def resolved(self, base: Path) -> RunConfig:
+        # This also protects callers that mutate a nested Any value after validation.
+        _check_mast_criteria_size(self.inputs.mast_criteria)
         data = self.model_dump(mode="json")
         for section, key in (
             ("inputs", "directory"),

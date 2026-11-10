@@ -24,11 +24,14 @@ from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import asdf
 import numpy as np
 import yaml
 from asdf.exceptions import AsdfConversionWarning
+from asdf.reference import Reference
+from asdf.tags.core.external_reference import ExternalArrayReference
 from asdf.tags.core.ndarray import NDArrayType
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
@@ -38,6 +41,37 @@ from astropy.wcs import WCS, Sip
 
 DO_NOT_USE = 1
 FLOOR_TOLERANCE = 1e-6
+
+
+def reject_external_asdf_references(tree):
+    """Reject ASDF nodes that could load arrays or documents from another URI."""
+    pending = [tree]
+    visited = set()
+    while pending:
+        node = pending.pop()
+        if isinstance(node, NDArrayType) and isinstance(node._source, str):
+            raise ValueError("External ASDF array sources and references are not supported")
+        if isinstance(node, (ExternalArrayReference, Reference)):
+            raise ValueError("External ASDF array sources and references are not supported")
+        if isinstance(node, Mapping):
+            identity = id(node)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            if "$ref" in node:
+                reference = node["$ref"]
+                if not isinstance(reference, str):
+                    raise ValueError("Invalid ASDF reference")
+                parsed = urlsplit(reference)
+                if parsed.scheme or parsed.netloc or parsed.path or parsed.query:
+                    raise ValueError("External ASDF array sources and references are not supported")
+            pending.extend(node.values())
+        elif isinstance(node, (tuple, list)):
+            identity = id(node)
+            if identity in visited:
+                continue
+            visited.add(identity)
+            pending.extend(node)
 
 
 def geometry(x: float, y: float, shape: tuple[int, int], size: int) -> dict[str, Any]:
@@ -450,6 +484,7 @@ def extract_parent(path, target_list, config, output, index, report):
     with warnings.catch_warnings():
         warnings.simplefilter("error", AsdfConversionWarning)
         with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=True) as af:
+            reject_external_asdf_references(af.tree)
             if path.suffix.lower() != ".asdf" or "schema" in af.tree:
                 raise ValueError("Use original Roman calibrated ASDF parents")
 

@@ -32,8 +32,7 @@ with these fields:
 
 The cropped primary arrays are `data`, `err` and `dq`; other cropped arrays are
 in `ancillary_arrays`. Keeping these descriptions does not retain a second full
-detector image in each cutout. Use `storage.retain_full_images` to retain full
-input images separately.
+detector image in each cutout. The setting `storage.retain_full_images` retains full input images separately.
 
 For example, an input Roman footprint at `roman.meta.wcsinfo.s_region` stays at
 `parent_metadata.roman.meta.wcsinfo.s_region`. It still describes the original
@@ -172,7 +171,7 @@ image extensions. ASDF can also add its own library/version/history records.
 | `mapping` | Pixel dimensions, offsets, copied bounds and padding information; see below. |
 | `wcs` | Selected coordinate model adjusted to the cutout. |
 | `parent_wcs` | Original input coordinate model, including when a corrected model was selected. |
-| `parent_metadata` | Preserved input tree or FITS header records described above. |
+| `parent_metadata` | Preserved input metadata tree described above. |
 | `cutout_metadata` | New dimensions, footprints and exposure summary describing this cutout. |
 | `provenance` | Input identity and processing record, including target, configuration and quality results. |
 | `ancillary_extensions` | FITS metadata only: maps each original ancillary-array path to its output FITS `extension` name and original `dtype`. |
@@ -226,9 +225,9 @@ Coordinates in this table are zero-based.
 
 ### Processing record
 
-The following are written by the normal pipeline. A Python caller using
-`make_cutout` directly can supply its own provenance; fields it does not supply
-will not all be present.
+The normal pipeline writes the following processing records. A Python caller using
+`make_cutout` directly can supply its own provenance, so fields the caller does
+not supply may be absent.
 
 | `provenance` field | Meaning |
 | --- | --- |
@@ -271,17 +270,18 @@ will not all be present.
 | `reason` | `disabled`, `accepted`, `insufficient_tile`, `insufficient_signal`, `degenerate_acf`, or `autocorrelation_elongation`. |
 | `axis_ratio` | Measured long/short autocorrelation axis ratio, or `None` when unavailable/disabled. |
 
-## Inspect the original header records in Python
+(inspect-the-original-header-records-in-python)=
+## Inspecting the original metadata in Python
 
 ```python
 from gladius.io import read_cutout
 
 cutout = read_cutout("cutout.fits")  # Also accepts cutout.asdf.
-for header in cutout.parent_metadata.get("fits_headers", []):
-    print(header["index"], header["name"])
-    for keyword, value, comment in header["cards"]:
-        print(keyword, value, comment)
+roman = cutout.parent_metadata.get("roman", cutout.parent_metadata)
+original_metadata = roman.get("meta", {})
+print(original_metadata.get("instrument", {}))
 ```
 
-These are the input headers retained by Gladius. To inspect the new ordinary FITS
-header, use `astropy.io.fits` and read the output `SCI`, `ERR` or `DQ` header.
+The example prints the original image’s instrument metadata. To inspect a new ordinary
+FITS header, you can use `astropy.io.fits` to read the output `SCI`, `ERR` or
+`DQ` header.

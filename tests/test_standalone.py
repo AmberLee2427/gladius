@@ -76,6 +76,46 @@ def test_script_records_strict_edge_failure(demo, tmp_path):
     assert all(r["status"] == "failed" for r in report["results"])
 
 
+def test_script_rejects_external_asdf_array_before_materializing(tmp_path):
+    parent = tmp_path / "external.asdf"
+    parent.write_text(
+        """#ASDF 1.0.0
+#ASDF_STANDARD 1.6.0
+%YAML 1.1
+---
+roman:
+  data: !<tag:stsci.edu:asdf/core/ndarray-1.1.0>
+    source: file:///no-such-gladius-test/standalone.asdf
+    datatype: float32
+    byteorder: little
+    shape: [2, 2]
+...
+"""
+    )
+
+    with pytest.raises(ValueError, match="External ASDF array sources"):
+        script.extract_parent(parent, [], {}, tmp_path, 1, [])
+
+
+def test_script_rejects_external_array_reference(tmp_path):
+    parent = tmp_path / "reference.asdf"
+    asdf.AsdfFile(
+        {
+            "roman": {
+                "reference": asdf.ExternalArrayReference(
+                    "file:///no-such-gladius-test/standalone-reference.fits",
+                    0,
+                    "float32",
+                    (2, 2),
+                )
+            }
+        }
+    ).write_to(parent)
+
+    with pytest.raises(ValueError, match="External ASDF array sources"):
+        script.extract_parent(parent, [], {}, tmp_path, 1, [])
+
+
 def test_csv_with_blank_unused_coordinates(tmp_path):
     (tmp_path / "targets.csv").write_text("id,ra,dec,x,y\nevent,270,-29,,\n")
     target = script.targets_from({"targets_csv": "targets.csv"}, tmp_path, None)[0]

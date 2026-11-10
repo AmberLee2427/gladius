@@ -1,8 +1,7 @@
 # Outputs
 
 Each run saves its cutout images, the settings used to make them, and a JSON
-record of what succeeded, failed or was skipped. The location is set by
-`storage.output_directory` in your configuration.
+record of what succeeded, failed or was skipped. The configuration setting `storage.output_directory` chooses where Gladius saves them.
 
 ## Folder layout
 
@@ -47,23 +46,24 @@ Names in angle brackets are placeholders:
   used to distinguish full images even if their filenames match.
 
 The tree shows one cutout and one optional stack; runs can contain many of each.
-Only the formats you select are written. Stacks, GIFs and colour composites can be enabled independently. Each is absent when disabled or
-when no eligible inputs are available. Hidden `.pipeline.lock` and `.cache` entries
+Gladius writes only the formats you select. You can enable stacks, GIFs and colour
+composites independently. Each is absent when disabled or when no eligible inputs
+are available. Hidden `.pipeline.lock` and `.cache` entries
 support locking and temporary processing; they are not science outputs.
 
 ## Which file should I open?
 
 | File | What it contains | When to use it |
 | --- | --- | --- |
-| `cutout.asdf` | Science pixels, uncertainties, quality flags, additional cropped arrays, coordinate model and metadata. | Read one cutout with its complete saved coordinate model and metadata. |
-| `cutout.fits` | The same cutout in FITS image extensions, with complete metadata and the coordinate model embedded in an extra extension. | Open SCI/ERR/DQ in FITS software, or use the Gladius reader to recover all saved information. |
-| `manifest.json` | Revision status, configuration, input identities, current quality, native file checksums, reuse counts, skips and errors. | Check whether the run succeeded and find its current outputs. |
-| `resolved-config.yaml` | The run's settings, with defaults filled in and paths resolved. | Inspect or repeat the configuration used for this run. |
-| `preview-stack.fits` | A median display image made from aligned cutouts, plus a count of contributing values at each pixel. | Visual inspection. **Use individual cutouts for scientific measurements.** |
-| `colour-composite.png` | Three independently normalized filter medians assigned to red, green and blue on one shared sky grid. | Inspect a false-colour view. Colours are not calibrated source colour ratios. |
-| `preview-animation.gif` | Individual exposures aligned to the reference sky grid, played in time order with a shared brightness stretch and timestamp labels. | Inspect changes between exposures; playback speed is configurable and does not represent observing cadence. |
-| `stack-manifest.json` | Median stack, GIF and colour-composite paths, input membership, references, display settings, exclusions and composite skips. | Find display outputs and check which cutouts contributed to them. |
-| `parents/<parent-file-hash>/<original-filename>` | A full copy of a selected input image. | Keep full detector images when `storage.retain_full_images` is enabled. Existing local originals are never deleted. |
+| `cutout.asdf` | Science pixels, uncertainties, quality flags, additional cropped arrays, coordinate model and metadata. | Reading one cutout with its complete saved coordinate model and metadata. |
+| `cutout.fits` | The same cutout in FITS image extensions, with complete metadata and the coordinate model embedded in an extra extension. | Reading SCI/ERR/DQ in FITS software, or recovering all saved information with the Gladius reader. |
+| `manifest.json` | Revision status, configuration, input identities, current quality, native file checksums, reuse counts, skips and errors. | Checking whether the run succeeded and finding its current outputs. |
+| `resolved-config.yaml` | The run's settings, with defaults filled in and paths resolved. | Inspecting or repeating the configuration used for this run. |
+| `preview-stack.fits` | A median display image made from aligned cutouts, plus a count of contributing values at each pixel. | Visual inspection. Individual cutouts retain the pixels needed for scientific measurements. |
+| `colour-composite.png` | Three independently normalized filter medians assigned to red, green and blue on one shared sky grid. | Viewing a false-colour image. Colours are not calibrated source colour ratios. |
+| `preview-animation.gif` | Individual exposures aligned to the reference sky grid, played in time order with a shared brightness stretch and timestamp labels. | Viewing changes between exposures; playback speed is configurable and does not represent observing cadence. |
+| `stack-manifest.json` | Median stack, GIF and colour-composite paths, input membership, references, display settings, exclusions and composite skips. | Finding display outputs and checking which cutouts contributed to them. |
+| `parents/<parent-file-hash>/<original-filename>` | A full copy of a selected input image. | Retaining full detector images when `storage.retain_full_images` is enabled. Existing local originals are never deleted. |
 
 ### Finding output paths
 
@@ -92,8 +92,7 @@ if display_manifest.exists():
 ```
 
 Older files can remain after rerunning with changed inputs. Finding a file on
-disk does not establish that it belongs to the current run. Check the overall
-status in `manifest.json` too: a failed run can leave earlier display files, and
+disk does not establish that it belongs to the current run. The overall status in `manifest.json` also matters: a failed run can leave earlier display files, and
 `stack-manifest.json` does not by itself establish that the latest attempt finished.
 
 ## Example images
@@ -103,13 +102,13 @@ median stack and exposure GIF below use the single-star `gladius demo` example.
 The [colour composite](#colour-composites) uses a separate six-star, three-filter
 field generated by the documentation script. Neither uses Roman observations.
 
-For the single-star example, the exact command is:
+To reproduce the single-star example, the following command uses a fresh destination:
 
 ```sh
 gladius demo /tmp/gladius-single-star-demo
 ```
 
-Choose a fresh destination. This creates two noisy 96 × 96 pixel parents in F146,
+The command creates two noisy 96 × 96 pixel parents in F146,
 two 64 × 64 cutouts, a median FITS stack and an exposure GIF, plus the configuration
 and run manifests. It does not create the six-star colour example.
 
@@ -134,7 +133,7 @@ the aligned individual exposures. Independent Gaussian noise has a standard devi
 Combining the exposures reduces the visible background noise. With just two
 values, the median is their average; interpolation during alignment also smooths
 the second exposure. **The stack is for visual
-inspection; use individual cutouts for scientific measurements.**
+inspection. Individual cutouts retain the pixels needed for scientific measurements.**
 
 All five previews use the same grayscale brightness stretch to reveal the source
 and background. This changes only how the PNGs look; the ASDF and FITS outputs
@@ -161,7 +160,8 @@ The single-star `gladius demo /tmp/gladius-single-star-demo` exposures, shown fo
 combines these images; this animation keeps them separate.
 ```
 
-Enable either or both outputs in the GUI under **Stacks, animations & colour**, or in YAML:
+To create a median stack, an animation, or both, you can select the outputs in the
+GUI under **Stacks, animations & colour**. The equivalent YAML settings are:
 
 ```yaml
 stacks:
@@ -200,9 +200,10 @@ between filters to demonstrate display colours; these are not Roman observations
 ```
 
 (reproduce-the-colour-example)=
-#### Reproduce the colour example
+#### Reproducing the colour example
 
-Run these commands from the root of a Gladius source checkout:
+To reproduce the examples, these commands install Gladius and run the script from
+the root of a source checkout:
 
 ```sh
 python -m pip install -e '.'
@@ -221,7 +222,8 @@ There is currently no separate `gladius demo` subcommand for the six-star field.
 The RGB settings below enable composites for your own multi-filter inputs; they
 do not generate synthetic observations.
 
-Enable **Create colour composites** under **Stacks, animations & colour**, or set:
+For a composite of your own inputs, you can enable **Create colour composites**
+under **Stacks, animations & colour**, or use these YAML settings:
 
 ```yaml
 stacks:
@@ -257,9 +259,10 @@ exclusions apply as for other display outputs.
 **These are false colours for inspection.** Independent stretches change relative
 brightness between filters. Exposures from different times are combined, and
 there is no matching of point-spread functions or photometric calibration across
-filters. Use the original cutouts to measure source colours or variability.
+filters. The original cutouts are needed to measure source colours or variability.
 
-## Read a cutout in Python
+(read-a-cutout-in-python)=
+## Reading a cutout in Python
 
 The same reader accepts either output format:
 
@@ -289,9 +292,9 @@ paths. The [header and metadata reference](headers.md) defines the saved fields.
 
 ## What is retained from the input?
 
-Gladius preserves the original metadata separately from the new cutout metadata.
-Gladius retains the original ASDF tree values and their locations. Arrays matching the detector image
-are cropped along the same rows and columns as SCI, ERR and DQ. The metadata
+Gladius preserves the original metadata separately from the new cutout metadata,
+including ASDF tree values and their locations. It crops arrays matching the detector
+image along the same rows and columns as SCI, ERR and DQ. The metadata
 records their original paths, dimensions and storage types. Other metadata arrays
 are retained in full. Full detector pixels are saved separately only when you
 choose to retain full images.

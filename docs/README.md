@@ -1,7 +1,13 @@
 # Documentation
 
-Build with `python -m pip install -e '.[docs]'` followed by
-`python -m sphinx -W -b html docs docs/_build/html`.
+The documentation build produces an HTML site in `docs/_build/html`. The following
+commands install the documentation dependencies and build the site:
+
+```sh
+python -m pip install -e '.[docs]'
+python -m sphinx -W -b html docs docs/_build/html
+```
+
 Sphinx warnings fail the build. Documentation does not include or execute the
 separate Nexus notebook in `notebooks/`. No credentials, archive queries or
 science outputs are used by the docs build.

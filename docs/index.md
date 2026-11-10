@@ -1,15 +1,15 @@
 # Gladius
 
 ```{raw} html
-<section class="family-billboard"><div class="family-kicker">Gladius · Roman image cutouts</div><h1>Gladius</h1><p>Roman detector cutouts from Python, the command line, or a local browser. Extract all targets from each image in one pass, retaining uncertainties, flags and parent metadata.</p></section>
+<section class="family-billboard"><div class="family-kicker">Gladius · Roman image cutouts</div><h1>Gladius</h1><p>Gladius creates small images around your targets from Roman detector images. You can use Python, the command line, or a local browser. It extracts all targets from each image in one pass and retains uncertainties, flags and metadata from the original image.</p></section>
 ```
 
 ```{raw} html
 <div class="start-grid">
-  <a class="start-card" href="quickstart.html"><strong>Start here</strong><span>Install Gladius and make your first cutouts.</span></a>
-  <a class="start-card" href="products.html"><strong>Understand the outputs</strong><span>Native image planes, parent metadata, footprints and run records.</span></a>
-  <a class="start-card" href="configuration.html"><strong>Configure a run</strong><span>Targets, MAST, astrometry, quality screening and outputs.</span></a>
-  <a class="start-card" href="api.html"><strong>Python API</strong><span>Call the same functions used by the CLI and GUI.</span></a>
+  <a class="start-card" href="quickstart.html"><strong>Getting started</strong><span>This guide covers installation and your first cutouts.</span></a>
+  <a class="start-card" href="products.html"><strong>Output files</strong><span>These files contain pixels, original metadata, sky coverage and run records.</span></a>
+  <a class="start-card" href="configuration.html"><strong>Run settings</strong><span>Targets, MAST, astrometry, quality screening and outputs.</span></a>
+  <a class="start-card" href="api.html"><strong>Python API</strong><span>Python provides the same functions as the command line and browser interface.</span></a>
 </div>
 ```
 
@@ -29,9 +29,11 @@ config = RunConfig(
 manifest_path = run(config)
 ```
 
-Use Roman Level 2 calibrated images (`*_cal.asdf`); Gladius does not cut out other
-products. ASDF retains the exact GWCS; FITS output includes
-SCI/ERR/DQ and the stored exact metadata alongside its FITS WCS representation.
+Gladius takes Roman Level 2 calibrated images (`*_cal.asdf`) as input; it does not
+cut out other products. ASDF output retains the exact generalized world coordinate
+system (GWCS), which maps pixels to sky positions. FITS output includes the science,
+uncertainty and quality arrays (SCI/ERR/DQ), the exact saved metadata and a FITS
+representation of the coordinate model.
 See [Outputs](products.md) for what each file contains.
 
 ## Choosing an interface

@@ -34,7 +34,7 @@ Other arrays that share the science image's height and width are cropped in the
 same place. Their floating-point padding is `NaN`; integer padding is zero,
 except arrays named `dq` or `pixeldq`, which receive `DO_NOT_USE`. A zero in an
 extra array therefore does not establish that a detector pixel existed there.
-Use the cutout's valid-pixel bounds and quality flags to identify actual coverage.
+The cutout's valid-pixel bounds and quality flags identify actual coverage.
 
 ## Which pixels are included?
 
@@ -80,7 +80,8 @@ The NumPy slice `data[20:25, 8:13]` selects rows 20–24 and columns 8–12.
 
 ## From RA/Dec to detector pixels
 
-The image's WCS describes which sky position corresponds to a detector pixel.
+The image's world coordinate system (WCS) describes which sky position corresponds
+to a detector pixel.
 To place a target supplied as RA/Dec, Gladius asks that model to work backwards:
 **which pixel position maps to these sky coordinates?** This is called the
 inverse coordinate transformation. The result is a possibly fractional `(x, y)`
@@ -122,7 +123,7 @@ and [GWCS `invert`](https://gwcs.readthedocs.io/en/latest/gwcs/generated/gwcs.wc
 ## How does a cutout position map back to the detector?
 
 The fields `x0` and `y0` give the parent-image position corresponding to cutout
-pixel `(0, 0)`. Add them to a cutout coordinate to recover the parent coordinate:
+pixel `(0, 0)`. You can add them to a cutout coordinate to recover the parent coordinate:
 
 ```text
 parent_x = cutout_x + x0
@@ -212,14 +213,14 @@ the corresponding summary values, including an unavailable midpoint, unset.
 
 ## Does the target position identify or measure a star?
 
-No source fitting or identification is performed. The cutout is placed using the
+Gladius does not fit or identify sources. It places the cutout using the
 coordinates you supplied and the chosen WCS. Gladius does not measure a star's
 centre from the pixels or check that a catalogue object is visible there.
 
 It also does not update target coordinates for motion across the sky (**proper
 motion**) or the apparent positional shift caused by the observer's changing
-location (**parallax**). Supply coordinates appropriate for the image's epoch
-when those effects matter.
+location (**parallax**). When those effects matter, the coordinates need to be
+appropriate for the image's epoch.
 
 ## What does the optional quality screen measure?
 
@@ -246,7 +247,7 @@ the commissioning classifier's scores.
 
 ## Can I use a display stack for measurements?
 
-**No. Use the individual cutouts for scientific measurements; display stacks
+**No. Individual cutouts are for scientific measurements; display stacks
 are for visual inspection.**
 
 A display stack aligns cutouts onto a common sky grid and takes a median of the
@@ -257,7 +258,7 @@ pixels in individual cutouts.
 Stacks are intended for inspection. Gladius does not match the point-spread
 functions (the shapes produced by unresolved sources), bring exposures onto a
 common photometric calibration, or propagate uncertainties through stacking.
-Use the individual cutouts for flux or position measurements, and assess the
-input calibration and quality flags for your analysis. Keep the stack's input
-list and coverage image when sharing a preview; they record which exposures
-contributed and how many values were available at each pixel.
+For flux or position measurements, you can use the individual cutouts and assess
+the input calibration and quality flags for your analysis. When sharing a preview,
+the stack's input list and coverage image record which exposures contributed and
+how many values were available at each pixel.

@@ -1,32 +1,32 @@
 # Configuration and execution
 
-## Build a configuration in the GUI
+(build-a-configuration-in-the-gui)=
+## Building a configuration in the GUI
 
-Start with the GUI to explore the settings and build your YAML. The form presents
-options with help text and defaults, so you can choose them in context and see
-the resulting configuration in the YAML preview. It uses the same configuration
-model, validation and scientific defaults as the CLI and Python API.
+The GUI helps you explore settings and build a YAML configuration. Its form shows
+help text and defaults beside the options, and the YAML preview shows the resulting
+configuration. It uses the same configuration model, validation and scientific
+defaults as the CLI and Python API. The following command starts the GUI:
 
 ```sh
 gladius gui --workspace /path/to/work --port 8768
 ```
 
-Open the printed URL in your browser. The GUI runs on that machine, binds to
-127.0.0.1, and uses the standard Python library; no extra GUI dependency is
-required. Keep its terminal open while using it.
+You can open the printed URL in your browser while the terminal remains open. The
+GUI runs on the machine where you started it, binds to 127.0.0.1, and uses the
+standard Python library; no extra GUI dependency is required.
 
-1. **Add targets.** Upload or paste a target CSV, or enter targets individually.
-   The form explains the coordinate conventions. CSV imports replace the current
-   target list; extra catalogue columns are preserved as target metadata.
-2. **Choose images and processing.** Expand the settings sections to select local
-   images or MAST, dates, detectors, cutout size, WCS handling and outputs. Read
-   the help beside each setting; WCS policy help changes with your selection.
-3. **Inspect and download the YAML.** The preview includes defaults and resolved
-   paths. Choose **Download YAML** to save a configuration for the CLI, Python or
-   a later GUI session. Target metadata is embedded, so the original CSV is not
-   needed to rerun it.
-4. **Make cutouts when ready.** Choose **Make cutouts** to run the configuration
-   from the GUI, or run the saved file later:
+1. To provide targets, you can upload or paste a target CSV, or enter targets
+   individually. The form explains the coordinate conventions. CSV imports replace
+   the current target list; extra catalogue columns are preserved as target metadata.
+2. To select images and processing, you can expand the settings sections and choose
+   local images or MAST, dates, detectors, cutout size, WCS handling and outputs.
+   Help appears beside each setting; WCS policy help changes with your selection.
+3. The YAML preview includes defaults and resolved paths. You can select **Download
+   YAML** to save a configuration for the CLI, Python or a later GUI session. Target
+   metadata is embedded, so the original CSV is not needed to rerun it.
+4. To make cutouts, you can select **Make cutouts** in the GUI or run the saved
+   file later:
 
    ```sh
    gladius run config.yaml
@@ -34,9 +34,9 @@ required. Keep its terminal open while using it.
 
 **Load YAML** and **Edit YAML** bring existing configurations back into the form.
 The **Working directory** field sets the base for relative paths in imported or
-pasted YAML. Set it to the intended directory when importing: the browser cannot
-infer the uploaded file's original location. Downloaded YAML uses absolute paths;
-update those paths when moving the configuration to another machine.
+pasted YAML. When importing, you can set it to the intended directory; the browser cannot
+infer the uploaded file's original location. Downloaded YAML uses absolute paths,
+which need updating when moving the configuration to another machine.
 
 Uploads and outputs stay on the local server. See [authentication](#local-mast-authentication)
 for MAST credentials, [GUI controls and testing](#gui-controls-and-testing) for
@@ -48,29 +48,31 @@ for progress, failures and job records.
 :target: _static/examples/gui.jpg
 
 The GUI with the synthetic demo configuration loaded. This is a screenshot;
-start `gladius gui` to use the controls. Click the image to view it at full size.
+the controls are available after starting `gladius gui`. You can click the image to view it at full size.
 ```
 
-### Use the GUI over SSH
+(use-the-gui-over-ssh)=
+### Using the GUI over SSH
 
-Start the GUI in your remote shell:
+To use the GUI on a remote machine, the following command starts it in your remote shell:
 
 ```sh
 gladius gui --workspace /path/to/work --port 8768
 ```
 
-In a separate terminal **on your laptop**, open a tunnel:
+A tunnel carries the connection to that GUI. This command opens one in a separate
+terminal **on your laptop**:
 
 ```sh
 ssh -N -L 8768:127.0.0.1:8768 username@remote-machine
 ```
 
-Open `http://127.0.0.1:8768` in your laptop's browser. Keep both the remote GUI
-process and the SSH tunnel running. Input paths and outputs refer to files on
+You can then open `http://127.0.0.1:8768` in your laptop's browser while both
+the remote GUI process and the SSH tunnel remain running. Input paths and outputs refer to files on
 the remote machine; uploading a CSV sends it from your browser to that machine.
 The GUI remains bound to the remote machine's localhost.
 
-If port 8768 is occupied on your laptop, choose another port, such as 8769,
+If port 8768 is occupied on your laptop, you can choose another port, such as 8769,
 **for all three places**: the remote `--port`, both port numbers in `-L`, and
 the browser URL. The current GUI checks the request's hostname and port; forwarding
 a different local port to 8768 is not supported.
@@ -78,25 +80,26 @@ a different local port to 8768 is not supported.
 ### Roman Research Nexus and JupyterHub
 
 For the full login, installation and launch sequence, see
-[Start the GUI on Roman Research Nexus](quickstart.md#start-the-gui-on-roman-research-nexus).
+[Using the GUI on Roman Research Nexus](quickstart.md#using-the-gui-on-roman-research-nexus).
 
-In a **Nexus JupyterLab terminal**, activate the environment containing Gladius,
-then start it with:
+To start the GUI on Nexus, you can activate the environment containing Gladius
+in a **Nexus JupyterLab terminal**, then run:
 
 ```sh
 gladius gui --workspace /path/on/nexus/to/work --port 8768 --nexus
 ```
 
-Open the **Gladius GUI** link printed in that terminal in your laptop's browser.
-It uses the authenticated Jupyter proxy, for example:
+You can open the **Gladius GUI** link printed in that terminal in your laptop's
+browser. The link uses the authenticated Jupyter proxy, which routes your browser
+connection to the app through your Jupyter login. For example:
 
 ```text
 https://roman.science.stsci.edu/user/YOUR-USERNAME/YOUR-SERVER/proxy/8768/
 ```
 
 Gladius reads `JUPYTERHUB_SERVICE_PREFIX` to retain your actual username and named
-server. Do not copy the placeholders above literally. Keep the trailing slash,
-the Gladius process, and the Nexus server running. Files and processing stay on
+server. The example contains placeholders; the printed link has your actual address and
+needs its trailing slash. The Gladius process and Nexus server need to remain running. Files and processing stay on
 Nexus. The app still listens only on `127.0.0.1` inside that server; your existing
 Jupyter login controls access through the proxy.
 
@@ -106,16 +109,16 @@ address and prints the proxy link even without `--nexus`. A Nexus address in
 also identifies Nexus. `--nexus` is the fallback when the public host is not
 provided. It must be run inside the Jupyter server environment, not on your laptop.
 
-For another JupyterHub, or if automatic detection cannot find the address, pass
-the complete browser URL explicitly:
+For another JupyterHub, or if automatic detection cannot find the address, you can
+pass the complete browser URL explicitly:
 
 ```sh
 gladius gui --workspace /path/to/work --port 8768 \
   --public-url https://YOUR-HUB/user/YOUR-USERNAME/YOUR-SERVER/proxy/8768/
 ```
 
-Use the URL prefix of your actual running JupyterLab server, replacing `lab/...`
-with `proxy/8768/`. A default server has no `YOUR-SERVER` path component. The
+The URL needs the prefix of your actual running JupyterLab server, with `lab/...`
+replaced by `proxy/8768/`. A default server has no `YOUR-SERVER` path component. The
 public URL configures both the startup link and the allowed browser origin;
 Gladius does not infer a trusted address from incoming forwarding headers.
 Assets, API calls, job polling and downloads remain under that proxy path.
@@ -133,12 +136,14 @@ preferred for named servers: a generic user-redirect link may select a different
 server from the one running Gladius. No login token is included in the printed URL.
 Your MAST token file remains separate from your Nexus login.
 
-### Embed the GUI in a notebook
+(embed-the-gui-in-a-notebook)=
+### Embedding the GUI in a notebook
 
 The local `gladius --tutorial` and hosted `gladius --nexus-tutorial` notebooks contain
 complete start, iframe and stop cells. They remain separate from this RTD site.
 
-Within a Nexus notebook, start the server from the kernel and embed its proxy URL:
+In a Nexus notebook, the following code starts the server from the kernel (the
+Python environment running the notebook code) and embeds its proxy URL:
 
 ```python
 import threading
@@ -158,17 +163,17 @@ display(IFrame(src=gladius_ui_url, width="100%", height=650))
 
 `port=0` selects an unused port. On Nexus the notebook and proxy share one browser
 origin, so `iframe_origin="self"` allows the frame. For a notebook on your laptop,
-omit `nexus=True`, set `iframe_origin` to its exact browser origin (for example
-`"http://localhost:8888"`), and use `server.url + "/"` as the iframe URL. Match the
-scheme, hostname and port shown in your notebook's address bar, without its path
-or any login token. The GUI's separate port is **not** the notebook origin.
+you can omit `nexus=True`, set `iframe_origin` to its exact browser origin (for example
+`"http://localhost:8888"`), and use `server.url + "/"` as the iframe URL. The origin
+needs the scheme, hostname and port shown in your notebook's address bar, without
+its path or any login token. The GUI's separate port is **not** the notebook origin.
 
 You can pass `initial_config=config` with an existing `RunConfig` to populate
 the form without starting a run. Existing GUI job history in that workspace takes
 precedence when restoring the last job. This is how the supplied tutorial loads
 its current settings into the form.
 
-After any active run finishes, stop the embedded server:
+After any active run finishes, the following code stops the embedded server:
 
 ```python
 server.shutdown()
@@ -178,17 +183,19 @@ thread.join(timeout=5)
 
 The server belongs to the notebook kernel: closing the displayed frame does not
 stop it, while restarting the kernel does. The tutorial's start cell reuses its
-server when rerun; stop it before changing its allowed notebook origin.
+server when rerun; changing its allowed notebook origin requires stopping it first.
 
-For a GUI started separately in a terminal, add `--iframe-origin self` on Nexus,
-or `--iframe-origin http://localhost:8888` for a local notebook. Without this
+For a GUI started separately in a terminal, you can add `--iframe-origin self` on
+Nexus, or `--iframe-origin http://localhost:8888` for a local notebook. Without this
 explicit option, embedding is blocked. The option changes only the allowed frame
 parent; GUI session tokens and API origin checks remain enabled. The browser
 still requires an authenticated Nexus session for a Nexus iframe.
 
-## Create or edit YAML directly
+(create-or-edit-yaml-directly)=
+## Creating or editing YAML directly
 
-For a text-based starting point, generate an annotated file:
+For a text-based configuration, these commands generate an annotated file,
+validate it and run it:
 
 ```sh
 gladius init-config config.yaml
@@ -223,20 +230,20 @@ Roman schema converters are installed with Gladius (`roman_datamodels`). Missing
 produce explicit errors rather than stripping typed metadata silently.
 
 `inputs.mode: mast` uses Astroquery's Roman MastMissions API (`astroquery>=0.4.11`).
-With RA/Dec targets, leave `mast_criteria: {}`: the package queries each distinct
+With RA/Dec targets and `mast_criteria: {}`, the package queries each distinct
 sky position, defaults to `productLevel: "2"` (calibrated detector images), and
 uses `mast_radius_arcmin: 6.0`. Dates, detectors and filters are included in the
 archive query and checked again locally. End dates remain exclusive even when
 the archive's range query includes the endpoint.
 
 The cone returns candidate images, not guaranteed overlap. Six arcminutes is a
-conservative default for ordinary small cutouts from a WFI detector; increase it
-for large cutouts or uncertain astrometry. It cannot recover images whose archive
+conservative default for ordinary small cutouts from a WFI detector; a larger radius
+may be needed for large cutouts or uncertain astrometry. It cannot recover images whose archive
 positions are wrong by more than the chosen radius. The supported radius is
 0 < radius <= 30 arcminutes.
 Overlapping searches are deduplicated before any parent is downloaded.
 
-Use `mast_criteria` for optional overrides, e.g. `{program: 1043}` (an example ID,
+The optional `mast_criteria` setting accepts overrides, e.g. `{program: 1043}` (an example ID,
 not a promise of available data). Explicit positional criteria replace automatic
 cones. Pixel-only targets require an explicit archive constraint because pixels
 do not identify a sky position. Advanced filters can narrow the result further;
@@ -249,15 +256,15 @@ require an authorized account and `MAST_API_TOKEN` in the launching shell/server
 environment, never in YAML. Local environment loading is described under
 [authentication](#local-mast-authentication); the package does not search
 commissioning infrastructure for credentials. The authenticated live CI smoke
-test checks a bounded archive download, which may be an associated product rather
-than a calibrated science image. It is not full scientific validation of real
-Roman cutouts.
+test downloads a calibrated detector image within its size limit and checks
+cutout extraction and saved output. These checks do not measure the input
+image’s calibration or absolute sky accuracy.
 
 Query syntax and columns follow [Astroquery mission searches](https://astroquery.readthedocs.io/en/stable/mast/mast_missions.html);
 Roman column names were checked against the live MAST column-list service.
 
 `selection.start` is inclusive; `end` is exclusive. Both refer to UTC exposure
-start, not midpoint or any-overlap with the interval. Quote timestamps in YAML.
+start, not midpoint or any-overlap with the interval. YAML timestamps need quotes.
 `end: '2026-02-01'` excludes all exposures starting on February 1. Other time
 scales found in input metadata are retained there and converted to UTC for
 selection and derived timing. Detectors are integer SCA numbers 1–18; parent
@@ -268,12 +275,12 @@ Targets use unique filesystem-safe IDs and exactly one pair of coordinates:
 `ra/dec` in ICRS degrees, or `x/y` in zero-based parent SCI pixels. A pixel target
 uses the same pixel coordinates on every selected detector image. Neither form
 is a measured centroid. Catalog motion and event/detector crossmatching are not
-inferred automatically; select the appropriate exposures.
+inferred automatically; the selected exposures need to be appropriate for the targets.
 
 ## Astrometry and extraction
 
 The WCS is the image's coordinate model: it converts between detector pixels
-and positions on the sky. Choose how Gladius uses it:
+and positions on the sky. The `astrometry.mode` setting chooses how Gladius uses it:
 
 - **`astrometry.mode: use`** uses the input image's WCS without the optional
   numerical consistency check.
@@ -304,15 +311,15 @@ padding values and coordinate conversion.
 ## Quality, stacks, animations and colour
 
 `quality.autocorrelation_limit: null` disables the optional elongation screen.
-Set a threshold above one to flag elongated image patterns: a measured ratio at
+A threshold above one flags elongated image patterns: a measured ratio at
 or above that threshold is rejected by the screen. An image with too few usable
 pixels or too little signal can also fail the screen. The score, settings and
 reason are saved. **Native cutouts are retained even when flagged.**
 
 `quality.exclude_from_stacks: true` excludes flagged cutouts from median stacks,
 GIFs and colour composites. With `false`, they can contribute to those outputs.
-The threshold needs testing on representative images; do not assume another
-classifier's threshold has the same meaning here. See the
+The threshold needs testing on representative images. Another classifier’s
+threshold may not have the same meaning here. See the
 [quality-screen explanation](science.md#what-does-the-optional-quality-screen-measure).
 
 Each display output can be enabled independently:
@@ -338,7 +345,7 @@ for how the RGB brightness limits are chosen.
 
 `stacks.max_exposures` limits inputs per target/filter. `stacks.max_memory_mb`
 checks an estimated memory requirement before creating the display output.
-Set either to `0` to disable that check. Exceeding a nonzero limit fails the run;
+Either setting can be set to `0` to disable its check. Exceeding a nonzero limit fails the run;
 Gladius keeps native cutouts already written and does not silently drop excess
 inputs. Earlier completed display groups can also remain on disk.
 
@@ -348,7 +355,8 @@ exhausts available memory.
 
 ## Named runs, revisions and reuse
 
-Give a project a name in the YAML (the GUI has a **Run name** field):
+A run name groups revisions of a project. You can set it in YAML (the GUI has a
+**Run name** field):
 
 ```yaml
 run:
@@ -394,7 +402,7 @@ file list and display inputs; the earlier revision remains intact.
 With unchanged discovery settings, a MAST run reuses its saved input list.
 Quality or display changes do not trigger another archive query or download
 when the native cutouts are already available. To look for newly available
-observations without changing the selection, explicitly refresh that list:
+observations without changing the selection, you can explicitly refresh that list:
 
 ```sh
 gladius run config.yaml --refresh-inputs
@@ -412,7 +420,10 @@ local files without relying on filenames or modification times alone. Local
 originals are never deleted. Temporary MAST downloads are removed after each
 parent has been processed, including when processing fails.
 
-### Start completely fresh
+(start-completely-fresh)=
+### Starting without earlier results
+
+To start a revision without reusing earlier work, the CLI accepts `--fresh`:
 
 ```sh
 gladius run config.yaml --name bulge-field-test --fresh
@@ -420,8 +431,7 @@ gladius run config.yaml --name bulge-field-test --fresh
 
 `--fresh` starts a new revision and bypasses discovery, cutout, assessment and
 display reuse. For MAST, it queries and downloads again. `execution.resume: false`
-in the YAML has the same effect, including in the GUI. Leave resume enabled for
-normal iterative work. A different name alone gives a separate result, not a
+in the YAML has the same effect, including in the GUI. Resume is suited to normal iterative work. A different name alone gives a separate result, not a
 forced recomputation.
 
 Python callers can use `run(config, refresh_inputs=True)` or
@@ -431,14 +441,13 @@ Python callers can use `run(config, refresh_inputs=True)` or
 
 Each revision saves its resolved configuration, input identities, errors, current
 quality assessments, file paths/checksums and stage reuse counts in `manifest.json`.
-Its `stack-manifest.json` lists display membership and exclusions. **Use the
-revision manifest for its current quality decision.** A reused ASDF/FITS file
+Its `stack-manifest.json` lists display membership and exclusions. **The revision manifest records the current quality decision.** A reused ASDF/FITS file
 keeps its original creation provenance, including the configuration that first
 created it; Gladius does not rewrite that file just because a threshold changed.
 
 Verified intermediate products live in `storage.output_directory/.cache/`.
 Revision products are independent copies, so cache repair cannot change the
-bytes of earlier revisions. Keep the cache to benefit from reuse; it can grow,
+bytes of earlier revisions. The cache enables reuse; it can grow,
 and Gladius currently has no automatic eviction or disk quota. Original parents
 are retained under `parents/` only when requested. Removing the shared cache
 loses the optimization; it does not delete revision copies.
@@ -486,9 +495,8 @@ Run progress and errors appear in the browser. Successful runs provide their
 manifest path, cutout counts and a manifest download. A failed pipeline exposes
 its error; pipeline manifests remain in the configured run output directories.
 Closing or refreshing a tab does not cancel the run. Refresh reconnects to the
-last submission while the server is alive. Keep the terminal open; interrupting
-the GUI server stops serving requests but allows an active worker to finish its
-cleanup. Only one GUI-owned run can execute at a time. Existing pipeline locks
+last submission while the server is alive. The terminal needs to remain open while the GUI serves requests. Interrupting
+the GUI server stops requests but allows an active worker to finish its cleanup. Only one GUI-owned run can execute at a time. Existing pipeline locks
 also protect runs initiated through other processes.
 
 Each submitted configuration and job record is saved in
@@ -501,8 +509,8 @@ into a new server session automatically.
 
 The **Live Roman MAST download** workflow runs on pushes to the repository's
 default branch that change package, integration-test or workflow files. It also
-has a **Run workflow** button. Add an Actions repository secret named
-`MAST_API_TOKEN` using an account authorized for the Roman data you want to test.
+has a **Run workflow** button. The workflow requires an Actions repository secret named `MAST_API_TOKEN` from an
+account authorized for the Roman data being tested.
 A missing or rejected token fails the live test; normal unit tests remain offline.
 
 The test samples five Level 2 datasets, checks a target query generated from a
@@ -532,14 +540,14 @@ GLADIUS_LIVE_MAST=1 python -m pytest tests/integration -m live_mast -v
 
 ## Local MAST authentication
 
-1. Open [MAST API tokens](https://auth.mast.stsci.edu/tokens).
-2. Sign in with your STScI account, create a token, and copy it.
-3. Run the command below, then paste the token at its hidden prompt.
+A token authenticates your account for MAST access. It does not grant access to
+restricted observations; the account must already be authorized for those data.
+To save a token locally:
 
-A token authenticates your account. It does not grant access to restricted
-observations; the account must already be authorized for those data.
-
-Save the token locally:
+1. You can visit [MAST API tokens](https://auth.mast.stsci.edu/tokens) and sign in
+   with your STScI account.
+2. After creating and copying a token, you can run the command below.
+3. At the hidden prompt, you can paste the token:
 
 ```sh
 gladius token
@@ -552,39 +560,39 @@ The command refuses to fall back to echoed input when a suitable terminal is
 unavailable. It sets owner-only file permissions on macOS/Linux; on Windows,
 file access follows the account's filesystem permissions.
 
-Use `gladius token --env-file /path/to/credentials.env` to choose another file.
-Do not pass the token as a shell argument. Alternatively copy the repository's
-`.env.example` to `.env`, then edit it locally:
+To choose another file, you can use `gladius token --env-file /path/to/credentials.env`.
+The token should not be passed as a shell argument. Alternatively, you can copy the
+repository's `.env.example` to `.env` and edit it locally:
 
 ```text
 MAST_API_TOKEN=your_token_here
 ```
 
-Use your own MAST token from an account authorized for the requested Roman data.
-Do not paste it into YAML, the browser, logs or Git. The repository ignores `.env`
+The token needs to belong to your own account authorized for the requested Roman data.
+It should not be pasted into YAML, the browser, logs or Git. The repository ignores `.env`
 and `.env.*` except the empty `.env.example` template. In a different repository,
-add your own ignore rule. Restrict the file to your account on shared machines
-(for example, `chmod 600 .env` on macOS/Linux).
+you can add your own ignore rule. On shared machines, the file needs to be restricted
+to your account (for example, `chmod 600 .env` on macOS/Linux).
 
-- **GUI:** put `.env` directly in the `--workspace` directory. Without
+- **GUI:** you can place `.env` directly in the `--workspace` directory. Without
   `--workspace`, this is the directory where you launch Gladius. It is loaded
-  once at server startup. After changing the file, stop and restart the server;
-  reloading the browser is insufficient. Editing the UI's Working directory or
+  once at server startup. After you change the file, the server needs to be stopped
+  and restarted; reloading the browser is insufficient. Editing the UI's Working directory or
   loading a YAML does not load a different environment file.
 - **CLI:** `gladius run /path/to/config.yaml` loads `/path/to/.env` before running.
   Validation and configuration-generation commands do not load it.
 - **MAST demo:** `gladius demo mast-demo` loads `.env` from the launch directory
   before querying the archive. Its generated YAML contains no token.
-- **Python:** call `load_environment("/path/to/workspace")` explicitly before
+- **Python:** you can call `load_environment("/path/to/workspace")` explicitly before
   `run(config)`. Importing Gladius and loading YAML do not change the environment.
 
 Only the specified directory is checked; parent directories are not searched.
 `run`, `gui`, and `demo` accept `--env-file` to override their default credential
 location; an explicitly requested missing file is an error. Python callers can
 use `load_environment(env_file="/path/to/credentials.env")` too.
-Already-set environment variables win, including empty values. Remove an old
-shell variable with `unset MAST_API_TOKEN` before launching if you want the file
-to supply it. Values are read literally, without shell execution or `${...}`
+Already-set environment variables win, including empty values. If you want the file
+to supply the token, you can remove an old shell variable with `unset MAST_API_TOKEN`
+before launching. Values are read literally, without shell execution or `${...}`
 interpolation. Tokens are not included in downloaded YAML or job configurations.
 A GitHub Actions secret is separate and cannot supply a local GUI token.
 
@@ -595,8 +603,7 @@ The GUI’s **Make cutouts** button calls the same pipeline as `gladius run`.
 selects the smallest known-size calibrated product in that sample, and loads a
 one-target, 64 × 64 ASDF configuration pinned to the dataset and exact product
 filename. It does not download images or start a run. The UI shows the advertised
-full-parent download size; the parent may be much larger than the cutout. Click
-Make to download it. An inaccessible archive, timeout or empty sample produces an
+full-parent download size; the parent may be much larger than the cutout. You can select Make to download it. An inaccessible archive, timeout or empty sample produces an
 error, never fabricated example data. Local archive access uses the launching
 environment’s MAST_API_TOKEN; a repository secret is available only to Actions.
 This one-image GUI test is distinct from CI’s live MAST download test.
@@ -614,8 +621,8 @@ folder, and is editable. The corrected-WCS directory defaults to `gaia_wcs`, the
 external correction tool’s default output location; Gladius only reads existing
 corrections and does not run that tool or create the correction folder.
 
-The WCS policy help changes with the selection. Numerical validation fails a
-parent from the revision’s completed outputs if its supplied transform is inconsistent.
+The WCS policy help changes with the selection. If the supplied coordinate model fails the numerical check, Gladius excludes
+that parent from the revision’s completed outputs.
 With continue-on-error enabled later images can be tried. Validation cannot
 establish absolute sky accuracy. Corrected mode reads and validates the separate
 correction and preserves the original transform.
@@ -629,8 +636,9 @@ screen; native cutouts remain saved. A 150-pixel cutout is 150 × 150 native pix
 not a promise of square angular pixels.
 
 Resume reuses checksum-verified outputs for identical configuration, code and
-dependency versions; without a previous run it starts normally. Parent discovery
-and reading still occur. Lock timeout is how long to wait for another process
+dependency versions; without a previous run it starts normally. MAST runs can
+reuse a saved input list and cached cutouts without querying or reading the
+parents again. Local runs rediscover and hash their inputs on each call. Lock timeout is how long to wait for another process
 writing within the same output directory; 0 fails immediately, and is unrelated to network
 timeouts. Continue-on-error handles failures inside individual image/target work
 (download, read, WCS, coordinate inversion, extraction, product validation/write).

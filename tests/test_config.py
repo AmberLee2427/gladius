@@ -1,7 +1,17 @@
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
-from gladius.config import RunConfig, Selection, Target, load_config
+from gladius.config import (
+    Astrometry,
+    Inputs,
+    RunConfig,
+    Selection,
+    Target,
+    load_config,
+    parse_config,
+)
 
 
 def test_unknown_duplicate_nonfinite_and_invalid_fields(tmp_path):
@@ -58,6 +68,67 @@ def test_yaml_timestamp_with_utc_timezone(tmp_path):
     path = tmp_path / "utc.yaml"
     path.write_text("targets: [{id: e, x: 0, y: 0}]\nselection: {start: 2026-01-01T00:00:00Z}\n")
     assert load_config(path).selection.start == "2026-01-01T00:00:00"
+
+
+def test_mast_criteria_alias_graph_is_bounded_before_resolution(tmp_path):
+    lines = [
+        "targets: [{id: event, ra: 2, dec: 3}]",
+        "inputs:",
+        "  mode: mast",
+        "  mast_criteria:",
+        "    program: &program 1043",
+        "    alternate_program: *program",
+    ]
+    assert parse_config("\n".join(lines), base=tmp_path).inputs.mast_criteria == {
+        "program": 1043,
+        "alternate_program": 1043,
+    }
+
+    lines = [
+        "targets: [{id: event, ra: 2, dec: 3}]",
+        "inputs:",
+        "  mode: mast",
+        "  mast_criteria:",
+        "    level_0: &level_0 [leaf]",
+    ]
+    for level in range(1, 16):
+        lines.append(f"    level_{level}: &level_{level} [*level_{level - 1}, *level_{level - 1}]")
+    with pytest.raises(ValidationError, match="expanded values"):
+        parse_config("\n".join(lines), base=tmp_path)
+
+
+def test_mast_criteria_direct_cycles_are_rejected():
+    recursive = []
+    recursive.append(recursive)
+    with pytest.raises(ValidationError, match="recursive values"):
+        Inputs(mast_criteria={"query": recursive})
+
+    config = RunConfig.model_validate({"targets": [{"id": "event", "x": 1, "y": 2}]})
+    recursive_mapping = {}
+    recursive_mapping["self"] = recursive_mapping
+    config.inputs.mast_criteria["late"] = recursive_mapping
+    with pytest.raises(ValueError, match="recursive values"):
+        config.resolved(Path("."))
+
+
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "{stem:1000000000}",
+        "{filename!r}",
+        "{stem.__class__}",
+        "{filename[0]}",
+        "{unknown}",
+    ],
+)
+def test_corrected_pattern_rejects_format_operations(pattern):
+    with pytest.raises(ValidationError, match="corrected_pattern"):
+        Astrometry(corrected_pattern=pattern)
+
+
+def test_corrected_pattern_keeps_supported_placeholders():
+    astrometry = Astrometry(corrected_pattern="{stem}_{filename}")
+    assert astrometry.corrected_pattern == "{stem}_{filename}"
 
 
 def test_documentation_schema_matches_runtime():

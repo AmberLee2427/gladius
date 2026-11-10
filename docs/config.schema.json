@@ -28,6 +28,7 @@
         },
         "corrected_pattern": {
           "default": "{stem}_gaiawcs.asdf",
+          "maxLength": 255,
           "title": "Corrected Pattern",
           "type": "string"
         },
