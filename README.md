@@ -4,25 +4,33 @@
 [![codecov](https://codecov.io/gh/AmberLee2427/gladius/graph/badge.svg)](https://codecov.io/gh/AmberLee2427/gladius)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-Native image cutouts for the Roman Space Telescope.
+Gladius makes small images around targets you choose from larger Roman Space
+Telescope images. It copies the original detector pixels and keeps their
+uncertainties, quality flags, metadata, and mapping to positions on the sky.
+You can use Gladius from Python, the command line, or a browser interface.
 
-Gladius is for **Roman Wide Field Instrument Level 2 calibrated images**
-(`*_cal.asdf`), and only those. It is not a general cutout tool: for other
-telescopes, FITS images, mosaics or arbitrary files, use
-[astrocut](https://astrocut.readthedocs.io).
+**[Documentation](https://roman-gladius.readthedocs.io/en/latest/)** ·
+[Getting started](docs/quickstart.md) ·
+[Example configuration](examples/config.yaml) ·
+[Standalone script](standalone/README.md)
 
-Python import and command: `gladius`. Distribution name: `roman-gladius`
-(`roman_gladius` is the equivalent PyPI spelling).
+Gladius accepts **Roman Wide Field Instrument Level 2 calibrated ASDF images**
+(`*_cal.asdf`). You can supply local images or ask it to find images in the MAST
+archive. For other telescopes or input formats, [Astrocut](https://astrocut.readthedocs.io)
+may be a better fit.
 
-Native detector cutouts from calibrated Roman images, with explicit parent-pixel
-mapping, separately retained parent metadata, exact stored astrometry, and optional
-display stacks. An independent alpha package built from the STScI Cookiecutter
-scaffold; it is not affiliated with or endorsed by STScI or Astropy.
+Gladius is alpha software. It is an independent project and is not affiliated
+with or endorsed by STScI or Astropy.
 
-## Install and run
+## Installing Gladius
 
-Install the published alpha release from [PyPI](https://pypi.org/project/roman-gladius/)
-with Python 3.11 or newer:
+Gladius requires Python 3.11 or later. The published alpha release is available
+from [PyPI](https://pypi.org/project/roman-gladius/) as `roman-gladius`; its Python
+import and command are both `gladius`.
+
+The following commands create a work folder and a virtual environment, install
+Gladius, and start its browser interface. A virtual environment keeps Gladius
+and its Python packages separate from those you use for other projects.
 
 ```sh
 mkdir gladius-work
@@ -33,110 +41,149 @@ python -m pip install roman-gladius
 gladius gui --workspace .
 ```
 
-Prefer a smaller environment? Install with `--no-deps`; `lite-requirements.txt` lists the packages Gladius needs without the notebook stack.
+On Windows, the activation command is `.venv\Scripts\activate` instead.
+The printed URL opens the interface in a browser on the same machine. There,
+you can add targets, choose images and settings, and make cutouts. The terminal
+needs to remain open while Gladius runs; closing the browser does not stop a job.
 
-On Windows, activate with `.venv\Scripts\activate` instead. Open the printed
-GUI URL to add targets, choose images and processing, and download a YAML file or
-make cutouts. For the manual YAML workflow:
+The default installation includes JupyterLab for the tutorials. A smaller
+installation without the notebook packages uses `--no-deps` together with all
+packages in [lite-requirements.txt](lite-requirements.txt).
+
+The [quickstart](docs/quickstart.md) also covers installation from source,
+interactive notebooks, and running the interface on Roman Research Nexus.
+
+## Trying an example
+
+The offline demo generates its own test images, so it needs no observations or
+credentials. The destination must not already contain a demo.
+
+```sh
+gladius demo gladius-demo
+```
+
+Gladius creates two synthetic exposures and makes ASDF and FITS cutouts, a median
+display image, and an animation. It also saves the configuration and a manifest:
+a file recording the run's outputs and status. These test images are not Roman
+observations.
+
+The MAST demo instead downloads one calibrated archive image and makes cutouts.
+It requires a MAST token. After creating a token on the
+[MAST token page](https://auth.mast.stsci.edu/tokens), you can paste it into the
+hidden prompt opened by `gladius token`:
+
+```sh
+gladius token
+gladius demo mast-demo
+```
+
+The first command saves the token in `.env` in the current directory. A token
+identifies your account; restricted observations still require access permission
+for that account. Tokens belong outside Git, YAML configurations, and notebooks.
+
+The demo checks the image size reported by MAST before downloading. Its default
+limit is 512 MiB, which `--max-parent-mib` can change. It makes no display stack.
+The [MAST demo guide](docs/quickstart.md#a-demo-with-one-real-image-from-mast)
+explains its outputs and coordinate checks. The
+[authentication guide](docs/configuration.md#local-mast-authentication) explains
+credential locations for the browser interface, command line, and Python.
+
+## Using your own targets and images
+
+The browser interface can build and save a YAML configuration for you. For a
+configuration you can edit in a text editor, `init-config` creates an annotated
+example. After you edit its targets, input paths, and output directory, the next
+two commands check it and run Gladius:
 
 ```sh
 gladius init-config config.yaml
-# Edit targets and inputs in config.yaml.
 gladius validate config.yaml
 gladius run config.yaml
 ```
 
-For archive access, set `inputs.mode: mast`. Searches use your targets by default;
-`mast_criteria` adds optional archive constraints. Restricted data use
-`MAST_API_TOKEN` from the environment.
-Directory mode does not perform archive queries or downloads.
-
-Try a complete offline example with no credentials or mission data:
+A target CSV can replace the targets in the YAML file:
 
 ```sh
-gladius demo /tmp/my-gladius-demo
+gladius run config.yaml --targets targets.csv
 ```
 
-This creates two synthetic ASDF exposures, a YAML file, native ASDF/FITS cutouts,
-a display stack, an exposure GIF, a resolved configuration and a run manifest. Choose a new demo
-folder; existing demo inputs are not overwritten.
+For example, a sky-coordinate target list contains an ID, right ascension, and
+declination in ICRS degrees:
 
-Or try a real archive image.
-First sign in at the [MAST token page](https://auth.mast.stsci.edu/tokens), create
-an API token, and copy it for the hidden prompt below. The token identifies your
-account; restricted observations still require permission for that account:
-
-```sh
-gladius token             # Hidden prompt; saves MAST_API_TOKEN in .env here.
-gladius demo mast-demo    # Queries MAST, downloads one parent, and makes cutouts.
+```csv
+id,ra,dec
+my-target,270.0,-29.0
 ```
 
-The MAST demo writes `mast-demo/demo.yaml` and ASDF/FITS cutouts under
-`mast-demo/output/`. It rejects parents advertised above 512 MiB before download;
-use `--max-parent-mib` to change that limit. It uses an explicit 0.01-pixel WCS
-round-trip tolerance and makes no display stack. See the
-[real-data quickstart](docs/quickstart.md#try-one-real-image-from-mast).
+These are example coordinates. Pixel targets use `id,x,y` instead, with zero-based
+coordinates in the original image. Extra CSV columns remain in the target metadata.
+Paths inside YAML resolve relative to that file; the `--targets` path resolves
+relative to your terminal's current directory.
 
-## Configuration
+The [configuration guide](docs/configuration.md) covers archive searches, date
+and filter selection, cutout size, quality screening, and output choices.
+[Named runs and reuse](docs/configuration.md#named-runs-revisions-and-reuse)
+explains how Gladius saves revisions and avoids repeating unchanged work.
 
-[examples/config.yaml](examples/config.yaml) documents every option. Paths are
-relative to the configuration file. Unknown keys, duplicate YAML keys, invalid
-coordinates and inconsistent settings are rejected before input discovery.
-`gladius config-schema schema.json` writes JSON Schema for editor support.
+## Pixels, coordinates, and outputs
 
-- Select exposure-start dates in a UTC `[start, end)` interval, detectors 1–18,
-  and filters. Empty detector/filter lists mean all; missing metadata needed for
-  a requested selection causes an explicit error.
-- Choose square cutout size, padding/strict edges and fully off-detector policy.
-- Use supplied WCS, validate its numerical consistency, or require a separately
-  supplied corrected GWCS. Validation does **not** establish absolute sky accuracy.
-- Enable an autocorrelation elongation screen and decide whether failures enter
-  display stacks. Native cutouts remain available regardless of quality flags.
-- Retain full parent images or keep only their derived products. Local input
-  files are never deleted. Archive parents are staged one at a time.
-- Create median display stacks, exposure GIFs and configurable false-colour composites.
-- Choose ASDF, FITS or both; configure bounded display stacks, resume and failure
-  handling. Resolved defaults and dependency versions are recorded for each run.
+Individual cutouts retain the original pixels without rotation or interpolation.
+At detector edges, Gladius can reject the request or pad the missing region.
+Science and uncertainty padding contain `NaN`; quality padding carries the
+`DO_NOT_USE` flag. A target outside the detector is skipped.
 
-See [configuration](docs/configuration.md), [outputs](docs/products.md),
-[scientific conventions](docs/science.md), and [Python API](docs/api.rst).
+The world coordinate system (WCS) maps pixels to positions on the sky. Gladius
+adjusts the chosen WCS for the cutout's offset and saves the original WCS and
+metadata separately. It can use a correction you supply, but does not fit one.
+Its numerical checks test coordinate consistency, not absolute sky accuracy.
 
-## Scientific contract
+ASDF output stores the complete coordinate model. FITS output provides science,
+uncertainty, and quality arrays, a conventional coordinate header, and embedded
+ASDF metadata containing the complete model. These files use Gladius's cutout
+format rather than the Roman pipeline's image format. The Python function
+`read_cutout` reads either output format.
 
-SCI and ERR are unresampled floating-point pixels with NaN padding. DQ flags stay
-integer; missing pixels are DO_NOT_USE (1), and existing saturation flags survive.
-Centering follows the commissioning convention `floor(position) - (size - 1)//2`,
-including odd sizes. Coordinates are zero-based `(x, y)` on the calibrated SCI
-array, with `array[y, x]` indexing. Origins can be negative.
+Optional median stacks, animations, and false-colour images are for inspection.
+Gladius interpolates pixels to align them; it does not match stellar image shapes,
+match photometric calibration, or propagate uncertainties through stacking.
+Individual cutouts retain the pixels needed for scientific measurements.
+The optional elongation screen remains provisional and needs calibration on
+representative images.
 
-The cutout WCS is a translation of the chosen parent WCS. The original WCS and
-metadata are retained under `parent_wcs` and `parent_metadata`; derived footprints
-are in `cutout_metadata`. Spatial arrays are cropped using the shared mapping,
-with descriptors recording their original paths, shapes and types. Non-spatial
-metadata arrays and custom fields are retained, including FITS header ordering,
-comments and duplicate HISTORY cards.
+The [output guide](docs/products.md) explains the files and how to read them.
+[Scientific conventions](docs/science.md) explains pixel selection, padding,
+coordinate handling, and scientific limits. The
+[metadata reference](docs/headers.md) describes saved fields.
 
-ASDF stores the exact GWCS. FITS provides SCI/ERR/DQ extensions, a measured TAN-SIP
-approximation where necessary, auxiliary arrays and a package-specific ASDFMETA
-extension retaining full metadata and exact WCS. These are **derived products**,
-not schema-valid Roman mission datamodels. Read them with `read_cutout`.
+## Python and tutorials
 
-## Current boundaries
+The browser interface and command line use the same Python functions. For example,
+this configuration makes 150 × 150 pixel cutouts from local images:
 
-The first version handles 2D calibrated detector images, not raw ramps, mosaics,
-spectral products or moving-target ephemerides. A supplied correction can be
-applied, but the separately authored Gaia solver is not bundled. The new
-independent autocorrelation method is provisional; its threshold must be
-calibrated, and the old commissioning threshold is not assumed equivalent.
-Stacks are resampled display products, not photometrically or PSF-matched science
-coadds. They do not propagate uncertainties. Execution is sequential and portable.
+```python
+from pathlib import Path
 
-MAST staging is covered by mocked service tests; real archive access depends on
-service availability, permissions and input metadata. See TESTING.md for actual
-validation scope. No automatic upload, publication or external solver invocation
-occurs.
+from gladius import RunConfig, read_targets_csv, run
 
-## Development and provenance
+config = RunConfig(
+    targets=read_targets_csv("targets.csv"),
+    inputs={"mode": "directory", "directory": "images"},
+    extraction={"size": 150},
+    storage={"output_directory": "cutouts"},
+).resolved(Path.cwd())
+
+manifest_path = run(config)
+```
+
+The [Python API reference](docs/api.rst) describes the available functions.
+`gladius --tutorial` copies and opens the local synthetic notebook;
+`gladius --nexus-tutorial` opens or links the MAST notebook on Nexus.
+The [notebook guide](notebooks/README.md) explains their requirements.
+
+## Development, testing, and releases
+
+The following commands install development dependencies and run the tests,
+code checks, documentation build, and package build from a source checkout:
 
 ```sh
 python -m pip install -e '.[dev]'
@@ -146,145 +193,23 @@ python -m sphinx -W -b html docs docs/_build/html
 python -m build
 ```
 
-Historical source snapshots are local reference material and are excluded from
-distributions. [TEMPLATE.json](TEMPLATE.json) records the
-Cookiecutter template and exact commit; [NOTICE.md](NOTICE.md) explains license
-scope and attribution. The copied external Gaia solver has not been incorporated
-into the package.
+Normal tests run offline. Separate opt-in checks cover archive access, a public
+Roman simulation, and local commissioning-category images.
+[TESTING.md](TESTING.md) describes the validation scope and release process.
+Authenticated archive workers keep their output private; downloaded archive images
+and cutouts do not become public CI artifacts.
 
-New package code is BSD-3-Clause. Template attribution is retained separately.
-See [contributing](CONTRIBUTING.md), [conduct](CODE_OF_CONDUCT.md),
-[AI disclosure](AI_POLICY.md), and [citation](CITATION.cff). The project has no DOI yet.
+The **Bump version** GitHub Actions workflow updates version files, creates a tag,
+and starts the PyPI release workflow. A matching `v<version>` tag can also trigger
+publication. The release workflow requires the `PYPI_API_TOKEN` Actions secret.
 
-## Local web GUI and target CSVs
+## Contributing and project information
 
-The separate [Nexus notebook](notebooks/README.md) queries real MAST data and
-requires an explicit path to your credential file. It is not part of the docs
-site. Install its plotting/kernel dependencies with `pip install -e .`.
+Gladius uses the BSD-3-Clause license. [NOTICE.md](NOTICE.md) describes attribution
+and license scope, and [TEMPLATE.json](TEMPLATE.json) records the STScI
+Cookiecutter scaffold. The external Gaia solver is not part of the package.
 
-For restricted MAST access, run `gladius token` in your workspace to save the
-token through a hidden prompt. Alternatively copy `.env.example` to `.env`
-and set `MAST_API_TOKEN=your_token_here`. The GUI loads that file when the server
-starts; restart the server after editing it. Existing shell variables take
-precedence. For `gladius run config.yaml`, place `.env` beside the YAML instead.
-Use `--env-file /path/to/credentials.env` with `token`, `run`, `gui`, or the MAST
-demo to select a different credential file.
-Keep `.env` private and out of Git; the repository already ignores it. GitHub
-Actions secrets do not populate this local file. See the
-[authentication instructions](docs/configuration.md#local-mast-authentication).
-
-```sh
-gladius gui --workspace . --port 8768
-```
-
-Open the printed local URL. The GUI builds the same validated configuration used
-by the CLI, imports target CSVs, downloads self-contained YAML, and runs the
-pipeline with live progress. It includes a YAML editor/importer for existing
-configurations. Relative paths resolve from the directory shown in the builder;
-downloaded YAML contains absolute paths. The server binds only to loopback.
-Keep its terminal open during runs; closing a browser tab does not cancel a run.
-
-```sh
-gladius validate config.yaml --targets targets.csv
-gladius run config.yaml --targets targets.csv
-```
-
-`--targets` replaces YAML targets before validation, so the YAML may omit targets
-when that option is supplied. The CSV path is relative to the CLI working
-directory; other paths retain their YAML-relative meaning.
-
-```csv
-id,ra,dec,catalogue
-OGLE-2019-BLG-0011,270.123,-29.456,OGLE
-```
-
-Use decimal ICRS degrees (`ra,dec`) or zero-based pixels (`x,y`), never both.
-`ra_deg/dec_deg` and `name/target_id` aliases are supported. IDs can be omitted to
-generate stable row-order IDs such as `target-000001`. Extra columns are retained
-as strings under each target's `metadata`, including in cutout provenance.
-Invalid rows and duplicate IDs fail explicitly. The GUI preview shows the first
-50 targets; all rows are included in the configuration and run.
-
-Each GUI submission saves its resolved YAML and progress record in
-`.gladius-gui/` under the workspace; scientific outputs still go to the
-configured output directory. Only one GUI-owned run is active at a time. Reloading
-the page reconnects to the last run while the server remains open. After a server
-restart, run history remains on disk rather than being automatically restarted.
-
-On Nexus, start the GUI in a JupyterLab terminal with
-`gladius gui --workspace /path/on/nexus/to/work --nexus` and open the printed
-proxy link. Gladius detects a supplied JupyterHub public URL automatically;
-`--public-url` provides an explicit override. See the
-[Nexus and SSH instructions](docs/configuration.md#roman-research-nexus-and-jupyterhub).
-
-## Python API
-
-The CLI and GUI use the same importable functions:
-
-```python
-from pathlib import Path
-
-from gladius import RunConfig, load_config, load_environment, read_targets_csv, run
-
-# Folder containing this example's YAML, targets, and optional .env file.
-workspace = Path.cwd()
-
-# Python callers explicitly load credentials for restricted MAST access.
-# Reads workspace/.env if present; existing environment variables take precedence.
-load_environment(workspace)
-
-# Existing YAML, with an optional CSV override: returns a validated RunConfig.
-config = load_config(workspace / "config.yaml", targets_path=workspace / "targets.csv")
-manifest_path = run(config, progress=print)
-
-# Or construct the configuration directly:
-config = RunConfig(
-    targets=read_targets_csv(workspace / "targets.csv"),
-    inputs={"mode": "mast"},
-    extraction={"size": 150},
-).resolved(workspace)
-# manifest_path = run(config)
-```
-
-MAST sky searches are generated from target RA/Dec, with Level 2 calibrated
-images and a configurable 6 arcminute candidate radius by default. Additional
-criteria are optional for sky targets; pixel-only targets need an archive
-constraint such as a program ID. See the configuration guide for authentication,
-query limits and overlap conventions. `make_cutout()` also accepts in-memory
-SCI/ERR/DQ arrays, a WCS and a `Target`; see the Python API documentation.
-
-## Live archive tests in GitHub Actions
-
-Add `MAST_API_TOKEN` under **Settings → Secrets and variables → Actions**.
-The **Live Roman MAST download** workflow runs on code changes in pull
-requests and on `main`, or manually from Actions. It downloads one calibrated
-image (capped at 1 GiB) and extracts a cutout using its real WCS.
-Downloaded science data are not uploaded as artifacts. Normal tests
-remain offline. See the configuration guide for the exact coverage and limits.
-
-## Publishing releases
-
-Pushing a matching `v<version>` tag runs the checked PyPI release workflow.
-Store the PyPI upload token as the repository Actions secret `PYPI_API_TOKEN`.
-See [release instructions](TESTING.md#publish-a-release-to-pypi) before pushing a tag.
-
-## Interactive tutorials
-
-`gladius --tutorial` copies and opens a local synthetic tutorial in the current
-directory. `gladius --nexus-tutorial` copies the real-MAST tutorial and opens or
-links it in the running Nexus JupyterLab server. Both demonstrate the GUI inside
-an iframe. Add `--no-open` to copy only. The default install includes local
-JupyterLab; the launcher registers that environment as the notebook kernel.
-
-## Named runs and reusable work
-
-Set `run.name: bulge-field-test` in YAML, or use
-`gladius run config.yaml --name bulge-field-test`. Revisions are saved under
-`cutouts/runs/bulge-field-test/r0001/`, `r0002/`, and so on. Changing a quality
-threshold or adding a composite reuses native cutouts. Changed dates refresh
-MAST discovery while known archive products retain their identity.
-
-`--refresh-inputs` re-queries MAST membership; `--fresh` bypasses all reuse.
-The GUI also exposes the run name. See the [reuse rules](docs/configuration.md#named-runs-revisions-and-reuse)
-for each setting and the distinction between creation provenance and current
-revision quality decisions.
+The repository also contains [contribution guidance](CONTRIBUTING.md), a
+[code of conduct](CODE_OF_CONDUCT.md), an [AI disclosure](AI_POLICY.md), and
+[citation metadata](CITATION.cff). The project has no DOI yet.
+[SECURITY.md](SECURITY.md) explains how to report a vulnerability privately.
