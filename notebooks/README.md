@@ -2,7 +2,9 @@
 
 The [local notebook](local_cutouts/local_cutouts.ipynb) and
 [Nexus notebook](nexus_cutouts/nexus_cutouts.ipynb) teach the same MAST workflow.
-Both require an explicit credential-file path and one accessible Roman
+Both open the interface without archive credentials, with local files available
+as an input choice. Their worked MAST example is optional: `RUN_ARCHIVE_EXAMPLE`
+enables it after you provide a credential-file path and one accessible Roman
 `fileSetName`. They inspect the query and advertised image size before downloading,
 retain the original image for context, and review cutouts and quality decisions.
 Only their embedded UI connection differs: localhost for a local notebook and the
@@ -26,8 +28,8 @@ AND flagged native cutouts. Parent images show cutout boundaries and target
 predictions. N/E arrows come from the saved WCS and do not independently validate
 pointing. Contact sheets share a brightness stretch per target/filter/unit group.
 
-The optional GUI is disabled by default. Set `RUN_GUI=True` to explore the loaded
-configuration. On local JupyterLab also set `NOTEBOOK_ORIGIN` to the actual scheme,
+The GUI opens by default, before the optional archive example. It does not
+require a Python `config` variable; you can build a configuration in the form. On local JupyterLab also set `NOTEBOOK_ORIGIN` to the actual scheme,
 host and port in your notebook address; Nexus uses its authenticated proxy.
 Stop the GUI with the provided shutdown cell when finished.
 

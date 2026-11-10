@@ -119,10 +119,69 @@ def test_tutorial_workflows_differ_only_in_gui_connection():
     assert len(local_code) == len(nexus_code)
     for left, right in zip(local_code, nexus_code, strict=True):
         left = left.replace(
-            "\n# The scheme, hostname, and port in your JupyterLab address, without its path.\n"
+            "\n# Match the scheme, hostname, and port in your JupyterLab address.\n"
             'NOTEBOOK_ORIGIN = "http://localhost:8888"\n',
             "",
         )
         left = left.replace("iframe_origin=NOTEBOOK_ORIGIN", 'nexus=True, iframe_origin="self"')
         left = left.replace('gui_server.url + "/"', "gui_server.public_url")
         assert left == right
+
+
+def test_archive_cells_are_optional_without_credentials(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    root = Path(__file__).resolve().parents[1] / "notebooks"
+    for kind in ("local", "nexus"):
+        notebook = json.loads((root / f"{kind}_cutouts/{kind}_cutouts.ipynb").read_text())
+        namespace = {}
+        for cell in notebook["cells"]:
+            if cell["cell_type"] != "code":
+                continue
+            if cell["id"] != "nexus-gui-start":
+                exec("".join(cell["source"]), namespace)
+        assert namespace["RUN_ARCHIVE_EXAMPLE"] is False
+        assert "config" not in namespace
+        assert "missions" not in namespace
+
+
+def test_gui_opens_before_archive_setup_without_config(tmp_path, monkeypatch):
+    import threading
+    from types import SimpleNamespace
+
+    import IPython.display
+
+    import gladius.web
+
+    calls = []
+
+    class FakeThread:
+        def __init__(self, **kwargs):
+            pass
+
+        def start(self):
+            pass
+
+    def server(workspace, **kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(
+            serve_forever=lambda: None,
+            public_url="https://example.invalid/proxy/1234/",
+            url="http://localhost:1234",
+        )
+
+    monkeypatch.setattr(gladius.web, "GuiServer", server)
+    monkeypatch.setattr(threading, "Thread", FakeThread)
+    monkeypatch.setattr(IPython.display, "display", lambda *args: None)
+    monkeypatch.chdir(tmp_path)
+    root = Path(__file__).resolve().parents[1] / "notebooks"
+    for kind in ("local", "nexus"):
+        notebook = json.loads((root / f"{kind}_cutouts/{kind}_cutouts.ipynb").read_text())
+        namespace = {}
+        for cell in notebook["cells"]:
+            if cell["cell_type"] == "code":
+                exec("".join(cell["source"]), namespace)
+            if cell["id"] == "nexus-gui-start":
+                break
+        assert "gui_server" in namespace
+        assert "ENV_FILE" not in namespace
+        assert calls[-1]["initial_config"] is None

@@ -29,7 +29,9 @@ def test_notebook_requires_explicit_credentials_before_archive_access(
             assert not cell["outputs"] and cell["execution_count"] is None
             ast.parse("".join(cell["source"]))
     namespace = {}
+    exec(cells["ui-settings"], namespace)
     exec(cells["gladius-02"], namespace)
+    namespace["RUN_ARCHIVE_EXAMPLE"] = True
     with pytest.raises(ValueError, match="Set ENV_FILE"):
         exec(cells["gladius-03"], namespace)
     namespace["ENV_FILE"] = tmp_path / "missing.env"
@@ -67,9 +69,12 @@ def test_distribution_checker_rejects_executed_notebook(tmp_path):
 def test_nexus_configuration_starts_without_credentials_or_gui():
     cells, notebook = notebook_cells()
     namespace = {}
+    exec(cells["ui-settings"], namespace)
     exec(cells["gladius-02"], namespace)
     assert namespace["ENV_FILE"] is None
-    assert namespace["RUN_GUI"] is False
+    assert namespace["RUN_GUI"] is True
+    assert namespace["RUN_ARCHIVE_EXAMPLE"] is False
+    namespace["RUN_GUI"] = False
     for cell in notebook["cells"]:
         code = "".join(cell["source"])
         if cell["cell_type"] == "code" and "if RUN_GUI:" in code:
@@ -82,7 +87,9 @@ def test_nexus_configuration_starts_without_credentials_or_gui():
 def test_nexus_query_is_explicit_and_bounded_before_network_access():
     cells, _ = notebook_cells()
     namespace = {}
+    exec(cells["ui-settings"], namespace)
     exec(cells["gladius-02"], namespace)
+    namespace["RUN_ARCHIVE_EXAMPLE"] = True
     with pytest.raises(ValueError, match="No MAST query was sent"):
         exec(cells["nexus-query-plan"], namespace)
     namespace["DATASET_ID"] = "*"

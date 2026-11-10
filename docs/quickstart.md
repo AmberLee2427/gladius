@@ -41,7 +41,7 @@ This installs your checkout, which may contain changes newer than the PyPI relea
 
 ## Interactive tutorial notebooks
 
-The tutorials let you explore Gladius in an editable notebook. Both tutorials use MAST data and require an explicit credential-file path and an accessible dataset. The following commands install Gladius, copy the local tutorial into your current directory, and open it:
+The tutorials let you explore Gladius in an editable notebook. Both open the interface without archive credentials. Their optional MAST example requires an explicit credential-file path and an accessible dataset. The following commands install Gladius, copy the local tutorial into your current directory, and open it:
 
 ```sh
 python -m pip install roman-gladius
