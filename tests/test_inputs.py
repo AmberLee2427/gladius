@@ -74,11 +74,11 @@ def test_archive_selection_staging_and_cleanup(demo, tmp_path, monkeypatch):
     assert json.loads(manifest.read_text())["status"] == "complete"
     assert len(instance.downloads) == 1
     assert not instance.downloads[0].exists()
-    # A response hitting the query limit is never treated as a complete inventory.
+    # A response hitting the limit warns that it is a sample.
     config = config.model_copy(
         update={"inputs": config.inputs.model_copy(update={"query_limit": 2})}
     )
-    with pytest.raises(ValueError, match="truncated"):
+    with pytest.warns(UserWarning, match="limited sample"):
         discover(config)
 
 
@@ -118,6 +118,7 @@ def test_automatic_mast_queries_and_overrides():
     assert len(queries) == 2
     assert queries[0] == {
         "productLevel": "2",
+        "exposure_type": "WFI_IMAGE",
         "coordinates": "359.99 -29.0",
         "radius": "6.0 arcmin",
         "detector": ["WFI01", "SCA01"],

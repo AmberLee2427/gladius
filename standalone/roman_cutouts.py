@@ -395,7 +395,11 @@ def sources(inputs, targets, base):
         mast.login(token=os.environ["MAST_API_TOKEN"], store_token=False)
 
     # Search around each sky target unless the user supplied a shared position.
-    criteria = {"productLevel": "2", **inputs.get("mast_criteria", {})}
+    criteria = {
+        "productLevel": "2",
+        "exposure_type": "WFI_IMAGE",
+        **inputs.get("mast_criteria", {}),
+    }
     positions = {(t["ra"], t["dec"]) for t in targets if "ra" in t}
     if not positions and not inputs.get("mast_criteria"):
         raise ValueError("Pixel-only MAST targets require explicit mast_criteria")

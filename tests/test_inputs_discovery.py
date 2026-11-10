@@ -146,7 +146,7 @@ def test_token_is_taken_from_environment_only(monkeypatch):
     )
     monkeypatch.setenv("MAST_API_TOKEN", "test-only-sentinel")
     discover(mast_config())
-    assert fake.login_calls == [{"token": "test-only-sentinel"}]
+    assert fake.login_calls == [{"token": "test-only-sentinel", "store_token": False}]
 
 
 def test_non_authorization_errors_are_not_masked(monkeypatch):
@@ -155,14 +155,14 @@ def test_non_authorization_errors_are_not_masked(monkeypatch):
         discover(mast_config())
 
 
-def test_query_at_limit_is_treated_as_truncated(monkeypatch):
+def test_query_at_limit_warns_and_continues(monkeypatch):
     rows = [("ds1", "WFI01", "F146", "2026-01-01"), ("ds2", "WFI01", "F146", "2026-01-01")]
     install(monkeypatch, FakeMissions(responses=[observations(*rows)]))
-    with pytest.raises(ValueError, match="truncated"):
+    with pytest.warns(UserWarning, match="limited sample"):
         discover(mast_config(inputs={"query_limit": 2}))
 
 
-def test_combined_target_searches_at_limit_are_treated_as_truncated(monkeypatch):
+def test_combined_target_searches_are_capped_with_warning(monkeypatch):
     # Each cone is below the limit by itself; their union reaches it.
     install(
         monkeypatch,
@@ -175,9 +175,9 @@ def test_combined_target_searches_at_limit_are_treated_as_truncated(monkeypatch)
     )
     config = mast_config(
         targets=[{"id": "a", "ra": 270, "dec": -29}, {"id": "b", "ra": 10, "dec": 20}],
-        inputs={"query_limit": 2},
+        inputs={"query_limit": 1},
     )
-    with pytest.raises(ValueError, match="truncated"):
+    with pytest.warns(UserWarning, match="limited sample"):
         discover(config)
 
 
@@ -235,7 +235,9 @@ def test_pixel_only_config_issues_one_unfiltered_query():
             "inputs": {"mode": "mast", "mast_criteria": {"objectname": "TRAPPIST-1"}},
         }
     )
-    assert mast_queries(config) == [{"productLevel": "2", "objectname": "TRAPPIST-1"}]
+    assert mast_queries(config) == [
+        {"productLevel": "2", "exposure_type": "WFI_IMAGE", "objectname": "TRAPPIST-1"}
+    ]
 
 
 def test_product_suffix_filter_can_remove_everything(monkeypatch):
@@ -370,3 +372,35 @@ def test_load_test_skips_datasets_without_products(tmp_path, monkeypatch):
     install(monkeypatch, Empty(sample_table(("a", 10.0, 10.0)), {}))
     with pytest.raises(ValueError, match="No accessible calibrated image"):
         mast_test_configuration(Path(tmp_path))
+
+
+def test_query_limit_caps_observations_passed_to_product_selection(monkeypatch):
+    fake = install(
+        monkeypatch,
+        FakeMissions(
+            responses=[
+                observations(
+                    ("ds1", "WFI01", "F146", "2026-01-01"),
+                    ("ds2", "WFI01", "F146", "2026-01-01"),
+                )
+            ]
+        ),
+    )
+    selected = []
+
+    def products_for(rows):
+        selected.extend(rows["fileSetName"])
+        return fake.products
+
+    fake.get_unique_product_list = products_for
+    with pytest.warns(UserWarning, match="limited sample"):
+        discover(mast_config(inputs={"query_limit": 1}))
+    assert len(selected) == 1
+
+
+def test_science_exposure_default_can_be_overridden_explicitly():
+    from gladius.inputs import mast_queries
+
+    assert mast_queries(mast_config())[0]["exposure_type"] == "WFI_IMAGE"
+    config = mast_config(inputs={"mast_criteria": {"exposure_type": "WFI_DARK"}})
+    assert mast_queries(config)[0]["exposure_type"] == "WFI_DARK"

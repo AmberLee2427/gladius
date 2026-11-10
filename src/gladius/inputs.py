@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import tempfile
+import warnings
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -45,7 +46,11 @@ def mast_queries(config: RunConfig) -> list[dict]:
     metadata filters; exact configured selections are still checked locally.
     The cone finds candidate images, not a guarantee of pixel overlap.
     """
-    criteria = {"productLevel": "2", **config.inputs.mast_criteria}
+    criteria = {
+        "productLevel": "2",
+        "exposure_type": "WFI_IMAGE",
+        **config.inputs.mast_criteria,
+    }
     selection = config.selection
     if selection.detectors:
         criteria.setdefault(
@@ -102,7 +107,7 @@ def discover(config: RunConfig):
         raise ImportError('MAST input requires pip install "roman-gladius[mast]"') from exc
     missions = MastMissions(mission="roman")
     if os.environ.get("MAST_API_TOKEN"):
-        missions.login(token=os.environ["MAST_API_TOKEN"])
+        missions.login(token=os.environ["MAST_API_TOKEN"], store_token=False)
     if missions.dataset_kwds.get("roman") != "fileSetName":
         raise ImportError(
             "Roman MAST support requires astroquery>=0.4.11; upgrade the [mast] extra"
@@ -126,20 +131,24 @@ def discover(config: RunConfig):
                 ) from exc
             raise
         if len(observations) >= config.inputs.query_limit:
-            raise ValueError("MAST query may be truncated; narrow criteria or increase query_limit")
+            warnings.warn(
+                "MAST query limit reached; processing a limited sample, not a complete inventory",
+                UserWarning,
+                stacklevel=2,
+            )
         if len(observations):
             tables.append(observations)
             combined = unique(vstack(tables), keys="fileSetName", keep="first")
-            if len(combined) >= config.inputs.query_limit:
-                raise ValueError(
-                    "MAST query may be truncated; narrow criteria or increase query_limit"
+            if len(combined) > config.inputs.query_limit:
+                warnings.warn(
+                    "Combined MAST results exceed query_limit; processing a limited sample",
+                    UserWarning,
+                    stacklevel=2,
                 )
-            tables = [combined]
+            tables = [combined[: config.inputs.query_limit]]
     if not tables:
         raise ValueError("No MAST observations matched the target searches and criteria")
     observations = unique(vstack(tables), keys="fileSetName", keep="first")
-    if len(observations) >= config.inputs.query_limit:
-        raise ValueError("MAST query may be truncated; narrow criteria or increase query_limit")
     indices = []
     for index, row in enumerate(observations):
         if selected(
@@ -216,7 +225,10 @@ def mast_test_configuration(base: Path) -> dict:
         if os.environ.get("MAST_API_TOKEN"):
             missions.login(token=os.environ["MAST_API_TOKEN"], store_token=False)
         observations = missions.query_criteria(
-            productLevel="2", limit=5, select_cols=["fileSetName", "ra", "dec"]
+            productLevel="2",
+            exposure_type="WFI_IMAGE",
+            limit=5,
+            select_cols=["fileSetName", "ra", "dec"],
         )
         candidates = []
         for index, row in enumerate(observations):

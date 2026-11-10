@@ -231,7 +231,8 @@ produce explicit errors rather than stripping typed metadata silently.
 
 `inputs.mode: mast` uses Astroquery's Roman MastMissions API (`astroquery>=0.4.11`).
 With RA/Dec targets and `mast_criteria: {}`, the package queries each distinct
-sky position, defaults to `productLevel: "2"` (calibrated detector images), and
+sky position, defaults to `productLevel: "2"` and `exposure_type: WFI_IMAGE` (calibrated
+science images, excluding dark exposures), and
 uses `mast_radius_arcmin: 6.0`. Dates, detectors and filters are included in the
 archive query and checked again locally. End dates remain exclusive even when
 the archive's range query includes the endpoint.
@@ -250,8 +251,10 @@ do not identify a sky position. Advanced filters can narrow the result further;
 configured local selections are still enforced. `product_suffix: _cal` chooses
 the calibrated files from the resulting product lists.
 
-Queries reaching `query_limit` (per cone or combined unique observations) are
-rejected as potentially incomplete. MAST access uses `astroquery`, installed with Gladius. Restricted data
+`query_limit` caps the number of unique observations selected across target
+searches. A search reaching that limit warns and continues with the returned
+sample. The sample may be incomplete and is not necessarily the nearest or
+smallest image. This setting limits observations, not downloaded bytes. MAST access uses `astroquery`, installed with Gladius. Restricted data
 require an authorized account and `MAST_API_TOKEN` in the launching shell/server
 environment, never in YAML. Local environment loading is described under
 [authentication](#local-mast-authentication); the package does not search

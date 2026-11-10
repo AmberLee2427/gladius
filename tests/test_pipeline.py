@@ -206,6 +206,26 @@ def test_animation_uses_one_stretch_and_marks_missing_pixels(tmp_path):
         np.testing.assert_array_equal(first[34, start + 8], [34, 22, 46])
 
 
+def test_animation_displays_array_y_upward(tmp_path):
+    from PIL import Image
+
+    from gladius.stacks import _write_animation
+
+    # A bright upper array row and a missing lower row make a flip unambiguous.
+    cube = np.array([[[np.nan, 0.0], [10.0, 0.0]]])
+    original = cube.copy()
+    path = tmp_path / "orientation.gif"
+    _write_animation(cube, path, 500, [{"start_utc": None}])
+
+    with Image.open(path) as gif:
+        pixels = np.asarray(gif.convert("RGB"))
+        left = (gif.width - 8) // 2
+        assert pixels[34, left, 0] > 200
+        np.testing.assert_array_equal(pixels[38, left], [34, 22, 46])
+
+    np.testing.assert_array_equal(cube, original)
+
+
 def test_colour_composite_without_stack_or_gif(demo):
     from PIL import Image
 

@@ -2,7 +2,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTEBOOK_ONLY = {"ipykernel", "matplotlib", "jupyterlab"}
+NOTEBOOK_ONLY = {"ipykernel", "matplotlib", "jupyterlab", "ipyaladin"}
 
 
 def _names(requirements):

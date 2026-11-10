@@ -45,7 +45,8 @@ def _write_animation(cube, path, frame_ms, frame_info):
         normal = np.clip((np.nan_to_num(data, nan=low) - low) / (high - low), 0, 1)
         pixels = (1 + 254 * np.arcsinh(normal / 0.03) / np.arcsinh(1 / 0.03)).astype("uint8")
         pixels[~np.isfinite(data)] = 0
-        image = Image.fromarray(pixels).convert("P")
+        # Match the median and RGB previews: array y increases upward.
+        image = Image.fromarray(pixels[::-1].copy()).convert("P")
         image.putpalette(palette)
         image = image.resize((cube.shape[2] * scale, height), Image.Resampling.NEAREST)
         frame = Image.new("P", (width, height + 34), 0)

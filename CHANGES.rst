@@ -1,6 +1,20 @@
 Unreleased
 ==========
 
+0.1.0a5 (2026-11-10)
+====================
+
+* Align the local and Nexus tutorials around the same archive workflow, with an
+  editable target CSV, commented settings, an October 2026 date selection and
+  a hidden token prompt after an authorization failure. The UI opens without
+  archive credentials so local-file work does not require them.
+* Add ipyaladin to the default installation and use IRSA's 2MASS mirror for
+  notebook sky views. Keep the smaller installation free of notebook packages.
+* Search for WFI science images by default, excluding dark exposures. Treat the
+  query limit as a sample cap with a warning rather than stopping the run.
+* Match GIF orientation to the median and RGB previews, with array y upward.
+  Science arrays remain unchanged.
+
 0.1.0a4 (2026-11-05)
 ====================
 
