@@ -1,6 +1,16 @@
 Unreleased
 ==========
 
+0.1.0a6 (2026-11-12)
+====================
+
+* Compare standalone-script and package cutouts from the same synthetic parents
+  in offline CI and the same downloaded WFI science image in authenticated MAST
+  CI. Check exact arrays, padding, recursive metadata, WCS and FITS image planes.
+  The authenticated worker keeps archive details out of public logs and reports.
+* Add local and Nexus notebook launch commands to the documentation interface
+  table, and clarify how Gladius accepts externally supplied WCS corrections.
+
 0.1.0a5 (2026-11-10)
 ====================
 

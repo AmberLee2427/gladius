@@ -104,3 +104,18 @@ The test is disabled in GitHub Actions, including when explicitly enabled by an
 environment variable. Its worker discards stdout/stderr and exposes only pass/fail.
 No commissioning images, identifiers, coordinates, measurements, or diagnostic
 artifacts are published. Temporary downloaded parents and derived cutouts are removed after the check.
+
+## Comparing the script and package
+
+The offline suite runs the standalone script and package on the same synthetic
+parents. The authenticated MAST workflow runs the same comparison on one
+calibrated WFI science image, using the repository's `MAST_API_TOKEN` secret.
+Both checks cover cutout sizes 50 and 51, a sky-coordinate target, and opposite
+detector corners. They compare exact science, error, quality and ancillary
+arrays, padding, recursive metadata, coordinate mappings and FITS image planes.
+The files have different schemas and provenance, so the check does not require
+identical file bytes.
+
+The authenticated comparison runs inside the existing silent worker. Public
+reports contain only its pass/fail result; CI does not upload the parent image
+or cutouts.

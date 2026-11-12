@@ -35,7 +35,7 @@ jobs:
           python-version: '3.12'
       - name: Install package and integration dependencies
         run: python -m pip install '.[test]'
-      - name: Query and download one calibrated Roman detector image
+      - name: Compare package and script cutouts from one WFI science image
         env:
           MAST_API_TOKEN: ${{ secrets.MAST_API_TOKEN }}
           GLADIUS_LIVE_MAST: '1'

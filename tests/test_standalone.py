@@ -203,3 +203,12 @@ def test_inverse_rejects_singular_transform():
 
     with pytest.raises(ValueError, match="singular"):
         script.world_to_pixel(SingularInverse(), 1.0, 2.0)
+
+
+@pytest.mark.parametrize("size", [50, 51])
+def test_package_and_script_produce_equivalent_cutouts(demo, tmp_path, size):
+    """Exercise the same comparison as live CI, using synthetic parents offline."""
+    from tests.integration.package_script_parity import check_package_script_parity
+
+    for parent in sorted((demo.parent / "images").glob("*.asdf")):
+        check_package_script_parity(parent, tmp_path / parent.stem, size)

@@ -94,6 +94,7 @@ def _authenticated_roman_download(tmp_path, record_property):
     # No invented program ID or hard-coded dataset can silently go stale.
     observations = missions.query_criteria(
         productLevel="2",
+        exposure_type="WFI_IMAGE",
         limit=5,
         select_cols=[
             "fileSetName",
@@ -159,6 +160,13 @@ def _authenticated_roman_download(tmp_path, record_property):
         from standalone_fidelity import check_standalone_fidelity
 
         check_standalone_fidelity(path, tmp_path)
+
+        # Use the downloaded parent for both implementations; no second download.
+        # This runs inside the silent worker, so assertion details stay private.
+        from package_script_parity import check_package_script_parity
+
+        for size in (50, 51):
+            check_package_script_parity(path, tmp_path / f"parity-{size}", size)
         downloaded_path = Path(path)
     assert not downloaded_path.exists(), "Temporary archive parent was not cleaned up"
 
@@ -172,6 +180,7 @@ def _authenticated_roman_download(tmp_path, record_property):
         "standalone_pixel_fidelity": "passed",
         "standalone_wcs": "passed",
         "standalone_metadata": "passed",
+        "package_script_product_equivalence": "passed",
     }
     report = os.environ.get("GLADIUS_MAST_REPORT")
     if report:
@@ -214,6 +223,7 @@ def test_live_harness_with_synthetic_archive(demo, tmp_path, monkeypatch):
             assert kwargs == {"token": "synthetic-test-token", "store_token": False}
 
         def query_criteria(self, **kwargs):
+            assert kwargs["exposure_type"] == "WFI_IMAGE"
             self.calls += 1
             if self.calls == 2:
                 assert kwargs["coordinates"] == "270.0 -29.0"
@@ -248,6 +258,7 @@ def test_live_harness_with_synthetic_archive(demo, tmp_path, monkeypatch):
     result = json.loads(report.read_text())
     assert result["coverage"] == "calibrated-image-and-cutout"
     assert result["temporary_cleanup"] == "passed"
+    assert result["package_script_product_equivalence"] == "passed"
     assert "synthetic-test-token" not in report.read_text()
 
 
