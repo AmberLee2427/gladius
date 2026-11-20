@@ -33,7 +33,7 @@
           "type": "string"
         },
         "roundtrip_tolerance_pixels": {
-          "default": 0.001,
+          "default": 0.01,
           "exclusiveMinimum": 0,
           "title": "Roundtrip Tolerance Pixels",
           "type": "number"
@@ -60,6 +60,19 @@
           "default": false,
           "title": "Continue On Error",
           "type": "boolean"
+        },
+        "abort_after_repeated_failures": {
+          "default": 3,
+          "minimum": 0,
+          "title": "Abort After Repeated Failures",
+          "type": "integer"
+        },
+        "download_workers": {
+          "default": 4,
+          "maximum": 8,
+          "minimum": 1,
+          "title": "Download Workers",
+          "type": "integer"
         },
         "lock_timeout_seconds": {
           "default": 0,
@@ -162,6 +175,18 @@
           "exclusiveMinimum": 0,
           "title": "Query Limit",
           "type": "integer"
+        },
+        "prefilter_footprint": {
+          "default": true,
+          "title": "Prefilter Footprint",
+          "type": "boolean"
+        },
+        "footprint_margin_arcsec": {
+          "default": 10.0,
+          "maximum": 600,
+          "minimum": 0,
+          "title": "Footprint Margin Arcsec",
+          "type": "number"
         }
       },
       "title": "Inputs",
@@ -343,12 +368,43 @@
           "items": {
             "enum": [
               "asdf",
-              "fits"
+              "fits",
+              "roman_frame"
             ],
             "type": "string"
           },
           "title": "Formats",
           "type": "array"
+        },
+        "ancillary_arrays": {
+          "default": true,
+          "title": "Ancillary Arrays",
+          "type": "boolean"
+        },
+        "parent_metadata_arrays": {
+          "default": true,
+          "title": "Parent Metadata Arrays",
+          "type": "boolean"
+        },
+        "asdf_compression": {
+          "default": "none",
+          "enum": [
+            "none",
+            "zlib",
+            "bzp2",
+            "lz4"
+          ],
+          "title": "Asdf Compression",
+          "type": "string"
+        },
+        "output_links": {
+          "default": "hardlink",
+          "enum": [
+            "hardlink",
+            "copy"
+          ],
+          "title": "Output Links",
+          "type": "string"
         }
       },
       "title": "Storage",

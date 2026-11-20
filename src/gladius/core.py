@@ -23,6 +23,17 @@ class OffDetectorError(ValueError):
     """The target position is not on the parent detector image."""
 
 
+class WcsRoundTripError(ValueError):
+    """The WCS inverse does not reproduce pixel positions within the tolerance."""
+
+    def __init__(self, error_pixels, tolerance):
+        self.error_pixels = error_pixels
+        self.tolerance = tolerance
+        super().__init__(
+            f"WCS numerical round-trip error {error_pixels:g} exceeds {tolerance:g} pixels"
+        )
+
+
 @dataclass
 class Cutout:
     """Native image planes, mapping, astrometry, and retained parent metadata."""
@@ -173,7 +184,7 @@ def check_correction_matches_parent(correction_wcs, correction_shape, parent_wcs
         )
 
 
-def validate_wcs(wcs, shape, tolerance=0.001, points=()):
+def validate_wcs(wcs, shape, tolerance=0.01, points=()):
     """Check finite coordinates and numerical inversion, not absolute sky accuracy.
 
     ``points`` are extra (x, y) pixel positions, such as predicted targets, that must
@@ -191,7 +202,7 @@ def validate_wcs(wcs, shape, tolerance=0.001, points=()):
         raise ValueError("WCS is not finite over the image")
     error = float(np.max(np.hypot(back[0] - xx, back[1] - yy)))
     if error > tolerance:
-        raise ValueError(f"WCS numerical round-trip error {error:g} exceeds {tolerance:g} pixels")
+        raise WcsRoundTripError(error, tolerance)
     # Reject a collapsed or singular spatial mapping even if inverse calls appear successful.
     mid = (nx / 2, ny / 2)
     c = SkyCoord(*pixel_to_world(wcs, *mid), unit="deg")

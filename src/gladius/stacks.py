@@ -13,7 +13,7 @@ from astropy.io import fits
 from scipy.ndimage import map_coordinates
 
 from .core import pixel_to_world, world_to_pixel
-from .io import atomic_json, fits_header, read_cutout, sha256
+from .io import atomic_json, cutout_file, fits_header, read_cutout, sha256
 
 
 def _snap_to_image_edges(coordinates, length):
@@ -80,7 +80,7 @@ def _aligned_exposures(rows, run_directory, ref):
     values = []
     frame_info = []
     for key, entry in rows:
-        cutout = read_cutout(run_directory / next(iter(entry["files"])))
+        cutout = read_cutout(run_directory / cutout_file(entry["files"]))
         frame_info.append(
             {
                 "input": key,
@@ -130,7 +130,7 @@ def build_stacks(entries, run_directory: Path, config):
         if len(units) != 1:
             raise ValueError("Cannot combine exposures with different data units")
         first = rows[0][1]
-        ref = read_cutout(run_directory / next(iter(first["files"])))
+        ref = read_cutout(run_directory / cutout_file(first["files"]))
         cube, frame_info = _aligned_exposures(rows, run_directory, ref)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
@@ -252,7 +252,7 @@ def _build_composites(groups, run_directory, config):
             continue
         # Blue is a deterministic reference regardless of input filename ordering.
         reference_id, reference_entry = groups[(target, filters[2])][0]
-        ref = read_cutout(run_directory / next(iter(reference_entry["files"])))
+        ref = read_cutout(run_directory / cutout_file(reference_entry["files"]))
         channels, masks, limits, membership = [], [], {}, {}
         for band in filters:
             rows = groups[(target, band)]

@@ -757,6 +757,8 @@
         product_suffix: "Product suffix",
         product_filename: "Exact product filename",
         query_limit: "Query limit",
+        prefilter_footprint: "Skip candidates whose footprint misses every target",
+        footprint_margin_arcsec: "Footprint margin (arcsec)",
         start: "Start (UTC, inclusive)",
         end: "End (UTC, exclusive)",
         detectors: "Detectors",
@@ -783,8 +785,14 @@
         output_directory: "Output directory",
         retain_full_images: "Retain full images",
         formats: "Formats",
+        ancillary_arrays: "Keep extra parent planes",
+        parent_metadata_arrays: "Keep parent metadata arrays",
+        asdf_compression: "ASDF compression",
+        output_links: "Run output files",
         resume: "Reuse verified products",
         continue_on_error: "Continue on error",
+        abort_after_repeated_failures: "Stop after repeated identical failures",
+        download_workers: "Parallel MAST downloads",
         lock_timeout_seconds: "Lock timeout (seconds)",
       };
       async function api(path, body) {
@@ -888,7 +896,7 @@
           const choices =
             key === "detectors"
               ? Array.from({ length: 18 }, (_, i) => i + 1)
-              : ["asdf", "fits"];
+              : ["asdf", "fits", "roman_frame"];
           for (const item of choices) {
             const label = document.createElement("label");
             label.className = "check";
@@ -898,7 +906,9 @@
               "aria-label",
               key === "detectors"
                 ? "Detector " + item
-                : item.toUpperCase() + " output",
+                : item === "roman_frame"
+                  ? "Roman full-frame output"
+                  : item.toUpperCase() + " output",
             );
             box.checked = value.includes(item);
             box.onchange = () => {
@@ -1079,6 +1089,26 @@
             "Record per-image download/read/WCS failures and per-target conversion/extraction/write failures, then try later inputs. The run still finishes Failed if errors were recorded. Invalid configuration, initial MAST discovery, run-lock and stack-phase errors stop the run. Quality flags are recorded and may exclude stacks; they do not trigger this switch.",
           retain_full_images:
             "Saves a full copy of selected images in the output directory. Local originals are never deleted.",
+          prefilter_footprint:
+            "Tests each RA/Dec target against the footprint MAST reports for each candidate image and skips downloading images that contain none of them. Candidates without a usable footprint are kept. Pixel targets disable this check.",
+          footprint_margin_arcsec:
+            "Allowance for approximate archive footprints. A target this close outside a footprint still counts as inside.",
+          roundtrip_tolerance_pixels:
+            "Default 0.01 pixels. Flight WCS inverses round-trip to a few thousandths of a pixel.",
+          formats:
+            "roman_frame adds a full-detector copy of the parent, blank outside the cutout, for tools that expect Roman full frames. It is as large as the parent unless compressed.",
+          ancillary_arrays:
+            "Extra detector-aligned parent planes such as chisq, dumo and var_poisson. Off keeps only SCI, ERR and DQ.",
+          parent_metadata_arrays:
+            "Arrays inside the parent metadata, such as reference pixels. Off keeps each array's shape, type and SHA-256 instead.",
+          asdf_compression:
+            "Compresses ASDF blocks. lz4 needs the lz4 package. FITS files are not compressed.",
+          output_links:
+            "hardlink lets run files share disk space with the verified cache; copy writes independent files.",
+          abort_after_repeated_failures:
+            "With Continue on error: stop when the first N images all fail with the same error, which usually means an environment problem. Downloaded images are kept for the rerun. 0 disables.",
+          download_workers:
+            "MAST downloads that run ahead of extraction (1 to 8). Extraction stays one image at a time.",
         };
         if (instructions[key]) {
           const help = document.createElement("small");

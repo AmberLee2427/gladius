@@ -48,6 +48,7 @@ def test_full_offline_run_resume_and_stack(demo):
     assert len(list((demo.parent / "images").iterdir())) == 2
     # A corrupted file cannot be trusted merely because a manifest says complete.
     bad = outputs[0]
+    bad.chmod(0o644)  # linked outputs are read-only; force the corruption
     bad.write_bytes(b"broken")
     repaired_path = run(config, progress=lambda _: None)
     assert repaired_path != manifest  # Completed revisions are never overwritten.

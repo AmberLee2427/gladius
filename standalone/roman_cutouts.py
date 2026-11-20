@@ -233,7 +233,7 @@ def require_icrs_degrees(wcs):
         raise ValueError(f"{problem}; Gladius needs ICRS RA/Dec in degrees")
 
 
-def validate_wcs(wcs, shape, tolerance=0.001, points=()):
+def validate_wcs(wcs, shape, tolerance=0.01, points=()):
     """Check finite coordinates and numerical inversion, not absolute sky accuracy.
 
     ``points`` are extra (x, y) pixel positions, such as predicted targets, that must
@@ -483,11 +483,32 @@ def write_fits(tree, path):
     fits.HDUList(hdus).writeto(path, checksum=True)
 
 
+def require_installed_extensions(tree, name):
+    """Fail if a file names an ASDF extension that is not installed at all.
+
+    Files written by a newer release of an installed package only warn (asdf can
+    read them); unknown tags still fail through AsdfConversionWarning.
+    """
+    history = tree.get("history") if isinstance(tree, Mapping) else None
+    entries = history.get("extensions", []) if isinstance(history, Mapping) else []
+    installed = asdf.get_config().extensions
+    uris = {e.extension_uri for e in installed if e.extension_uri}
+    legacy = {n for e in installed for n in e.legacy_class_names}
+    for entry in entries if isinstance(entries, (list, tuple)) else []:
+        if isinstance(entry, Mapping):
+            uri, legacy_class = entry.get("extension_uri"), entry.get("extension_class")
+            if (uri and uri not in uris) or (
+                not uri and legacy_class and legacy_class not in legacy
+            ):
+                raise RuntimeError(f"{name} needs ASDF extension {uri or legacy_class}; install it")
+
+
 def extract_parent(path, target_list, config, output, index, report):
     # Unknown ASDF converters must fail rather than silently discard typed metadata.
     with warnings.catch_warnings():
         warnings.simplefilter("error", AsdfConversionWarning)
-        with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=True) as af:
+        with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=False) as af:
+            require_installed_extensions(af.tree, path.name)
             reject_external_asdf_references(af.tree)
             if path.suffix.lower() != ".asdf" or "schema" in af.tree:
                 raise ValueError("Use original Roman calibrated ASDF parents")

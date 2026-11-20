@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "Please cite the package name and version; an archival DOI has not yet been assigned."
 title: "Gladius"
 type: software
-version: 0.1.0a6
+version: 0.1.0a7
 authors:
   - name: "Gladius contributors"
 license: BSD-3-Clause
-date-released: 2026-11-12
+date-released: 2026-11-20

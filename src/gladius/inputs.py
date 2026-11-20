@@ -9,6 +9,7 @@ import warnings
 from contextlib import contextmanager
 from pathlib import Path
 
+import numpy as np
 from astropy.time import Time
 
 from .config import RunConfig
@@ -88,8 +89,100 @@ def mast_queries(config: RunConfig) -> list[dict]:
     ]
 
 
-def discover(config: RunConfig):
-    """Return deterministic local paths or MAST product records; no images staged yet."""
+def parse_s_region(text):
+    """Return vertex (ra, dec) arrays in degrees for one IVOA POLYGON, else None.
+
+    Anything else (circles, unions, several polygons or malformed text) returns None,
+    and callers keep the candidate: an unknown footprint is never a reason to skip.
+    """
+    if not isinstance(text, str):
+        return None
+    tokens = text.replace(",", " ").split()
+    if not tokens or tokens[0].upper() != "POLYGON":
+        return None
+    values = []
+    for token in tokens[1:]:
+        try:
+            values.append(float(token))
+        except ValueError:
+            if values:
+                return None
+    if len(values) < 6 or len(values) % 2:
+        return None
+    vertices = np.asarray(values, dtype=float).reshape(-1, 2)
+    if not np.isfinite(vertices).all():
+        return None
+    return vertices[:, 0], vertices[:, 1]
+
+
+def footprint_contains(vertices, ra, dec, margin_arcsec=0.0):
+    """Test a sky position against a polygon in the tangent plane at that position."""
+    ra_v, dec_v = np.radians(vertices[0]), np.radians(vertices[1])
+    ra0, dec0 = np.radians(ra), np.radians(dec)
+    cos_c = np.sin(dec0) * np.sin(dec_v) + np.cos(dec0) * np.cos(dec_v) * np.cos(ra_v - ra0)
+    if np.any(cos_c <= 0):
+        return True  # a vertex 90 degrees away: this is not a detector footprint
+    x = np.cos(dec_v) * np.sin(ra_v - ra0) / cos_c
+    y = (np.cos(dec0) * np.sin(dec_v) - np.sin(dec0) * np.cos(dec_v) * np.cos(ra_v - ra0)) / cos_c
+    x1, y1, x2, y2 = x, y, np.roll(x, 1), np.roll(y, 1)
+    crosses = (y1 > 0) != (y2 > 0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        intercept = x1 - y1 * (x2 - x1) / (y2 - y1)
+    if np.count_nonzero(crosses & (intercept > 0)) % 2:
+        return True
+    dx, dy = x2 - x1, y2 - y1
+    length = dx * dx + dy * dy
+    with np.errstate(divide="ignore", invalid="ignore"):
+        t = np.clip(np.where(length > 0, -(x1 * dx + y1 * dy) / length, 0), 0, 1)
+    distance = np.min(np.hypot(x1 + t * dx, y1 + t * dy))
+    return bool(distance <= np.tan(np.radians(margin_arcsec / 3600)))
+
+
+def footprint_filter(observations, config: RunConfig, stats=None):
+    """Return row indices whose archive footprint may contain a configured sky target.
+
+    Pixel targets have no sky position, so their presence disables the filter.
+    """
+    indices = list(range(len(observations)))
+    positions = [(t.ra, t.dec) for t in config.targets if t.ra is not None]
+    applied = (
+        config.inputs.prefilter_footprint
+        and bool(positions)
+        and len(positions) == len(config.targets)
+        and "s_region" in getattr(observations, "colnames", ())
+    )
+    unknown = rejected = 0
+    if applied:
+        kept = []
+        for index in indices:
+            value = observations[index]["s_region"]
+            vertices = parse_s_region(None if np.ma.is_masked(value) else str(value))
+            if vertices is None:
+                unknown += 1
+                kept.append(index)
+            elif any(
+                footprint_contains(vertices, ra, dec, config.inputs.footprint_margin_arcsec)
+                for ra, dec in positions
+            ):
+                kept.append(index)
+            else:
+                rejected += 1
+        indices = kept
+    if stats is not None:
+        stats.update(
+            footprint_prefilter=bool(applied),
+            candidate_observations=len(observations),
+            footprint_rejected=rejected,
+            footprint_unknown=unknown,
+        )
+    return indices
+
+
+def discover(config: RunConfig, stats=None):
+    """Return deterministic local paths or MAST product records; no images staged yet.
+
+    ``stats``, when given, receives candidate and footprint-prefilter counts.
+    """
     if config.inputs.mode == "directory":
         directory = config.inputs.directory
         if not directory.is_dir():
@@ -119,7 +212,13 @@ def discover(config: RunConfig):
         try:
             observations = missions.query_criteria(
                 **criteria,
-                select_cols=["fileSetName", "detector", "optical_element", "exposure_start_time"],
+                select_cols=[
+                    "fileSetName",
+                    "detector",
+                    "optical_element",
+                    "exposure_start_time",
+                    "s_region",
+                ],
                 limit=config.inputs.query_limit,
             )
         except Exception as exc:
@@ -150,7 +249,8 @@ def discover(config: RunConfig):
         raise ValueError("No MAST observations matched the target searches and criteria")
     observations = unique(vstack(tables), keys="fileSetName", keep="first")
     indices = []
-    for index, row in enumerate(observations):
+    for index in footprint_filter(observations, config, stats):
+        row = observations[index]
         if selected(
             {
                 "detector": str(row["detector"]),
@@ -161,7 +261,11 @@ def discover(config: RunConfig):
         ):
             indices.append(index)
     if not indices:
-        raise ValueError("No MAST detector observations passed selection")
+        raise ValueError(
+            "No MAST detector observations passed selection and the target footprint check"
+            if stats and stats.get("footprint_rejected")
+            else "No MAST detector observations passed selection"
+        )
     products = missions.get_unique_product_list(observations[indices])
     products = missions.filter_products(products, file_suffix=config.inputs.product_suffix)
     if not len(products):
@@ -180,14 +284,21 @@ def discover(config: RunConfig):
 
 @contextmanager
 def staged(source, missions, work: Path):
-    """Stage only one archive parent; never remove user-supplied local inputs."""
+    """Stage one archive parent in a private folder; never remove user-supplied inputs.
+
+    Safe to call from several threads with one logged-in client: each call has its
+    own folder, and the client's HTTP session pools connections per thread.
+    """
     if missions is None:
         yield Path(source)
         return
     from astropy.table import Table
 
     with tempfile.TemporaryDirectory(prefix="parent-", dir=work) as temporary:
-        manifest = missions.download_products(Table(rows=[source]), download_dir=temporary)
+        # Parallel progress bars would interleave; Gladius reports per-parent progress.
+        manifest = missions.download_products(
+            Table(rows=[source]), download_dir=temporary, verbose=False
+        )
         paths = [
             Path(str(row["Local Path"]))
             for row in manifest

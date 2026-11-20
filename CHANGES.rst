@@ -1,6 +1,34 @@
 Unreleased
 ==========
 
+0.1.0a7 (2026-11-20)
+====================
+
+Changes from the 0.1.0a6 Nexus beta test:
+
+* Read parents written by a newer release of an installed ASDF package (for
+  example asdf 5.4 files on the RST-Commissioning-1.0.0 kernel's asdf 5.3) with
+  one warning instead of failing. Files needing an extension that is not
+  installed at all still fail. The standalone script follows the same rule.
+* Default ``astrometry.roundtrip_tolerance_pixels`` to 0.01 pixels; flight WCS
+  inverses round-trip to a few thousandths of a pixel. Report errors once per
+  parent and error type, with the largest WCS round-trip error.
+* Skip MAST candidates whose archive footprint (``s_region``) contains none of
+  the RA/Dec targets, before downloading (``inputs.prefilter_footprint``).
+* Download MAST parents in parallel ahead of extraction
+  (``execution.download_workers``, default 4); extraction stays one parent at a
+  time. Remember off-detector targets so reruns do not download again.
+* Keep downloaded parents in the cache after a failure until a successful run.
+  With ``continue_on_error``, stop when the first parents all fail the same way
+  (``execution.abort_after_repeated_failures``, default 3).
+* Hard-link run outputs to verified cache files instead of copying
+  (``storage.output_links``); count every placed file as ``published``.
+* Add ``storage.ancillary_arrays``, ``storage.parent_metadata_arrays`` and
+  ``storage.asdf_compression`` to make large cutouts smaller.
+* Add the ``roman_frame`` output: the parent's Roman file at full detector size,
+  blank outside the cutout, for tools that expect full frames.
+* Report progress once per parent image.
+
 0.1.0a6 (2026-11-12)
 ====================
 

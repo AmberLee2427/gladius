@@ -57,6 +57,7 @@ support locking and temporary processing; they are not science outputs.
 | --- | --- | --- |
 | `cutout.asdf` | Science pixels, uncertainties, quality flags, additional cropped arrays, coordinate model and metadata. | Reading one cutout with its complete saved coordinate model and metadata. |
 | `cutout.fits` | The same cutout in FITS image extensions, with complete metadata and the coordinate model embedded in an extra extension. | Reading SCI/ERR/DQ in FITS software, or recovering all saved information with the Gladius reader. |
+| `parent-frame.asdf` | The parent's Roman file at full detector size, blank (NaN / `DO_NOT_USE`) outside the cutout. Written only when `storage.formats` includes `roman_frame`. | Running tools that expect full Roman detector frames, such as full-frame PSF photometry. |
 | `manifest.json` | Revision status, configuration, input identities, current quality, native file checksums, reuse counts, skips and errors. | Checking whether the run succeeded and finding its current outputs. |
 | `resolved-config.yaml` | The run's settings, with defaults filled in and paths resolved. | Inspecting or repeating the configuration used for this run. |
 | `preview-stack.fits` | A median display image made from aligned cutouts, plus a count of contributing values at each pixel. | Visual inspection. Individual cutouts retain the pixels needed for scientific measurements. |

@@ -21,6 +21,8 @@ inputs:
   product_suffix: _cal
   product_filename: null       # optional exact MAST product filename; Load test pins one
   query_limit: 50000
+  prefilter_footprint: true      # skip MAST parents whose footprint (s_region) holds no RA/Dec target
+  footprint_margin_arcsec: 10.0  # tolerance for footprint approximations
 selection:
   start: null                   # e.g. '2026-01-01T00:00:00'
   end: null                     # exclusive; '2026-02-01' excludes all February
@@ -33,7 +35,7 @@ astrometry:
   mode: validate                # use | validate | corrected
   corrected_directory: gaia_wcs  # external solver default; existing files only
   corrected_pattern: '{stem}_gaiawcs.asdf'
-  roundtrip_tolerance_pixels: 0.001
+  roundtrip_tolerance_pixels: 0.01  # flight inverses round-trip to a few milli-pixels
   fits_tolerance_pixels: 0.01
 quality:
   autocorrelation_limit: null   # disabled; exploratory starting point 2.0, review 1.5–3.0
@@ -53,8 +55,14 @@ stacks:
 storage:
   output_directory: cutouts
   retain_full_images: false     # local originals are NEVER deleted
-  formats: [asdf, fits]
+  formats: [asdf, fits]          # add roman_frame for a full-detector Roman-layout copy per cutout
+  ancillary_arrays: true        # false drops extra parent planes (chisq, dumo, var_*) from cutouts
+  parent_metadata_arrays: true  # false keeps shape/dtype/SHA256 of parent metadata arrays only
+  asdf_compression: none        # none | zlib | bzp2 | lz4 (lz4 needs pip install lz4)
+  output_links: hardlink        # hardlink | copy; run outputs share cache files when possible
 execution:
   resume: true
   continue_on_error: false      # when true, record failures and proceed; CLI still returns nonzero
+  abort_after_repeated_failures: 3  # with continue_on_error: stop if the first 3 parents fail alike; 0 disables
+  download_workers: 4           # parallel MAST downloads ahead of extraction (1 to 8)
   lock_timeout_seconds: 0

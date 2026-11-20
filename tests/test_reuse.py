@@ -132,6 +132,7 @@ def test_parent_byte_change_and_corrupted_cache(demo, modify_parent):
     assert second != first and saved(second)["stage_counts"]["extracted"] == 1
     cache = config.storage.output_directory / ".cache/native"
     native = next(cache.glob("*/cutout.asdf"))
+    native.chmod(0o644)
     native.write_bytes(b"broken")
     third = run(config, progress=lambda _: None)
     assert saved(third)["status"] == "complete"
@@ -155,7 +156,7 @@ def test_mast_snapshots_refresh_identity_and_fresh_download(demo, monkeypatch):
     mission = object()
     calls = {"queries": 0, "downloads": 0}
 
-    def discover(options):
+    def discover(options, **_):
         calls["queries"] += 1
         return mission, rows
 
@@ -224,7 +225,7 @@ def test_fresh_mast_retention_still_downloads(demo, monkeypatch):
     monkeypatch.setattr(
         module,
         "discover",
-        lambda _: (
+        lambda *_, **__: (
             object(),
             [{"filename": p.name, "dataURI": f"mast:roman/{p.name}"} for p in paths],
         ),
@@ -242,7 +243,7 @@ def test_fresh_mast_retention_still_downloads(demo, monkeypatch):
 
 
 def test_corrupt_display_starts_new_revision_and_restores_from_cache(demo):
-    config = load_config(demo)
+    config = change(load_config(demo), storage={"output_links": "copy"})
     first = run(config, progress=lambda _: None)
     display = saved(first.parent / "stack-manifest.json")["products"][0]
     broken = first.parent / display["path"]
@@ -251,6 +252,22 @@ def test_corrupt_display_starts_new_revision_and_restores_from_cache(demo):
     assert first != second
     assert broken.read_bytes() == b"corrupt"
     assert sha256(second.parent / display["path"]) == display["sha256"]
+
+
+def test_linked_outputs_are_read_only_and_a_forced_edit_is_rebuilt(demo):
+    config = load_config(demo)
+    first = run(config, progress=lambda _: None)
+    display = saved(first.parent / "stack-manifest.json")["products"][0]
+    linked = first.parent / display["path"]
+    with pytest.raises(PermissionError):
+        linked.write_bytes(b"corrupt")
+    # Forcing the edit reaches the shared cache inode; it is detected and rebuilt.
+    linked.chmod(0o644)
+    linked.write_bytes(b"corrupt")
+    second = run(config, progress=lambda _: None)
+    assert first != second
+    rebuilt = saved(second.parent / "stack-manifest.json")["products"][0]
+    assert sha256(second.parent / rebuilt["path"]) == rebuilt["sha256"]
 
 
 def test_parent_mutation_during_read_is_rejected(demo, monkeypatch):
@@ -373,7 +390,7 @@ def test_refresh_downloads_only_new_archive_members(demo, monkeypatch):
     paths = {p.name: p for p in (demo.parent / "images").glob("*.asdf")}
     rows = [{"filename": name, "dataURI": f"mast:roman/{name}"} for name in sorted(paths)]
     downloads = []
-    monkeypatch.setattr(module, "discover", lambda _: (object(), rows))
+    monkeypatch.setattr(module, "discover", lambda *_, **__: (object(), rows))
 
     @contextmanager
     def staged(source, missions, work):

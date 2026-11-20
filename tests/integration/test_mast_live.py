@@ -243,7 +243,7 @@ def test_live_harness_with_synthetic_archive(demo, tmp_path, monkeypatch):
         def get_unique_product_list(self, observations):
             return Table(rows=[(source.name, source.stat().st_size)], names=["filename", "size"])
 
-        def download_products(self, products, download_dir):
+        def download_products(self, products, download_dir, **options):
             assert len(products) == 1
             target = Path(download_dir) / source.name
             shutil.copyfile(source, target)

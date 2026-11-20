@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import warnings
 from collections.abc import Mapping
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass
 from io import BytesIO
@@ -14,7 +16,7 @@ from urllib.parse import urlsplit
 
 import asdf
 import numpy as np
-from asdf.exceptions import AsdfConversionWarning
+from asdf.exceptions import AsdfConversionWarning, AsdfWarning
 from asdf.reference import Reference
 from asdf.tags.core.external_reference import ExternalArrayReference
 from asdf.tags.core.ndarray import NDArrayType
@@ -23,9 +25,14 @@ from astropy.time import Time
 from astropy.wcs import WCS
 
 from . import __version__
-from .core import Cutout, pixel_to_world
+from .core import DO_NOT_USE, Cutout, pixel_to_world
 
 SCHEMA = "gladius/derived-1.0"
+FRAME_SCHEMA = "gladius/parent-frame-1.0"
+try:
+    from asdf.exceptions import AsdfPackageVersionWarning
+except ImportError:  # pragma: no cover - older asdf releases used AsdfWarning
+    AsdfPackageVersionWarning = AsdfWarning
 
 
 @dataclass
@@ -68,6 +75,53 @@ def _reject_external_asdf_references(tree):
                 continue
             visited.add(identity)
             pending.extend(node)
+
+
+def _require_installed_extensions(tree, name):
+    """Fail when a file names an ASDF extension that is not installed at all.
+
+    A file written by a newer release of an installed extension package is only a
+    warning: asdf reads it, and unknown tags still fail through AsdfConversionWarning.
+    """
+    history = tree.get("history") if isinstance(tree, Mapping) else None
+    entries = history.get("extensions", []) if isinstance(history, Mapping) else []
+    installed = asdf.get_config().extensions
+    uris = {e.extension_uri for e in installed if e.extension_uri}
+    legacy = {n for e in installed for n in e.legacy_class_names}
+    for entry in entries if isinstance(entries, (list, tuple)) else []:
+        if not isinstance(entry, Mapping):
+            continue
+        uri, legacy_class = entry.get("extension_uri"), entry.get("extension_class")
+        if (uri and uri not in uris) or (not uri and legacy_class and legacy_class not in legacy):
+            raise RuntimeError(
+                f"{name} was written with ASDF extension {uri or legacy_class}, which is not "
+                "installed. Install the package that provides it (roman_datamodels for Roman "
+                "images) so typed metadata are not lost."
+            )
+
+
+@contextmanager
+def open_asdf(path, **options):
+    """Open with Gladius' reader policy; newer writer package versions only warn."""
+    path = Path(path)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("error", AsdfConversionWarning)
+        warnings.simplefilter("always", AsdfPackageVersionWarning)
+        af = asdf.open(path, memmap=False, strict_extension_check=False, **options)
+    try:
+        _require_installed_extensions(af.tree, path.name)
+        for item in caught:
+            if issubclass(item.category, AsdfPackageVersionWarning):
+                # One warning per package pair, not one per parent file name.
+                text = re.sub(r"^File\s*(?:'[^']*')?\s*", "", str(item.message))
+                warnings.warn(f"An input file {text}", AsdfPackageVersionWarning, stacklevel=3)
+            else:
+                warnings.warn_explicit(item.message, item.category, item.filename, item.lineno)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", AsdfConversionWarning)
+            yield af
+    finally:
+        af.close()
 
 
 def _materialize_asdf_arrays(tree):
@@ -169,6 +223,34 @@ def _partition(node, shape, ancillary, path=""):
     return deepcopy(node)
 
 
+def omit_arrays(node):
+    """Replace array payloads in parent metadata by shape, dtype and SHA256 descriptors."""
+    if isinstance(node, np.ndarray):
+        data = np.ascontiguousarray(node.view(np.ndarray))
+        descriptor = {
+            "omitted_array": True,
+            "shape": list(data.shape),
+            "dtype": str(data.dtype),
+            "sha256": hashlib.sha256(data.tobytes()).hexdigest(),
+            "content": "array payload omitted (storage.parent_metadata_arrays: false); "
+            "see provenance parent_sha256 for the parent file",
+        }
+        if hasattr(node, "unit"):
+            descriptor["unit"] = str(node.unit)
+        return descriptor
+    if isinstance(node, Mapping):
+        return {key: omit_arrays(value) for key, value in node.items()}
+    if isinstance(node, list):
+        return [omit_arrays(value) for value in node]
+    if isinstance(node, tuple):
+        return tuple(omit_arrays(value) for value in node)
+    return node
+
+
+def _compression(name):
+    return None if name in (None, "none") else name
+
+
 def _time(value):
     if value is None:
         return None
@@ -224,54 +306,50 @@ def read_exposure(path: str | Path) -> Exposure:
     suffix = path.suffix.lower()
     if suffix != ".asdf":
         raise ValueError(NOT_ROMAN_MESSAGE.format(detail=f"{path.name} is not an ASDF file."))
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", AsdfConversionWarning)
-        with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=True) as af:
-            _reject_external_asdf_references(af.tree)
-            if af.tree.get("schema") == SCHEMA:
-                raise ValueError(
-                    f"{path.name} is a Gladius cutout, not a parent image. "
-                    "Use the original Roman Level 2 image as the parent."
-                )
-            node = af.tree.get("roman", af.tree)
-            if any(name not in node for name in ("data", "err", "dq")):
-                raise ValueError(
-                    NOT_ROMAN_MESSAGE.format(detail=f"{path.name} has no data, err and dq arrays.")
-                )
-            arrays = {name: np.asarray(node[name]).copy() for name in ("data", "err", "dq")}
-            if arrays["data"].ndim != 2:
-                raise ValueError("Only 2D calibrated detector images are supported")
-            meta = node.get("meta", {})
-            wcs = deepcopy(meta.get("wcs", node.get("wcs")))
-            if wcs is None:
-                raise ValueError("No parent WCS found")
-            ancillary = {}
-            parent_metadata = _partition(af.tree, arrays["data"].shape, ancillary)
-            prefix = "roman/" if "roman" in af.tree else ""
-            for key in arrays:
-                ancillary.pop(prefix + key, None)
-            summary = _summary(meta)
-            for key, label in (("data", "data_units"), ("err", "err_units")):
-                if summary[label] is None and hasattr(node[key], "unit"):
-                    summary[label] = str(node[key].unit)
-            return Exposure(arrays, wcs, parent_metadata, ancillary, summary)
+    with open_asdf(path, lazy_load=True) as af:
+        _reject_external_asdf_references(af.tree)
+        if af.tree.get("schema") == SCHEMA:
+            raise ValueError(
+                f"{path.name} is a Gladius cutout, not a parent image. "
+                "Use the original Roman Level 2 image as the parent."
+            )
+        node = af.tree.get("roman", af.tree)
+        if any(name not in node for name in ("data", "err", "dq")):
+            raise ValueError(
+                NOT_ROMAN_MESSAGE.format(detail=f"{path.name} has no data, err and dq arrays.")
+            )
+        arrays = {name: np.asarray(node[name]).copy() for name in ("data", "err", "dq")}
+        if arrays["data"].ndim != 2:
+            raise ValueError("Only 2D calibrated detector images are supported")
+        meta = node.get("meta", {})
+        wcs = deepcopy(meta.get("wcs", node.get("wcs")))
+        if wcs is None:
+            raise ValueError("No parent WCS found")
+        ancillary = {}
+        parent_metadata = _partition(af.tree, arrays["data"].shape, ancillary)
+        prefix = "roman/" if "roman" in af.tree else ""
+        for key in arrays:
+            ancillary.pop(prefix + key, None)
+        summary = _summary(meta)
+        for key, label in (("data", "data_units"), ("err", "err_units")):
+            if summary[label] is None and hasattr(node[key], "unit"):
+                summary[label] = str(node[key].unit)
+        return Exposure(arrays, wcs, parent_metadata, ancillary, summary)
 
 
 def read_correction(path: Path):
     """Read a separately supplied corrected WCS and its non-spatial provenance."""
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", AsdfConversionWarning)
-        with asdf.open(path, lazy_load=True, memmap=False, strict_extension_check=True) as af:
-            _reject_external_asdf_references(af.tree)
-            node = af.tree.get("roman", af.tree)
-            wcs = node.get("wcs", node.get("meta", {}).get("wcs"))
-            if wcs is None:
-                raise ValueError(f"No WCS in correction product {path}")
-            # Corrections normally have a small wcs/provenance tree; avoid copying full images.
-            ancillary = {}
-            shape = np.asarray(node["data"]).shape if "data" in node else (-1, -1)
-            meta = _partition(af.tree, shape, ancillary)
-            return deepcopy(wcs), meta, shape
+    with open_asdf(path, lazy_load=True) as af:
+        _reject_external_asdf_references(af.tree)
+        node = af.tree.get("roman", af.tree)
+        wcs = node.get("wcs", node.get("meta", {}).get("wcs"))
+        if wcs is None:
+            raise ValueError(f"No WCS in correction product {path}")
+        # Corrections normally have a small wcs/provenance tree; avoid copying full images.
+        ancillary = {}
+        shape = np.asarray(node["data"]).shape if "data" in node else (-1, -1)
+        meta = _partition(af.tree, shape, ancillary)
+        return deepcopy(wcs), meta, shape
 
 
 def _tree(cutout):
@@ -337,12 +415,15 @@ def _fits_array(array):
     return array
 
 
-def write_cutout(cutout: Cutout, folder: Path, formats=("asdf", "fits"), *, tolerance=0.01):
+def write_cutout(
+    cutout: Cutout, folder: Path, formats=("asdf", "fits"), *, tolerance=0.01, compression=None
+):
     """Write and reopen each file, checking native planes and stored astrometry.
 
     FITS contains a package-specific ASDFMETA extension with complete metadata
     and exact WCS; SCI/ERR/DQ remain normal image extensions. This is a derived
-    product format, not a schema-valid Roman mission datamodel.
+    product format, not a schema-valid Roman mission datamodel. ``compression``
+    (zlib, bzp2 or lz4) applies to ASDF blocks only.
     """
     folder.mkdir(parents=True, exist_ok=True)
     files = []
@@ -351,7 +432,7 @@ def write_cutout(cutout: Cutout, folder: Path, formats=("asdf", "fits"), *, tole
         path = folder / "cutout.asdf"
         asdf.AsdfFile(
             {**metadata, **cutout.arrays, "ancillary_arrays": cutout.ancillary_arrays}
-        ).write_to(path)
+        ).write_to(path, all_array_compression=_compression(compression))
         files.append(path)
     if "fits" in formats:
         header = fits_header(cutout.wcs, cutout.arrays["data"].shape, tolerance)
@@ -433,6 +514,86 @@ def write_cutout(cutout: Cutout, folder: Path, formats=("asdf", "fits"), *, tole
             rtol=0,
         )
     return files
+
+
+def _blank_outside(node, shape, keep, visited=None, key=""):
+    """Return node with every parent-aligned plane set to padding outside ``keep``."""
+    visited = set() if visited is None else visited
+    if isinstance(node, (np.ndarray, NDArrayType)):
+        array = node.copy() if isinstance(node, np.ndarray) else np.array(node)
+        if array.ndim < 2 or tuple(array.shape[-2:]) != shape:
+            return node
+        view = array.view(np.ndarray)
+        if key.lower() in ("dq", "pixeldq") and np.issubdtype(view.dtype, np.integer):
+            fill = DO_NOT_USE
+        elif np.issubdtype(view.dtype, np.inexact):
+            fill = np.nan
+        else:
+            fill = 0
+        view[..., ~keep] = fill
+        return array
+    if isinstance(node, Mapping) and id(node) not in visited:
+        visited.add(id(node))
+        for name in list(node.keys()):
+            value = _blank_outside(node[name], shape, keep, visited, str(name))
+            if value is not node[name]:
+                node[name] = value
+    elif isinstance(node, list) and id(node) not in visited:
+        visited.add(id(node))
+        for index, item in enumerate(node):
+            value = _blank_outside(item, shape, keep, visited, key)
+            if value is not item:
+                node[index] = value
+    return node
+
+
+def write_parent_frame(parent, mapping, path, *, compression=None, provenance=None):
+    """Write the parent's own Roman tree with pixels blanked outside one cutout.
+
+    The result keeps the full detector grid, tags, metadata and WCS so tools that
+    assume Roman full frames work unchanged. Floating planes are NaN, DQ planes are
+    DO_NOT_USE and other integer planes are zero outside ``parent_valid_bounds``.
+    ``compression=None`` uses the parent SCI block's compression for every block.
+    """
+    path = Path(path)
+    with open_asdf(parent, lazy_load=False) as af:
+        _reject_external_asdf_references(af.tree)
+        node = af.tree.get("roman", af.tree)
+        shape = tuple(np.shape(node["data"]))
+        if list(shape) != list(mapping["parent_shape_yx"]):
+            raise ValueError("Parent shape does not match the cutout mapping")
+        if _compression(compression) is None:
+            # Replaced arrays are new objects, so "input" would not find their blocks.
+            try:
+                compression = af.get_array_compression(node["data"]) or None
+            except (AttributeError, KeyError, ValueError, TypeError):
+                compression = None
+        keep = np.zeros(shape, dtype=bool)
+        sx0, sy0, sx1, sy1 = mapping["parent_valid_bounds_xyxy"]
+        keep[sy0:sy1, sx0:sx1] = True
+        _blank_outside(af.tree, shape, keep)
+        af.tree["gladius_frame"] = {
+            "schema": FRAME_SCHEMA,
+            "package_version": __version__,
+            "mapping": deepcopy(mapping),
+            "content": "parent tree; spatial planes blanked outside parent_valid_bounds_xyxy",
+            "provenance": deepcopy(provenance or {}),
+        }
+        af.write_to(path, all_array_compression=_compression(compression))
+    with open_asdf(path, lazy_load=True) as saved:
+        saved_node = saved.tree.get("roman", saved.tree)
+        if tuple(np.shape(saved_node["data"])) != shape:
+            raise ValueError("Parent-frame export changed the detector shape")
+    return path
+
+
+FRAME_FILENAME = "parent-frame.asdf"
+
+
+def cutout_file(files):
+    """Name of an entry's readable cutout: ASDF first, then FITS; never a parent frame."""
+    names = [name for name in files if Path(name).name != FRAME_FILENAME]
+    return sorted(names, key=lambda name: not name.endswith(".asdf"))[0]
 
 
 def read_cutout(path: str | Path) -> Cutout:

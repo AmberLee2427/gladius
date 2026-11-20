@@ -17,7 +17,7 @@ from astropy.coordinates import SkyCoord
 from PIL import Image, ImageDraw, ImageFont
 
 from .core import pixel_to_world, world_to_pixel
-from .io import read_cutout, read_exposure, sha256
+from .io import cutout_file, read_cutout, read_exposure, sha256
 
 
 def _manifest(path):
@@ -42,8 +42,7 @@ def _entries(manifest):
 
 
 def _cutout(directory, entry):
-    names = sorted(entry["files"], key=lambda name: not name.endswith(".asdf"))
-    return read_cutout(directory / names[0])
+    return read_cutout(directory / cutout_file(entry["files"]))
 
 
 def audit_rows(manifest_path):

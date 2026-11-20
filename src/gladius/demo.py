@@ -82,8 +82,8 @@ def create_mast_demo(directory: Path, *, max_parent_mib: float = 512) -> Path:
     """Discover one real parent and write demo YAML; do not download the image.
 
     The size check uses MAST's advertised bytes, not a streaming download cap.
-    The demo explicitly uses a 0.01-pixel numerical WCS tolerance, matching the
-    real-data notebook; the package default remains 0.001 pixels.
+    The demo uses the package default 0.01-pixel numerical WCS tolerance, stated
+    explicitly so the YAML shows it.
     """
     from .config import RunConfig
     from .inputs import mast_test_configuration

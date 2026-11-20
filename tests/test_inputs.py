@@ -45,7 +45,7 @@ def test_archive_selection_staging_and_cleanup(demo, tmp_path, monkeypatch):
             assert filters == {"file_suffix": "_cal"}
             return products
 
-        def download_products(self, products, download_dir):
+        def download_products(self, products, download_dir, **options):
             assert len(products) == 1
             path = demo.parent / "images" / str(products[0]["filename"])
             target = type(path)(download_dir) / path.name
@@ -84,7 +84,7 @@ def test_archive_selection_staging_and_cleanup(demo, tmp_path, monkeypatch):
 
 def test_archive_download_failure_and_context_cleanup(tmp_path):
     class Broken:
-        def download_products(self, products, download_dir):
+        def download_products(self, products, download_dir, **options):
             (tmp_path / "temporary_path.txt").write_text(download_dir)
             return Table(rows=[("", "ERROR")], names=["Local Path", "Status"])
 

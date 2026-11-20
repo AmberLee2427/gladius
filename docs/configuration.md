@@ -244,6 +244,17 @@ positions are wrong by more than the chosen radius. The supported radius is
 0 < radius <= 30 arcminutes.
 Overlapping searches are deduplicated before any parent is downloaded.
 
+A cone returns every detector of every nearby exposure, so most candidates
+usually contain none of the targets. With `inputs.prefilter_footprint: true`
+(the default), Gladius tests each RA/Dec target against the footprint polygon
+MAST reports for each candidate (`s_region`) and does not download candidates
+whose footprint contains no target. `footprint_margin_arcsec` (default 10)
+allows for approximate footprints. A candidate is kept whenever its footprint is
+missing or is not a single polygon. Pixel targets have no sky position, so any
+pixel target disables the check. The manifest's `discovery` section records how
+many candidates were skipped; the check never removes a target from an image that
+covers it.
+
 The optional `mast_criteria` setting accepts overrides, e.g. `{program: 1043}` (an example ID,
 not a promise of available data). Explicit positional criteria replace automatic
 cones. Pixel-only targets require an explicit archive constraint because pixels
@@ -289,7 +300,8 @@ and positions on the sky. The `astrometry.mode` setting chooses how Gladius uses
   numerical consistency check.
 - **`validate`** checks 25 positions across the image. Each position must convert
   to a valid sky coordinate and back to within `roundtrip_tolerance_pixels` of
-  its starting pixel. Near the image centre, a one-pixel step in either direction
+  its starting pixel (default 0.01 pixels; flight WCS inverses round-trip to a
+  few thousandths of a pixel, which is scientifically harmless). Near the image centre, a one-pixel step in either direction
   must also correspond to a nonzero separation on the sky. A failed check rejects
   that input. This catches numerical problems; a WCS that consistently points to
   the wrong sky position can still pass.
@@ -310,6 +322,32 @@ Failure to convert sky coordinates to pixels is an error, rather than an off-ima
 
 See [Scientific conventions](science.md) for worked examples of pixel selection,
 padding values and coordinate conversion.
+
+### Smaller cutouts and full-frame exports
+
+A cutout keeps every parent plane aligned with the detector (for example
+`chisq`, `dumo` and `var_poisson`) and the parent's full metadata, which for
+Roman images includes reference-pixel arrays such as `amp33`. At large sizes
+these dominate the file. Three `storage` options reduce it:
+
+- `ancillary_arrays: false` keeps only SCI, ERR and DQ. The provenance lists the
+  omitted planes with their shapes and data types.
+- `parent_metadata_arrays: false` replaces each array in the parent metadata by
+  its shape, data type and SHA-256; the cutout provenance keeps the parent file's
+  SHA-256 and name. Scalar metadata and the WCS are unchanged.
+- `asdf_compression: zlib` (or `bzp2`; `lz4` needs `pip install lz4`) compresses
+  ASDF blocks. FITS files are not compressed.
+
+Some tools assume full Roman detector frames, such as PSF photometry that reads
+`roman.data` as 4088 × 4088 and uses spatially varying models. Adding
+`roman_frame` to `storage.formats` writes `parent-frame.asdf` beside each cutout:
+the parent's own Roman file with its tags, metadata and WCS, where every
+detector-aligned plane is NaN (DQ: `DO_NOT_USE`; other integers: 0) outside the
+cutout. `gladius_frame.mapping` records the cutout's position. It needs the
+parent image when first written, keeps the original parent WCS (not a corrected
+one), and must be combined with `asdf` or `fits`. With
+`asdf_compression: none` it uses the parent's own block compression; otherwise
+the selected one. An uncompressed frame is as large as its parent.
 
 ## Quality, stacks, animations and colour
 
@@ -420,8 +458,18 @@ needed for new cutout geometry, new targets, or full-image retention.
 
 Local inputs are rediscovered and hashed on every call. This detects changed
 local files without relying on filenames or modification times alone. Local
-originals are never deleted. Temporary MAST downloads are removed after each
-parent has been processed, including when processing fails.
+originals are never deleted.
+
+MAST parents are downloaded in parallel ahead of extraction:
+`execution.download_workers` (default 4, at most 8) downloads run while the
+current parent is processed. Extraction itself stays one parent at a time, so
+memory use does not grow with the number of workers. A downloaded parent is
+removed once all its targets are processed without errors. If processing fails,
+or the run stops before a downloaded parent is used, the parent is kept under
+`.cache/downloads/` so the next run does not download it again; these kept files
+are removed when a run completes successfully, and `--fresh` discards them.
+Targets found to be off a detector are remembered too, so a rerun does not
+download a parent only to find that again.
 
 (start-completely-fresh)=
 ### Starting without earlier results
@@ -449,11 +497,23 @@ keeps its original creation provenance, including the configuration that first
 created it; Gladius does not rewrite that file just because a threshold changed.
 
 Verified intermediate products live in `storage.output_directory/.cache/`.
-Revision products are independent copies, so cache repair cannot change the
-bytes of earlier revisions. The cache enables reuse; it can grow,
-and Gladius currently has no automatic eviction or disk quota. Original parents
-are retained under `parents/` only when requested. Removing the shared cache
-loses the optimization; it does not delete revision copies.
+With `storage.output_links: hardlink` (the default), revision files are hard
+links to these cache files, so a cutout occupies disk space once. Cache files are
+only ever replaced, never edited in place, so cache repair cannot change the
+bytes of earlier revisions. Gladius copies instead when links are not possible
+(for example across file systems), or always with `output_links: copy`. Linked
+files are read-only, because editing one in place would also change the cache
+copy; copy a file before modifying it. (A forced edit is detected and the cache
+product rebuilt.) Copies made with `output_links: copy` are writable. The cache enables reuse;
+it can grow, and Gladius currently has no automatic eviction or disk quota.
+Original parents are retained under `parents/` only when requested. Removing the
+shared cache loses the optimization; it does not delete revision files.
+
+`stage_counts` in `manifest.json` reports the work done: `extracted` and
+`native_reused` cutouts, `off_detector_reused` skips, `quality_measured` and
+`quality_reused` assessments, `serialized` (FITS files newly converted),
+`frames_written` (new `roman_frame` exports) and `published` (cutout files placed
+in this revision, all formats).
 
 Pre-existing alpha-3 hash-named runs remain readable and untouched. They are not
 automatically imported into the new cache. New manifests use schema version 2;
@@ -470,7 +530,18 @@ By default, a processing error is recorded and stops the run.
 read, coordinate-conversion, extraction or write failures. The final status
 still reports failure, and the CLI returns a nonzero exit code. Invalid settings,
 archive discovery, output-lock failures and display failures stop the run.
-Processing remains sequential, one parent image at a time.
+Errors are recorded once per parent image and error type, naming the affected
+targets; for WCS round-trip failures the largest error is reported.
+
+A problem with the environment usually makes every parent fail the same way.
+With `continue_on_error: true`, `execution.abort_after_repeated_failures: 3`
+(the default) stops the run when the first three parent images all fail with the
+same error before any succeeds; downloaded parents are kept for the rerun. Set
+it to `0` to try every parent regardless.
+
+Progress is reported once per parent image, for example
+`[3/38] <filename>` followed by its number of cutouts, off-detector skips and
+failures.
 
 Cutouts are reopened and checked before publication. File checksums are verified
 before cache reuse; incomplete/corrupt cached products are rebuilt. Manifest JSON

@@ -95,6 +95,10 @@ class Inputs(Options):
     product_suffix: str = "_cal"
     product_filename: str | None = None
     query_limit: PositiveInt = 50000
+    # MAST cones return every detector near a target. The archive footprint
+    # (s_region) lets Gladius skip parents that cannot contain any sky target.
+    prefilter_footprint: bool = True
+    footprint_margin_arcsec: Annotated[float, Field(ge=0, le=600, allow_inf_nan=False)] = 10.0
 
     @field_validator("mast_criteria", mode="before")
     @classmethod
@@ -159,7 +163,8 @@ class Astrometry(Options):
     mode: Literal["use", "validate", "corrected"] = "validate"
     corrected_directory: Path | None = Path("gaia_wcs")
     corrected_pattern: str = Field(default="{stem}_gaiawcs.asdf", max_length=255)
-    roundtrip_tolerance_pixels: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 0.001
+    # Flight GWCS inverses round-trip to a few milli-pixels; 0.01 px is harmless.
+    roundtrip_tolerance_pixels: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 0.01
     fits_tolerance_pixels: Annotated[float, Field(gt=0, allow_inf_nan=False)] = 0.01
 
     @model_validator(mode="after")
@@ -214,19 +219,42 @@ class Stacks(Options):
 class Storage(Options):
     output_directory: Path = Path("cutouts")
     retain_full_images: bool = False
-    formats: list[Literal["asdf", "fits"]] = Field(default_factory=lambda: ["asdf", "fits"])
+    formats: list[Literal["asdf", "fits", "roman_frame"]] = Field(
+        default_factory=lambda: ["asdf", "fits"]
+    )
+    # Size controls for native cutouts. Omitted payloads keep shape, dtype and SHA256.
+    ancillary_arrays: bool = True
+    parent_metadata_arrays: bool = True
+    asdf_compression: Literal["none", "zlib", "bzp2", "lz4"] = "none"
+    # Cache files are replaced, never edited, so revisions can share their inodes.
+    output_links: Literal["hardlink", "copy"] = "hardlink"
 
     @field_validator("formats")
     @classmethod
     def output_formats(cls, values):
         if not values or len(set(values)) != len(values):
             raise ValueError("formats must be a nonempty list without duplicates")
+        if "roman_frame" in values and not {"asdf", "fits"} & set(values):
+            raise ValueError("roman_frame is an extra export; also request asdf or fits")
         return values
+
+    @field_validator("asdf_compression")
+    @classmethod
+    def compression_available(cls, value):
+        if value == "lz4":
+            try:
+                import lz4  # noqa: F401
+            except ImportError as exc:
+                raise ValueError("asdf_compression lz4 requires pip install lz4") from exc
+        return value
 
 
 class Execution(Options):
     resume: bool = True
     continue_on_error: bool = False
+    # With continue_on_error, stop when the first N failing parents share one error class.
+    abort_after_repeated_failures: Annotated[int, Field(strict=True, ge=0)] = 3
+    download_workers: Annotated[int, Field(strict=True, ge=1, le=8)] = 4
     lock_timeout_seconds: Annotated[float, Field(ge=0, allow_inf_nan=False)] = 0
 
 

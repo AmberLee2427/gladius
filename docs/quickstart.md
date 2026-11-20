@@ -127,7 +127,7 @@ The demo loads that `.env` and queries five accessible Level 2 datasets. It choo
 
 Before downloading, Gladius checks the size advertised by MAST. The default limit is 512 MiB; this is not a streaming download cap. Gladius does not download the image if the selected parent exceeds the limit. `--max-parent-mib` changes the advertised size limit.
 
-This example and the real-data notebook use a 0.01-pixel tolerance for checking the world coordinate system (WCS), which maps image pixels to positions on the sky. The check measures the numerical error when the coordinate model maps a pixel to the sky and back. The package default remains 0.001 pixels. This check does not establish absolute sky accuracy.
+This example and the real-data notebook use the default 0.01-pixel tolerance for checking the world coordinate system (WCS), which maps image pixels to positions on the sky. The check measures the numerical error when the coordinate model maps a pixel to the sky and back. This check does not establish absolute sky accuracy.
 
 The demo needs a new or empty destination. The following commands show how to select a different credential file or destination:
 
